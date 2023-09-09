@@ -1,0 +1,9 @@
+<resources
+    xmlns:tools="http://schemas.android.com/tools">
+    <style
+        name="Base.Theme.EcoSave"
+        parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    </style>
+
+    <style name="Theme.EcoSave" parent="Base.Theme.EcoSave" />
+</resources>
