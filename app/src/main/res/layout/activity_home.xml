@@ -7,6 +7,15 @@
     android:layout_height="match_parent"
     tools:context=".HomeActivity">
 
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -15,7 +24,7 @@
         android:layout_marginEnd="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -77,7 +86,19 @@
                 android:text="@string/registered_device_list"
                 android:textSize="20sp"
                 android:textColor="@color/black"
-                android:fontFamily="@font/outfit_bold"/>
+                android:fontFamily="@font/outfit_bold" />
+            
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnAddDevice"
+                android:layout_width="150dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="15dp"
+                android:text="@string/add_device"
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:fontFamily="@font/outfit_bold"
+                android:background="@drawable/btn_rounded_light_blue" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
