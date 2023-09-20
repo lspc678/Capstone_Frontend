@@ -10,4 +10,7 @@
     <string name="change_my_resident">내 거주지 변경</string>
     <string name="Where_is_my_position_near_my_resident">내 근처에서 나는...?</string>
     <string name="registered_device_list">등록한 기기 목록</string>
+    <string name="add_device">기기 추가</string>
+    <string name="energy_consumption">소비전력량</string>
+    <string name="CO2">CO2</string>
 </resources>
