@@ -1,8 +1,13 @@
 package com.toyproject.ecosave
 
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Toast
 import com.toyproject.ecosave.databinding.ActivityAddDeviceBinding
 
 class AddDeviceActivity : AppCompatActivity() {
@@ -17,6 +22,43 @@ class AddDeviceActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.title = "기기 추가"
         supportActionBar?.setDisplayHomeAsUpEnabled(true) // 앱바에 back 버튼 활성화
+
+        val items = resources.getStringArray(R.array.category_list)
+        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items)
+
+        binding.spinner.adapter = spinnerAdapter
+        binding.spinner.prompt = "카테고리 선택"
+        binding.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            @SuppressLint("SetTextI18n")
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                when (position) {
+                    0 -> {
+                        binding.textEnergyConsumption.text = "월간 소비전력량"
+                        binding.textEnergyConsumptionUnit.text = "kWh/월"
+                        binding.textCO2EmissionUnit.text = "g/시간"
+                    }
+                    1 -> {
+                        binding.textEnergyConsumption.text = "월간 소비전력량"
+                        binding.textEnergyConsumptionUnit.text = "kWh/월"
+                        binding.textCO2EmissionUnit.text = "g/시간"
+                    }
+                    2 -> {
+                        binding.textEnergyConsumption.text = "월간 소비전력량"
+                        binding.textEnergyConsumptionUnit.text = "kWh/월"
+                        binding.textCO2EmissionUnit.text = "g/시간"
+                    }
+                    3 -> {
+                        binding.textEnergyConsumption.text = "1Kg당 소비전력량"
+                        binding.textEnergyConsumptionUnit.text = "Wh/kg"
+                        binding.textCO2EmissionUnit.text = "g/회"
+                    }
+                    else -> {
+                        Toast.makeText(applicationContext, "Default", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
