@@ -13,4 +13,9 @@
     <string name="add_device">기기 추가</string>
     <string name="energy_consumption">소비전력량</string>
     <string name="CO2">CO2</string>
+    <string name="take_picture">사진 촬영</string>
+    <string name="how_to_register_device">에너지 소비 효율 등급 라벨을 촬영하여 기기 등록을 할 수 있습니다.</string>
+    <string name="kWh_per_month">kWh/월</string>
+    <string name="gram_per_hour">g/시간</string>
+    <string name="zero">0</string>
 </resources>
