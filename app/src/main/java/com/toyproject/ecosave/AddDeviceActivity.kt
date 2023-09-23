@@ -1,13 +1,13 @@
 package com.toyproject.ecosave
 
 import android.annotation.SuppressLint
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.toyproject.ecosave.databinding.ActivityAddDeviceBinding
 
 class AddDeviceActivity : AppCompatActivity() {
@@ -53,11 +53,18 @@ class AddDeviceActivity : AppCompatActivity() {
                         binding.textCO2EmissionUnit.text = "g/회"
                     }
                     else -> {
-                        Toast.makeText(applicationContext, "Default", Toast.LENGTH_SHORT).show()
+                        binding.textEnergyConsumption.text = "월간 소비전력량"
+                        binding.textEnergyConsumptionUnit.text = "kWh/월"
+                        binding.textCO2EmissionUnit.text = "g/시간"
                     }
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        binding.btnTakePicture.setOnClickListener {
+            val intent = Intent(this, CameraActivity::class.java)
+            startActivity(intent)
         }
     }
 
