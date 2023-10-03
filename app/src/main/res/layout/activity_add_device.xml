@@ -19,6 +19,7 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar">
@@ -61,13 +62,13 @@
                 android:id="@+id/deviceImage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="30dp" />
+                android:layout_marginTop="30dp"
+                android:adjustViewBounds="true" />
 
             <Spinner
                 android:id="@+id/spinner"
                 android:layout_width="match_parent"
                 android:layout_height="70dp"
-                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="30dp"
                 android:spinnerMode="dialog" />
 
@@ -176,6 +177,19 @@
                     app:layout_constraintEnd_toEndOf="@+id/nonEditableBackgroundForCO2"
                     app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnAddDevice"
+                android:layout_width="150dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="30dp"
+                android:layout_marginBottom="30dp"
+                android:text="@string/add_device"
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:fontFamily="@font/outfit_bold"
+                android:background="@drawable/btn_rounded_light_blue" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
