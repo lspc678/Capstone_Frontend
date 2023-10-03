@@ -16,159 +16,166 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginTop="15dp"
-        android:orientation="vertical"
+        android:layout_height="0dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/how_to_register_device"
-            android:textSize="16sp"
-            android:textColor="#49454F"
-            android:fontFamily="@font/outfit_bold"/>
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnTakePicture"
-            android:layout_width="match_parent"
-            android:layout_height="85dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="30dp"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
-            android:text="@string/take_picture"
-            android:textSize="20sp"
-            android:textColor="@color/white"
-            android:fontFamily="@font/noto_sans_kr_bold"
-            android:background="@drawable/btn_add_device"
-            android:drawableStart="@drawable/ic_photo_camera" />
-
-        <ImageView
-            android:id="@+id/deviceImage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:src="@drawable/ic_image" />
-
-        <Spinner
-            android:id="@+id/spinner"
-            android:layout_width="match_parent"
-            android:layout_height="70dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="30dp"
-            android:spinnerMode="dialog" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="30dp">
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginEnd="20dp"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/toolbar">
 
             <TextView
-                android:id="@+id/textEnergyConsumption"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/outfit_regular"
-                android:text="@string/energy_consumption"
-                android:textColor="@color/light_grey"
-                android:textSize="15sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:fontFamily="@font/outfit_bold"
+                android:text="@string/how_to_register_device"
+                android:textColor="#49454F"
+                android:textSize="16sp" />
 
-            <TextView
-                android:id="@+id/nonEditableBackgroundForEnergyEmission"
-                android:layout_width="180dp"
-                android:layout_height="60dp"
-                android:background="@drawable/non_editable_textfield"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnTakePicture"
+                android:layout_width="match_parent"
+                android:layout_height="85dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="30dp"
+                android:background="@drawable/btn_add_device"
+                android:drawableStart="@drawable/ic_photo_camera"
+                android:fontFamily="@font/noto_sans_kr_bold"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:text="@string/take_picture"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
 
-            <TextView
-                android:id="@+id/editEnergyConsumption"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginStart="15dp"
-                android:fontFamily="@font/outfit_regular"
-                android:text="@string/zero"
-                android:textColor="@color/light_grey"
-                android:textSize="18sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="@id/nonEditableBackgroundForEnergyEmission"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/textEnergyConsumptionUnit"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="15dp"
-                android:text="@string/kWh_per_month"
-                android:textSize="15sp"
-                android:textColor="@color/light_grey"
-                android:fontFamily="@font/outfit_regular"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="@+id/nonEditableBackgroundForEnergyEmission"
-                app:layout_constraintTop_toTopOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="30dp">
-
-            <TextView
-                android:id="@+id/textCO2"
-                android:layout_width="wrap_content"
+            <ImageView
+                android:id="@+id/deviceImage"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/outfit_regular"
-                android:text="@string/CO2"
-                android:textColor="@color/light_grey"
-                android:textSize="15sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_marginTop="30dp" />
 
-            <TextView
-                android:id="@+id/nonEditableBackgroundForCO2"
-                android:layout_width="180dp"
-                android:layout_height="60dp"
-                android:background="@drawable/non_editable_textfield"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+            <Spinner
+                android:id="@+id/spinner"
+                android:layout_width="match_parent"
+                android:layout_height="70dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="30dp"
+                android:spinnerMode="dialog" />
 
-            <TextView
-                android:id="@+id/editCO2Emission"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginStart="15dp"
-                android:fontFamily="@font/outfit_regular"
-                android:text="@string/zero"
-                android:textColor="@color/light_grey"
-                android:textSize="18sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="@id/nonEditableBackgroundForCO2"
-                app:layout_constraintTop_toTopOf="parent" />
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp">
 
-            <TextView
-                android:id="@+id/textCO2EmissionUnit"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="15dp"
-                android:text="@string/gram_per_hour"
-                android:textSize="15sp"
-                android:textColor="@color/light_grey"
-                android:fontFamily="@font/outfit_regular"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="@+id/nonEditableBackgroundForCO2"
-                app:layout_constraintTop_toTopOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
+                <TextView
+                    android:id="@+id/textEnergyConsumption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/outfit_regular"
+                    android:text="@string/energy_consumption"
+                    android:textColor="@color/light_grey"
+                    android:textSize="15sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/nonEditableBackgroundForEnergyEmission"
+                    android:layout_width="180dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/non_editable_textfield"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/editEnergyConsumption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="15dp"
+                    android:fontFamily="@font/outfit_regular"
+                    android:text="@string/zero"
+                    android:textColor="@color/light_grey"
+                    android:textSize="18sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="@id/nonEditableBackgroundForEnergyEmission"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/textEnergyConsumptionUnit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="15dp"
+                    android:fontFamily="@font/outfit_regular"
+                    android:text="@string/kWh_per_month"
+                    android:textColor="@color/light_grey"
+                    android:textSize="15sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="@+id/nonEditableBackgroundForEnergyEmission"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp">
+
+                <TextView
+                    android:id="@+id/textCO2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/outfit_regular"
+                    android:text="@string/CO2"
+                    android:textColor="@color/light_grey"
+                    android:textSize="15sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/nonEditableBackgroundForCO2"
+                    android:layout_width="180dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/non_editable_textfield"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/editCO2Emission"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="15dp"
+                    android:fontFamily="@font/outfit_regular"
+                    android:text="@string/zero"
+                    android:textColor="@color/light_grey"
+                    android:textSize="18sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="@id/nonEditableBackgroundForCO2"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/textCO2EmissionUnit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="15dp"
+                    android:fontFamily="@font/outfit_regular"
+                    android:text="@string/gram_per_hour"
+                    android:textColor="@color/light_grey"
+                    android:textSize="15sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="@+id/nonEditableBackgroundForCO2"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
