@@ -5,6 +5,7 @@
     <string name="password_kor">비밀번호</string>
     <string name="find_password">비밀번호 찾기</string>
     <string name="sign_up">회원가입</string>
+
     <string name="ecosave">EcoSave</string>
     <string name="my_resident">내 거주지</string>
     <string name="change_my_resident">내 거주지 변경</string>
@@ -18,4 +19,9 @@
     <string name="kWh_per_month">kWh/월</string>
     <string name="gram_per_hour">g/시간</string>
     <string name="zero">0</string>
+
+    <string name="logout">로그아웃</string>
+
+    <string name="open_nav">Open Navigation Drawer</string>
+    <string name="close_nav">Open Navigation Drawer</string>
 </resources>
