@@ -122,5 +122,17 @@
             android:textSize="18sp"
             android:fontFamily="@font/outfit_medium"
             android:background="@drawable/btn_login" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnDevelopersTool"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="20dp"
+            android:text="개발자 도구"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:fontFamily="@font/outfit_medium"
+            android:background="@drawable/btn_login" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,6 +6,7 @@ import android.os.Bundle
 import com.toyproject.ecosave.databinding.ActivityLoginBinding
 import com.toyproject.ecosave.models.LoginRequestBody
 import com.toyproject.ecosave.services.LoginService
+import com.toyproject.ecosave.testscreen.TestMainActivity
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -33,6 +34,12 @@ class LoginActivity : AppCompatActivity() {
             val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
             finish()
+        }
+
+        // 테스트용 버튼이며 정식 버전에서는 삭제 예정
+        binding.btnDevelopersTool.setOnClickListener {
+            val intent = Intent(this, TestMainActivity::class.java)
+            startActivity(intent)
         }
     }
 }
