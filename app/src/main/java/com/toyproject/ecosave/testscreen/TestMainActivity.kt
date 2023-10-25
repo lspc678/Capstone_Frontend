@@ -2,10 +2,13 @@ package com.toyproject.ecosave.testscreen
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+
 import com.toyproject.ecosave.databinding.ActivityTestMainBinding
 import com.toyproject.ecosave.testscreen.testmodels.TestRequestPost
 import com.toyproject.ecosave.testscreen.testmodels.TestResponsePost
 import com.toyproject.ecosave.testscreen.testmodels.TestUserData
+
+// retrofit2
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -16,10 +19,10 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 
-
 class TestMainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityTestMainBinding
 
+    // API 테스트 (GET 통신), API 테스트 (POST 통신)에서 사용
     interface RequestUser {
         @GET("/api/users/{uid}")
         fun getUser(@Path("uid") uid: String) : Call<TestUserData>
@@ -33,6 +36,7 @@ class TestMainActivity : AppCompatActivity() {
         binding = ActivityTestMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // API 테스트 (GET 통신)
         binding.btnTestGetRequest.setOnClickListener {
             val retrofit = Retrofit.Builder()
                 .baseUrl("https://reqres.in")
@@ -54,6 +58,7 @@ class TestMainActivity : AppCompatActivity() {
             })
         }
 
+        // API 테스트 (POST 통신)
         binding.btnTestPostRequest.setOnClickListener {
             val retrofit = Retrofit.Builder()
                 .baseUrl("https://reqres.in")
