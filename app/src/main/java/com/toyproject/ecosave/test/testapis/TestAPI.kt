@@ -1,7 +1,7 @@
-package com.toyproject.ecosave.testscreen.testapis
+package com.toyproject.ecosave.test.testapis
 
-import com.toyproject.ecosave.testscreen.testmodels.TestRequestPost
-import com.toyproject.ecosave.testscreen.testmodels.TestResponsePost
+import com.toyproject.ecosave.test.testmodels.TestRequestPost
+import com.toyproject.ecosave.test.testmodels.TestResponsePost
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

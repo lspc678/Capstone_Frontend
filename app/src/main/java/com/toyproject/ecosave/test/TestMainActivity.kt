@@ -1,12 +1,12 @@
-package com.toyproject.ecosave.testscreen
+package com.toyproject.ecosave.test
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 
 import com.toyproject.ecosave.databinding.ActivityTestMainBinding
-import com.toyproject.ecosave.testscreen.testmodels.TestRequestPost
-import com.toyproject.ecosave.testscreen.testmodels.TestResponsePost
-import com.toyproject.ecosave.testscreen.testmodels.TestUserData
+import com.toyproject.ecosave.test.testmodels.TestRequestPost
+import com.toyproject.ecosave.test.testmodels.TestResponsePost
+import com.toyproject.ecosave.test.testmodels.TestUserData
 
 // retrofit2
 import retrofit2.Call

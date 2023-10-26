@@ -16,10 +16,10 @@ import retrofit2.Response
 
 // 테스트용 (정식 버전에서는 삭제 예정)
 import android.util.Log
-import com.toyproject.ecosave.testscreen.TestMainActivity
-import com.toyproject.ecosave.testscreen.testapis.TestAPI
-import com.toyproject.ecosave.testscreen.testmodels.TestRequestPost
-import com.toyproject.ecosave.testscreen.testmodels.TestResponsePost
+import com.toyproject.ecosave.test.TestMainActivity
+import com.toyproject.ecosave.test.testapis.TestAPI
+import com.toyproject.ecosave.test.testmodels.TestRequestPost
+import com.toyproject.ecosave.test.testmodels.TestResponsePost
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
