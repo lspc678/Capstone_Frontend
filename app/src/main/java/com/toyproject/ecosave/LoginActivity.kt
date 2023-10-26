@@ -1,12 +1,25 @@
 package com.toyproject.ecosave
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
+
 import com.toyproject.ecosave.databinding.ActivityLoginBinding
+import com.toyproject.ecosave.apis.LoginAPI
 import com.toyproject.ecosave.models.LoginRequestBody
-import com.toyproject.ecosave.services.LoginService
+import com.toyproject.ecosave.models.LoginResponseBody
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
+// 테스트용 (정식 버전에서는 삭제 예정)
+import android.util.Log
 import com.toyproject.ecosave.testscreen.TestMainActivity
+import com.toyproject.ecosave.testscreen.testapis.TestAPI
+import com.toyproject.ecosave.testscreen.testmodels.TestRequestPost
+import com.toyproject.ecosave.testscreen.testmodels.TestResponsePost
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -16,27 +29,65 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val userData = LoginRequestBody(
-            binding.textInputEmail.editText?.text.toString(),
-            binding.textInputPassword.editText?.text.toString()
-        )
-
+        // 로그인 버튼 클릭시
         binding.btnLogin.setOnClickListener {
-            val loginService = LoginService(userData)
-            loginService.work()
-            val intent = Intent(this, HomeActivity::class.java)
-            startActivity(intent)
-            finish()
+            val api = LoginAPI.create()
+
+            val userData = LoginRequestBody(
+                binding.textInputEmail.editText?.text.toString(),
+                binding.textInputPassword.editText?.text.toString()
+            )
+
+            api.postLogin(userData).enqueue(object : Callback<LoginResponseBody> {
+                override fun onResponse(
+                    call: Call<LoginResponseBody>,
+                    response: Response<LoginResponseBody>
+                ) {
+                    if (response.isSuccessful) {
+                        val result = response.body()
+                        Log.d("로그인 성공", "$result")
+
+                        val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    }
+                }
+
+                override fun onFailure(call: Call<LoginResponseBody>, t: Throwable) {
+                    Toast.makeText(this@LoginActivity, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+                    Log.d("로그인 실패", t.message.toString())
+                }
+            })
         }
 
-        // 테스트용 버튼이며 정식 버전에서는 삭제 예정
+        // 게스트로 로그인 (테스트용 버튼이며 정식 버전에서는 삭제 예정)
         binding.btnLoginForGuest.setOnClickListener {
-            val intent = Intent(this, HomeActivity::class.java)
-            startActivity(intent)
-            finish()
+            // 테스팅용 API를 날림
+            val api = TestAPI.create()
+
+            api.postUser(TestRequestPost("pawan", "programmer")).enqueue(object : Callback<TestResponsePost> {
+                override fun onResponse(
+                    call: Call<TestResponsePost>,
+                    response: Response<TestResponsePost>
+                ) {
+                    if (response.isSuccessful) {
+                        val result = response.body()
+                        Log.d("테스트 로그인 성공", "$result")
+
+                        val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    }
+                }
+
+                override fun onFailure(call: Call<TestResponsePost>, t: Throwable) {
+                    Toast.makeText(this@LoginActivity, "테스트 로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
+                    Log.d("테스트 로그인 실패", t.message.toString())
+                }
+            })
         }
 
-        // 테스트용 버튼이며 정식 버전에서는 삭제 예정
+        // 개발자 도구 (테스트용 버튼이며 정식 버전에서는 삭제 예정)
         binding.btnDevelopersTool.setOnClickListener {
             val intent = Intent(this, TestMainActivity::class.java)
             startActivity(intent)
