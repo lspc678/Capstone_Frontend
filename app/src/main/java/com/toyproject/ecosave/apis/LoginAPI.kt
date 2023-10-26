@@ -1,33 +1,49 @@
 package com.toyproject.ecosave.apis
 
-import com.toyproject.ecosave.interfaces.LoginInterface
+import com.toyproject.ecosave.models.LoginRequestBody
+import com.toyproject.ecosave.models.LoginResponseBody
 
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 
-import retrofit2.Retrofit
+import retrofit2.Call
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.Retrofit
+import retrofit2.http.Body
+import retrofit2.http.Headers
+import retrofit2.http.POST
 
-object LoginAPI {
-    private const val BASE_URL = "http://13.125.246.213:8000/"
+interface LoginAPI {
+    @Headers("Content-Type: application/json")
+    @POST("account/log-in")
+    fun postLogin(@Body userInfo: LoginRequestBody) : Call<LoginResponseBody>
 
-    private val okHttpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            })
-            .build()
-    }
+    companion object {
+        private const val BASE_URL = "http://13.125.246.213:8000/"
 
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(okHttpClient) // 로그캣에서 패킷 내용을 모니터링 할 수 있음 (인터셉터)
-            .build()
-    }
+        fun create() : LoginAPI {
+            val httpLoggingInterceptor = HttpLoggingInterceptor()
+            httpLoggingInterceptor.level = HttpLoggingInterceptor.Level.BODY
 
-    val emgMedService: LoginInterface by lazy {
-        retrofit.create(LoginInterface::class.java)
+            val headerInterceptor = Interceptor {
+                val request = it.request()
+                    .newBuilder()
+                    .build()
+                return@Interceptor it.proceed(request)
+            }
+
+            val client = OkHttpClient.Builder()
+                .addInterceptor(headerInterceptor)
+                .addInterceptor(httpLoggingInterceptor)
+                .build()
+
+            return Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(LoginAPI::class.java)
+        }
     }
 }
