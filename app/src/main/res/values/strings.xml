@@ -24,4 +24,7 @@
 
     <string name="open_nav">Open Navigation Drawer</string>
     <string name="close_nav">Open Navigation Drawer</string>
+    <string name="relative_electric_power_consume_grade">전력 소비 상대 등급</string>
+    <string name="power_of_consume">소비 전력량</string>
+    <string name="use_or_not">사용 여부</string>
 </resources>
