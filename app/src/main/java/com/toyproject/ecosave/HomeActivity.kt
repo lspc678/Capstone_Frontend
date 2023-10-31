@@ -1,10 +1,11 @@
 package com.toyproject.ecosave
 
+import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.Manifest
 import android.os.Bundle
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -17,6 +18,13 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.toyproject.ecosave.apis.naverapi.ReverseGeocodingAPI
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.RelativeElectricPowerConsumeGradeData
@@ -34,16 +42,36 @@ class HomeActivity : AppCompatActivity() {
     private var recyclerViewRegisteredDeviceListAdapter: RecyclerViewRegisteredDeviceListAdapter? = null
     private var list = mutableListOf<RelativeElectricPowerConsumeGradeData>()
 
+    private var currentLatitude = 0.0 // 위도
+    private var currentLongitude = 0.0 // 경도
+
+    private val permissions = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    )
+
+    private val optionsForChangeMyResidence = arrayOf(
+        "현재 위치를 거주지로 설정",
+        "지도에서 검색"
+    )
+
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            super.onLocationResult(locationResult)
+
+            locationResult.let {
+                val lastLocation = it.lastLocation
+                lastLocation?.let { it2 ->
+                    currentLatitude = it2.latitude
+                    currentLongitude = it2.longitude
+                    Log.d("위치", "$currentLatitude, $currentLongitude")
+                }
+            }
+        }
+    }
+
     companion object {
         const val REQUEST_CODE_PERMISSIONS = 1001
-        private val permissions = arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        private val optionsForChangeMyResidence = arrayOf(
-            "현재 위치를 거주지로 설정",
-            "지도에서 검색"
-        )
     }
 
     private fun prepareListData() {
@@ -58,7 +86,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun showWarningDialogForChangeMyResidence() {
-        val alertDialogBuilderBtn = AlertDialog.Builder(this@HomeActivity)
+        val alertDialogBuilderBtn = AlertDialog.Builder(this)
         alertDialogBuilderBtn.setTitle("내 거주지 변경")
         alertDialogBuilderBtn.setMessage("현재 위치를 기준으로 거주지를 변경합니다.\n주의: 이전에 저장된 거주지 정보는 사라집니다.")
         alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
@@ -70,10 +98,9 @@ class HomeActivity : AppCompatActivity() {
         alertDialogBox.show()
     }
 
-    private fun getMyLocation() {
-        if (permissions.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED}) {
+    private fun setLocationRequest() {
+        if (permissions.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }) {
             val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-            var locationCurrent = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
 
             // 위치 서비스가 켜져있는지 확인
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -81,16 +108,44 @@ class HomeActivity : AppCompatActivity() {
                 return
             }
 
-            if (locationCurrent == null) {
-                locationCurrent = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+            val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+            val locationRequest: LocationRequest =
+                LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000 * 100)
+                    .setMinUpdateDistanceMeters(0.0F)
+                    .build()
+
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+        }
+    }
+
+    private fun getMyLocation() {
+        if (permissions.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }) {
+            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+
+            // 위치 서비스가 켜져있는지 확인
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                turnOnGPS() // 위치 서비스 켜기
+                return
             }
 
-            val currentLatitude = locationCurrent?.latitude // 위도
-            val currentLongitude = locationCurrent?.longitude // 경도
+            // 10초 마다 현재 위치 수신
+            val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+            val locationRequest: LocationRequest =
+                LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000 * 100)
+                    .setMinUpdateDistanceMeters(0.0F)
+                    .build()
 
-            if (currentLatitude != null && currentLongitude != null) {
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+
+            val alertDialogBuilderBtn = AlertDialog.Builder(this)
+            alertDialogBuilderBtn.setTitle("내 거주지 변경")
+            alertDialogBuilderBtn.setMessage("위치 수신이 완료 되었습니다.")
+            alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
                 searchAddress(currentLatitude, currentLongitude)
             }
+
+            val alertDialogBox = alertDialogBuilderBtn.create()
+            alertDialogBox.show()
         } else {
             requestPermissions(permissions, REQUEST_CODE_PERMISSIONS)
         }
@@ -98,7 +153,7 @@ class HomeActivity : AppCompatActivity() {
 
     private fun turnOnGPS() {
         // 위치 설정이 켜져 있지 않으면 위치 설정창으로 이동
-        val alertDialogBuilderBtn = AlertDialog.Builder(this@HomeActivity)
+        val alertDialogBuilderBtn = AlertDialog.Builder(this)
         alertDialogBuilderBtn.setTitle("위치 서비스 권한 필요")
         alertDialogBuilderBtn.setMessage("내 거주지 설정을 하기 위해서는 위치 서비스 권한이 필요합니다.")
         alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
@@ -126,6 +181,7 @@ class HomeActivity : AppCompatActivity() {
                 ) {
                     if (response.isSuccessful) {
                         val result = response.body()
+                        Log.d("위치", result.toString())
                         if (result != null) {
                             val addrArea = result.results[0]
                             val addrRegion = addrArea.region
@@ -181,7 +237,7 @@ class HomeActivity : AppCompatActivity() {
 
         var selected = 1
 
-        val alertDialogBuilderBtn = AlertDialog.Builder(this@HomeActivity)
+        val alertDialogBuilderBtn = AlertDialog.Builder(this)
         alertDialogBuilderBtn.setTitle("거주지로 설정할 주소를 선택해 주세요.")
         alertDialogBuilderBtn.setSingleChoiceItems(options, 1) { _, which ->
             when (which) {
@@ -192,10 +248,10 @@ class HomeActivity : AppCompatActivity() {
             binding.textMyResident.text = options[selected]
             when (selected) {
                 0 -> {
-                    Toast.makeText(this@HomeActivity, "지번 주소로 설정", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "지번 주소로 설정", Toast.LENGTH_SHORT).show()
                 }
                 1 -> {
-                    Toast.makeText(this@HomeActivity, "도로명 주소로 설정", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "도로명 주소로 설정", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -230,8 +286,9 @@ class HomeActivity : AppCompatActivity() {
         toggle.syncState()
 
         binding.textMyResident.text = "등록된 정보가 없습니다."
+
         binding.btnChangeMyResident.setOnClickListener {
-            val alertDialogBuilderBtn = AlertDialog.Builder(this@HomeActivity)
+            val alertDialogBuilderBtn = AlertDialog.Builder(this)
             alertDialogBuilderBtn.setTitle("내 거주지 변경")
             alertDialogBuilderBtn.setItems(optionsForChangeMyResidence) { _, which ->
                 when (which) {
