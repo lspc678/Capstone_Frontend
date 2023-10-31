@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -12,33 +13,91 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.provider.Settings
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+
 import androidx.activity.result.ActivityResultLauncher
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+
 import com.toyproject.ecosave.databinding.ActivityAddDeviceBinding
+
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 
-
 class AddDeviceActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddDeviceBinding
-    private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     private var photoFile: File? = null
-    val CAPTURE_IMAGE_REQUEST = 1
     private var mCurrentPhotoPath: String? = null
+
+    companion object {
+        private const val REQUEST_CAMERA_PERMISSION = 1000
+        private const val CAPTURE_IMAGE_REQUEST = 1
+    }
 
     private fun displayMessage(context: Context, message: String) {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
-    @SuppressLint("QueryPermissionsNeeded")
+    private fun getPermissionForCamera() {
+        val cameraPermission = ContextCompat.checkSelfPermission(
+            this,
+            android.Manifest.permission.CAMERA
+        )
+
+        if (cameraPermission != PackageManager.PERMISSION_GRANTED) {
+            // 카메라 권한이 없는 경우 권한 요청
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.CAMERA)) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(android.Manifest.permission.CAMERA),
+                    REQUEST_CAMERA_PERMISSION
+                )
+            } else {
+                // 카메라 권한 거부 및 '다시 묻지 않음'인 경우
+                val alertDialogBuilderBtn = AlertDialog.Builder(this)
+                alertDialogBuilderBtn.setTitle("카메라 권한 요청")
+                alertDialogBuilderBtn.setMessage("카메라 권한이 거부되었습니다. 설정(앱 정보)에서 카메라 권한을 허용해 주세요.")
+                alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    val uri = Uri.fromParts("package", packageName, null)
+                    intent.data = uri
+                    startActivity(intent)
+                }
+                alertDialogBuilderBtn.setNegativeButton("취소") { _, _ -> }
+
+                val alertDialogBox = alertDialogBuilderBtn.create()
+                alertDialogBox.show()
+            }
+        } else {
+            // 카메라 권한이 있음
+            captureImage()
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CAMERA_PERMISSION) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                captureImage()
+            }
+        }
+    }
+
     private fun captureImage() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         if (takePictureIntent.resolveActivity(packageManager) != null) {
@@ -52,19 +111,21 @@ class AddDeviceActivity : AppCompatActivity() {
                         "com.toyproject.ecosave.fileprovider",
                         photoFile!!
                     )
-                    takePictureIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    takePictureIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
                     startActivityForResult(takePictureIntent, CAPTURE_IMAGE_REQUEST)
                 }
             } catch (ex: Exception) {
                 // Error occurred while creating the File
-                displayMessage(baseContext, ex.message.toString())
+                Log.d("사진 촬영", ex.message.toString())
+                displayMessage(baseContext, "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")
             }
         } else {
             displayMessage(baseContext, "Null")
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -85,9 +146,6 @@ class AddDeviceActivity : AppCompatActivity() {
             val bitmap = BitmapFactory.decodeFile(photoFile!!.absolutePath)
             val cameraRotated = rotateBitmap(bitmap, orientation)
             binding.deviceImage.setImageBitmap(cameraRotated)
-            // binding.deviceImage.setImageBitmap(bitmap)
-        } else {
-            displayMessage(baseContext, "Request cancelled or something went wrong.")
         }
     }
 
@@ -191,18 +249,9 @@ class AddDeviceActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-//        activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-//            if (result?.data != null) {
-//                val bundle = result.data!!.extras
-//                val bitmap = bundle?.get("data") as Bitmap
-//                binding.deviceImage.setImageBitmap(bitmap)
-//            }
-//        }
-
+        // 사진 촬영 버튼
         binding.btnTakePicture.setOnClickListener {
-            captureImage()
-            // val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            // activityResultLauncher.launch(cameraIntent)
+            getPermissionForCamera()
         }
     }
 
