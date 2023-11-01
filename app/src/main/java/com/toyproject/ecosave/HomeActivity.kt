@@ -28,6 +28,7 @@ import com.toyproject.ecosave.apis.naverapi.ReverseGeocodingAPI
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.RelativeElectricPowerConsumeGradeData
 import com.toyproject.ecosave.models.ReverseGeocodingResponse
+import com.toyproject.ecosave.widget.simpleDialog
 
 import retrofit2.Call
 import retrofit2.Callback
@@ -168,40 +169,47 @@ class HomeActivity : AppCompatActivity() {
                     response: Response<ReverseGeocodingResponse>
                 ) {
                     if (response.isSuccessful) {
-                        val result = response.body()
-                        Log.d("위치", result.toString())
-                        if (result != null) {
-                            val addrArea = result.results[0]
-                            val addrRegion = addrArea.region
-                            val addrLand = addrArea.land
-                            val addr = if (addrLand.number2 == "") {
-                                "${addrRegion.area1.name} " +
-                                        "${addrRegion.area2.name} " +
-                                        "${addrRegion.area3.name} " +
-                                        addrLand.number1
-                            } else {
-                                "${addrRegion.area1.name} " +
-                                        "${addrRegion.area2.name} " +
-                                        "${addrRegion.area3.name} " +
-                                        "${addrLand.number1}-${addrLand.number2}"
-                            }
+                        try {
+                            val result = response.body()
+                            Log.d("위치", result.toString())
 
-                            val roadAddrArea = result.results[1]
-                            val roadAddrRegion = roadAddrArea.region
-                            val roadAddrLand = roadAddrArea.land
-                            val roadAddr = if (roadAddrLand.number2 == "") {
-                                "${roadAddrRegion.area1.name} " +
-                                        "${roadAddrRegion.area2.name} " +
-                                        "${roadAddrLand.name} " +
-                                        roadAddrLand.number1
-                            } else {
-                                "${roadAddrRegion.area1.name} " +
-                                        "${roadAddrRegion.area2.name} " +
-                                        "${roadAddrLand.name} " +
-                                        "${roadAddrLand.number1}-${roadAddrLand.number2}"
-                            }
+                            if (result != null) {
+                                val addrArea = result.results[0]
+                                val addrRegion = addrArea.region
+                                val addrLand = addrArea.land
+                                val addr = if (addrLand.number2 == "") {
+                                    "${addrRegion.area1.name} " +
+                                            "${addrRegion.area2.name} " +
+                                            "${addrRegion.area3.name} " +
+                                            addrLand.number1
+                                } else {
+                                    "${addrRegion.area1.name} " +
+                                            "${addrRegion.area2.name} " +
+                                            "${addrRegion.area3.name} " +
+                                            "${addrLand.number1}-${addrLand.number2}"
+                                }
 
-                            chooseAddress(addr, roadAddr)
+                                val roadAddrArea = result.results[1]
+                                val roadAddrRegion = roadAddrArea.region
+                                val roadAddrLand = roadAddrArea.land
+                                val roadAddr = if (roadAddrLand.number2 == "") {
+                                    "${roadAddrRegion.area1.name} " +
+                                            "${roadAddrRegion.area2.name} " +
+                                            "${roadAddrLand.name} " +
+                                            roadAddrLand.number1
+                                } else {
+                                    "${roadAddrRegion.area1.name} " +
+                                            "${roadAddrRegion.area2.name} " +
+                                            "${roadAddrLand.name} " +
+                                            "${roadAddrLand.number1}-${roadAddrLand.number2}"
+                                }
+
+                                chooseAddress(addr, roadAddr)
+                            }
+                        } catch (e: Exception) {
+                            simpleDialog(this@HomeActivity, "내 거주지 변경", "현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.")
+                            Log.d("위치", e.toString())
+                            e.printStackTrace()
                         }
                     } else {
                         Log.d("위치", response.errorBody()?.string()!!)
