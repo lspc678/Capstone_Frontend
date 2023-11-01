@@ -24,7 +24,6 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
 import com.toyproject.ecosave.apis.naverapi.ReverseGeocodingAPI
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.RelativeElectricPowerConsumeGradeData
@@ -55,6 +54,11 @@ class HomeActivity : AppCompatActivity() {
         "지도에서 검색"
     )
 
+    companion object {
+        const val REQUEST_CODE_PERMISSIONS = 1001
+        const val LOCATION_REQUEST_INTERVAL_MILLIS = (1000 * 100).toLong()
+    }
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             super.onLocationResult(locationResult)
@@ -70,10 +74,6 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    companion object {
-        const val REQUEST_CODE_PERMISSIONS = 1001
-    }
-
     private fun prepareListData() {
         var data = RelativeElectricPowerConsumeGradeData(0, 1, 10, 35.9F, 0)
         list.add(data)
@@ -85,69 +85,57 @@ class HomeActivity : AppCompatActivity() {
         list.add(data)
     }
 
-    private fun showWarningDialogForChangeMyResidence() {
+    private fun showDialogForError() {
         val alertDialogBuilderBtn = AlertDialog.Builder(this)
         alertDialogBuilderBtn.setTitle("내 거주지 변경")
-        alertDialogBuilderBtn.setMessage("현재 위치를 기준으로 거주지를 변경합니다.\n주의: 이전에 저장된 거주지 정보는 사라집니다.")
-        alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
-            getMyLocation()
-        }
-        alertDialogBuilderBtn.setNegativeButton("취소") { _, _ -> }
+        alertDialogBuilderBtn.setMessage("현재 위치를 수신하지 못했습니다. 잠시 후 다시 시도해 주세요.")
+        alertDialogBuilderBtn.setPositiveButton("확인") { _, _ -> }
 
         val alertDialogBox = alertDialogBuilderBtn.create()
         alertDialogBox.show()
     }
 
     private fun setLocationRequest() {
+        // 필요 권한이 허용되어 있는지 확인
         if (permissions.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }) {
-            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-
-            // 위치 서비스가 켜져있는지 확인
-            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                turnOnGPS() // 위치 서비스 켜기
-                return
-            }
-
             val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
             val locationRequest: LocationRequest =
-                LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000 * 100)
+                LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_REQUEST_INTERVAL_MILLIS)
                     .setMinUpdateDistanceMeters(0.0F)
                     .build()
 
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+        } else {
+            requestPermissions(permissions, REQUEST_CODE_PERMISSIONS)
         }
     }
 
     private fun getMyLocation() {
-        if (permissions.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }) {
-            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
-            // 위치 서비스가 켜져있는지 확인
-            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                turnOnGPS() // 위치 서비스 켜기
-                return
-            }
-
+        // 위치 서비스가 켜져있는지 확인
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            turnOnGPS() // 위치 서비스 켜기
+        } else {
             // 10초 마다 현재 위치 수신
-            val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-            val locationRequest: LocationRequest =
-                LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000 * 100)
-                    .setMinUpdateDistanceMeters(0.0F)
-                    .build()
-
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+            setLocationRequest()
 
             val alertDialogBuilderBtn = AlertDialog.Builder(this)
             alertDialogBuilderBtn.setTitle("내 거주지 변경")
-            alertDialogBuilderBtn.setMessage("위치 수신이 완료 되었습니다.")
+            alertDialogBuilderBtn.setMessage(
+                "현재 위치를 기준으로 거주지를 변경합니다.\n\n"
+                        + "주의: 이전에 저장된 거주지 정보는 사라집니다.")
             alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
-                searchAddress(currentLatitude, currentLongitude)
+                if (currentLatitude == 0.0 || currentLongitude == 0.0) {
+                    showDialogForError()
+                } else {
+                    searchAddress(currentLatitude, currentLongitude)
+                }
             }
+            alertDialogBuilderBtn.setNegativeButton("취소") { _, _ -> }
 
             val alertDialogBox = alertDialogBuilderBtn.create()
             alertDialogBox.show()
-        } else {
-            requestPermissions(permissions, REQUEST_CODE_PERMISSIONS)
         }
     }
 
