@@ -1,6 +1,7 @@
 package com.toyproject.ecosave
 
 import android.Manifest
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
@@ -24,10 +25,13 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+
 import com.toyproject.ecosave.apis.naverapi.ReverseGeocodingAPI
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.RelativeElectricPowerConsumeGradeData
 import com.toyproject.ecosave.models.ReverseGeocodingResponse
+import com.toyproject.ecosave.widget.createDialog
+import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
 
 import retrofit2.Call
@@ -87,13 +91,11 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun showDialogForError() {
-        val alertDialogBuilderBtn = AlertDialog.Builder(this)
-        alertDialogBuilderBtn.setTitle("내 거주지 변경")
-        alertDialogBuilderBtn.setMessage("현재 위치를 수신하지 못했습니다. 잠시 후 다시 시도해 주세요.")
-        alertDialogBuilderBtn.setPositiveButton("확인") { _, _ -> }
-
-        val alertDialogBox = alertDialogBuilderBtn.create()
-        alertDialogBox.show()
+        simpleDialog(
+            this,
+            "내 거주지 변경",
+            "현재 위치를 수신하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        )
     }
 
     private fun setLocationRequest() {
@@ -121,39 +123,40 @@ class HomeActivity : AppCompatActivity() {
             // 10초 마다 현재 위치 수신
             setLocationRequest()
 
-            val alertDialogBuilderBtn = AlertDialog.Builder(this)
-            alertDialogBuilderBtn.setTitle("내 거주지 변경")
-            alertDialogBuilderBtn.setMessage(
-                "현재 위치를 기준으로 거주지를 변경합니다.\n\n"
-                        + "주의: 이전에 저장된 거주지 정보는 사라집니다.")
-            alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
+            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
                 if (currentLatitude == 0.0 || currentLongitude == 0.0) {
                     showDialogForError()
                 } else {
                     searchAddress(currentLatitude, currentLongitude)
                 }
             }
-            alertDialogBuilderBtn.setNegativeButton("취소") { _, _ -> }
 
-            val alertDialogBox = alertDialogBuilderBtn.create()
-            alertDialogBox.show()
+            createDialog(
+                this,
+                "내 거주지 변경",
+                "현재 위치를 기준으로 거주지를 변경합니다.\n\n"
+                        + "주의: 이전에 저장된 거주지 정보는 사라집니다.",
+                positiveButtonOnClickListener,
+                defaultNegativeDialogInterfaceOnClickListener
+            )
         }
     }
 
     private fun turnOnGPS() {
         // 위치 설정이 켜져 있지 않으면 위치 설정창으로 이동
-        val alertDialogBuilderBtn = AlertDialog.Builder(this)
-        alertDialogBuilderBtn.setTitle("위치 서비스 권한 필요")
-        alertDialogBuilderBtn.setMessage("내 거주지 설정을 하기 위해서는 위치 서비스 권한이 필요합니다.")
-        alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
+        val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
             val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
             intent.addCategory(Intent.CATEGORY_DEFAULT)
             startActivity(intent)
         }
-        alertDialogBuilderBtn.setNegativeButton("취소") { _, _ -> }
 
-        val alertDialogBox = alertDialogBuilderBtn.create()
-        alertDialogBox.show()
+        createDialog(
+            this,
+            "위치 서비스 권한 필요",
+            "내 거주지 설정을 하기 위해서는 위치 서비스 권한이 필요합니다.",
+            positiveButtonOnClickListener,
+            defaultNegativeDialogInterfaceOnClickListener
+        )
     }
 
     // 현재 위치를 기반으로 지번 주소와 도로명 주소를 찾음
@@ -174,40 +177,45 @@ class HomeActivity : AppCompatActivity() {
                             Log.d("위치", result.toString())
 
                             if (result != null) {
-                                val addrArea = result.results[0]
-                                val addrRegion = addrArea.region
-                                val addrLand = addrArea.land
-                                val addr = if (addrLand.number2 == "") {
-                                    "${addrRegion.area1.name} " +
-                                            "${addrRegion.area2.name} " +
-                                            "${addrRegion.area3.name} " +
-                                            addrLand.number1
-                                } else {
-                                    "${addrRegion.area1.name} " +
-                                            "${addrRegion.area2.name} " +
-                                            "${addrRegion.area3.name} " +
-                                            "${addrLand.number1}-${addrLand.number2}"
+                                val addressList = mutableListOf<String>()
+
+                                if (result.results.isEmpty()) {
+                                    simpleDialog(
+                                        this@HomeActivity,
+                                        "내 거주지 변경",
+                                        "해당 위치에 대한 데이터가 없습니다. 다른 지역에서 다시 시도해 주세요."
+                                    )
+                                    return
                                 }
 
-                                val roadAddrArea = result.results[1]
-                                val roadAddrRegion = roadAddrArea.region
-                                val roadAddrLand = roadAddrArea.land
-                                val roadAddr = if (roadAddrLand.number2 == "") {
-                                    "${roadAddrRegion.area1.name} " +
-                                            "${roadAddrRegion.area2.name} " +
-                                            "${roadAddrLand.name} " +
-                                            roadAddrLand.number1
-                                } else {
-                                    "${roadAddrRegion.area1.name} " +
-                                            "${roadAddrRegion.area2.name} " +
-                                            "${roadAddrLand.name} " +
-                                            "${roadAddrLand.number1}-${roadAddrLand.number2}"
+                                for (area in result.results) {
+                                    val addrRegion = area.region
+                                    val addrLand = area.land
+
+                                    val address = if (addrLand.number2 == "") {
+                                        "${addrRegion.area1.name} " +
+                                                "${addrRegion.area2.name} " +
+                                                "${addrRegion.area3.name} " +
+                                                addrLand.number1
+                                    } else {
+                                        "${addrRegion.area1.name} " +
+                                                "${addrRegion.area2.name} " +
+                                                "${addrRegion.area3.name} " +
+                                                "${addrLand.number1}-${addrLand.number2}"
+                                    }
+
+                                    addressList.add(address)
                                 }
 
-                                chooseAddress(addr, roadAddr)
+                                val finalAddressList = addressList.toTypedArray()
+                                chooseAddress(finalAddressList)
                             }
                         } catch (e: Exception) {
-                            simpleDialog(this@HomeActivity, "내 거주지 변경", "현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.")
+                            simpleDialog(
+                                this@HomeActivity,
+                                "내 거주지 변경",
+                                "현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요."
+                            )
                             Log.d("위치", e.toString())
                             e.printStackTrace()
                         }
@@ -224,30 +232,25 @@ class HomeActivity : AppCompatActivity() {
         )
     }
 
-    // Dialog를 통해 지번 주소와 도로명 주소중 하나를 거주지로 설정
-    private fun chooseAddress(addr: String, roadAddr: String) {
-        val options = arrayOf(
-            addr,
-            roadAddr
-        )
-
-        var selected = 1
+    // Dialog를 통해 거주지 설정
+    private fun chooseAddress(addressList: Array<String>) {
+        var selected = 0
 
         val alertDialogBuilderBtn = AlertDialog.Builder(this)
         alertDialogBuilderBtn.setTitle("거주지로 설정할 주소를 선택해 주세요.")
-        alertDialogBuilderBtn.setSingleChoiceItems(options, 1) { _, which ->
+        alertDialogBuilderBtn.setSingleChoiceItems(addressList, selected) { _, which ->
             when (which) {
                 which -> selected = which
             }
         }
         alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
-            binding.textMyResident.text = options[selected]
+            binding.textMyResident.text = addressList[selected]
             when (selected) {
                 0 -> {
-                    Toast.makeText(this, "지번 주소로 설정", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, addressList[selected], Toast.LENGTH_SHORT).show()
                 }
                 1 -> {
-                    Toast.makeText(this, "도로명 주소로 설정", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, addressList[selected], Toast.LENGTH_SHORT).show()
                 }
             }
         }
