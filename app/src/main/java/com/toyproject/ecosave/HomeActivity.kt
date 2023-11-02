@@ -274,7 +274,7 @@ class HomeActivity : AppCompatActivity() {
         list = ArrayList()
         recyclerView = binding.recyclerView
 
-        recyclerViewRegisteredDeviceListAdapter = RecyclerViewRegisteredDeviceListAdapter(this, list)
+        recyclerViewRegisteredDeviceListAdapter = RecyclerViewRegisteredDeviceListAdapter(list)
         val layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
         recyclerView!!.layoutManager = layoutManager
         recyclerView!!.adapter = recyclerViewRegisteredDeviceListAdapter
