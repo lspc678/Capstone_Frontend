@@ -61,10 +61,10 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
             val intent = Intent(holder.itemView.context, DetailActivity::class.java)
 
             when (list[position].deviceType) {
-                DeviceTypeList.REFRIGERATOR -> intent.putExtra("deviceType", "냉장고")
-                DeviceTypeList.AIR_CONDITIONER -> intent.putExtra("deviceType", "에어컨")
-                DeviceTypeList.TV -> intent.putExtra("deviceType", "TV")
-                DeviceTypeList.BOILER -> intent.putExtra("deviceType", "보일러")
+                DeviceTypeList.REFRIGERATOR -> intent.putExtra("deviceType", DeviceTypeList.REFRIGERATOR)
+                DeviceTypeList.AIR_CONDITIONER -> intent.putExtra("deviceType", DeviceTypeList.AIR_CONDITIONER)
+                DeviceTypeList.TV -> intent.putExtra("deviceType", DeviceTypeList.TV)
+                DeviceTypeList.BOILER -> intent.putExtra("deviceType", DeviceTypeList.BOILER)
                 else -> {}
             }
 
