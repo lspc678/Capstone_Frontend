@@ -28,6 +28,7 @@ import com.google.android.gms.location.Priority
 
 import com.toyproject.ecosave.apis.naverapi.ReverseGeocodingAPI
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
+import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RelativeElectricPowerConsumeGradeData
 import com.toyproject.ecosave.models.ReverseGeocodingResponse
 import com.toyproject.ecosave.widget.createDialog
@@ -80,13 +81,13 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun prepareListData() {
-        var data = RelativeElectricPowerConsumeGradeData(0, 1, 10, 35.9F, 0)
+        var data = RelativeElectricPowerConsumeGradeData(DeviceTypeList.REFRIGERATOR, 1, 10, 35.9F, 0)
         list.add(data)
 
-        data = RelativeElectricPowerConsumeGradeData(1, 2, 15, 131.3F, 0)
+        data = RelativeElectricPowerConsumeGradeData(DeviceTypeList.AIR_CONDITIONER, 2, 15, 131.3F, 0)
         list.add(data)
 
-        data = RelativeElectricPowerConsumeGradeData(5, 3, 28, 83.0F, 1)
+        data = RelativeElectricPowerConsumeGradeData(DeviceTypeList.BOILER, 3, 28, 83.0F, 1)
         list.add(data)
     }
 
