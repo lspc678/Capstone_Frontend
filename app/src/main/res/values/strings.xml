@@ -27,4 +27,7 @@
     <string name="relative_electric_power_consume_grade">전력 소비 상대 등급</string>
     <string name="power_of_consume">소비 전력량</string>
     <string name="use_or_not">사용 여부</string>
+    <string name="simulation">시뮬레이션</string>
+    <string name="registered_date">등록일</string>
+    <string name="delete_device">기기 삭제</string>
 </resources>
