@@ -13,10 +13,11 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.toyproject.ecosave.models.DeviceTypeList
 
-import com.toyproject.ecosave.models.RelativeElectricPowerConsumeGradeData
+import com.toyproject.ecosave.models.RelativeGradeData
+import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 
 class RecyclerViewRegisteredDeviceListAdapter constructor(
-    private val list: List<RelativeElectricPowerConsumeGradeData>
+    private val list: List<RelativeGradeData>
 ) : RecyclerView.Adapter<RecyclerViewRegisteredDeviceListAdapter.ViewHolder>()  {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageDevice: ImageView = itemView.findViewById(R.id.imageDevice)
@@ -46,16 +47,12 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
             else -> holder.imageDevice.setImageResource(R.drawable.ic_image)
         }
 
+        holder.textPowerOfConsume.text = "${list[position].powerOfConsume} ${getPowerOfConsumeUnit(list[position].deviceType)["symbol"]}"
+
         holder.textRelativeElectricPowerConsumeGrade.text =
             list[position].relativeElectricPowerConsumeGrade.toString() +
                     "등급(" +
                     list[position].relativeElectricPowerConsumePercentage + "%)"
-
-        when (list[position].unit) {
-            0 -> holder.textPowerOfConsume.text = list[position].powerOfConsume.toString() + " kWh/월"
-            1 -> holder.textPowerOfConsume.text = list[position].powerOfConsume.toString() + "W"
-            else -> holder.textPowerOfConsume.text = "Error"
-        }
 
         holder.registeredDeviceListItem.setOnClickListener {
             val intent = Intent(holder.itemView.context, DetailActivity::class.java)
@@ -67,6 +64,13 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
                 DeviceTypeList.BOILER -> intent.putExtra("deviceType", DeviceTypeList.BOILER)
                 else -> {}
             }
+
+            intent.putExtra("powerOfConsume", list[position].powerOfConsume)
+            intent.putExtra("relativeElectricPowerConsumeGrade", list[position].relativeElectricPowerConsumeGrade)
+            intent.putExtra("relativeElectricPowerConsumePercentage", list[position].relativeElectricPowerConsumePercentage)
+            intent.putExtra("relativeCO2EmissionGrade", list[position].relativeCO2EmissionGrade)
+            intent.putExtra("relativeCO2EmissionPercentage", list[position].relativeCO2EmissionPercentage)
+            intent.putExtra("amountOfCO2Emission", list[position].amountOfCO2Emission)
 
             ContextCompat.startActivity(holder.itemView.context, intent, null)
         }
