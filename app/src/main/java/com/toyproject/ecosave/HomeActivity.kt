@@ -29,7 +29,7 @@ import com.google.android.gms.location.Priority
 import com.toyproject.ecosave.apis.naverapi.ReverseGeocodingAPI
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.DeviceTypeList
-import com.toyproject.ecosave.models.RelativeElectricPowerConsumeGradeData
+import com.toyproject.ecosave.models.RelativeGradeData
 import com.toyproject.ecosave.models.ReverseGeocodingResponse
 import com.toyproject.ecosave.widget.createDialog
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
@@ -45,7 +45,7 @@ class HomeActivity : AppCompatActivity() {
 
     private var recyclerView: RecyclerView? = null
     private var recyclerViewRegisteredDeviceListAdapter: RecyclerViewRegisteredDeviceListAdapter? = null
-    private var list = mutableListOf<RelativeElectricPowerConsumeGradeData>()
+    private var list = mutableListOf<RelativeGradeData>()
 
     private var currentLatitude = 0.0 // 위도
     private var currentLongitude = 0.0 // 경도
@@ -81,13 +81,37 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun prepareListData() {
-        var data = RelativeElectricPowerConsumeGradeData(DeviceTypeList.REFRIGERATOR, 1, 10, 35.9F, 0)
+        var data = RelativeGradeData(
+            DeviceTypeList.REFRIGERATOR,
+            1,
+            10,
+            35.9F,
+            1,
+            8,
+            21.0F
+        )
         list.add(data)
 
-        data = RelativeElectricPowerConsumeGradeData(DeviceTypeList.AIR_CONDITIONER, 2, 15, 131.3F, 0)
+        data = RelativeGradeData(
+            DeviceTypeList.AIR_CONDITIONER,
+            2,
+            15,
+            131.3F,
+            3,
+            23,
+            52.3F
+        )
         list.add(data)
 
-        data = RelativeElectricPowerConsumeGradeData(DeviceTypeList.BOILER, 3, 28, 83.0F, 1)
+        data = RelativeGradeData(
+            DeviceTypeList.BOILER,
+            3,
+            28,
+            83.0F,
+            null,
+            null,
+            null
+        )
         list.add(data)
     }
 
