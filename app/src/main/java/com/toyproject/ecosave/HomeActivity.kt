@@ -83,34 +83,43 @@ class HomeActivity : AppCompatActivity() {
     private fun prepareListData() {
         var data = RelativeGradeData(
             DeviceTypeList.REFRIGERATOR,
-            1,
-            10,
-            35.9F,
-            1,
-            8,
-            21.0F
+            1, 3, 35.9F,
+            1, 4, 21.0F
         )
         list.add(data)
 
         data = RelativeGradeData(
             DeviceTypeList.AIR_CONDITIONER,
-            2,
-            15,
-            131.3F,
-            3,
-            23,
-            52.3F
+            2, 8, 131.3F,
+            3, 14, 52.3F
         )
         list.add(data)
 
         data = RelativeGradeData(
             DeviceTypeList.BOILER,
-            3,
-            28,
-            83.0F,
-            null,
-            null,
-            null
+            3, 21, 83.0F,
+            null, null, null
+        )
+        list.add(data)
+
+        data = RelativeGradeData(
+            DeviceTypeList.AIR_CONDITIONER,
+            4, 28, 195.2F,
+            5, 42, 77.4F
+        )
+        list.add(data)
+
+        data = RelativeGradeData(
+            DeviceTypeList.AIR_CONDITIONER,
+            6, 64, 195.2F,
+            7, 81, 77.4F
+        )
+        list.add(data)
+
+        data = RelativeGradeData(
+            DeviceTypeList.AIR_CONDITIONER,
+            8, 90, 195.2F,
+            9, 97, 77.4F
         )
         list.add(data)
     }
@@ -298,7 +307,7 @@ class HomeActivity : AppCompatActivity() {
         list = ArrayList()
         recyclerView = binding.recyclerView
 
-        recyclerViewRegisteredDeviceListAdapter = RecyclerViewRegisteredDeviceListAdapter(list)
+        recyclerViewRegisteredDeviceListAdapter = RecyclerViewRegisteredDeviceListAdapter(this, list)
         val layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
         recyclerView!!.layoutManager = layoutManager
         recyclerView!!.adapter = recyclerViewRegisteredDeviceListAdapter
