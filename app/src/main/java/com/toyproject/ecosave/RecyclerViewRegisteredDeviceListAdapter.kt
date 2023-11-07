@@ -1,7 +1,9 @@
 package com.toyproject.ecosave
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 
 import android.view.LayoutInflater
 import android.view.View
@@ -17,7 +19,7 @@ import com.toyproject.ecosave.models.RelativeGradeData
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 
 class RecyclerViewRegisteredDeviceListAdapter constructor(
-    private val list: List<RelativeGradeData>
+    private val context: Context, private val list: List<RelativeGradeData>
 ) : RecyclerView.Adapter<RecyclerViewRegisteredDeviceListAdapter.ViewHolder>()  {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageDevice: ImageView = itemView.findViewById(R.id.imageDevice)
@@ -48,6 +50,15 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
         }
 
         holder.textPowerOfConsume.text = "${list[position].powerOfConsume} ${getPowerOfConsumeUnit(list[position].deviceType)["symbol"]}"
+
+        when (list[position].relativeElectricPowerConsumeGrade) {
+            1 -> holder.textRelativeElectricPowerConsumeGrade.setTextColor(ContextCompat.getColor(context, R.color.grade_1))
+            2, 3 -> holder.textRelativeElectricPowerConsumeGrade.setTextColor(ContextCompat.getColor(context, R.color.grade_2_and_3))
+            4, 5 -> holder.textRelativeElectricPowerConsumeGrade.setTextColor(ContextCompat.getColor(context, R.color.grade_4_and_5))
+            6, 7 -> holder.textRelativeElectricPowerConsumeGrade.setTextColor(ContextCompat.getColor(context, R.color.grade_6_and_7))
+            8, 9 -> holder.textRelativeElectricPowerConsumeGrade.setTextColor(ContextCompat.getColor(context, R.color.grade_8_and_9))
+            else -> holder.textRelativeElectricPowerConsumeGrade.setTextColor(ContextCompat.getColor(context, R.color.black))
+        }
 
         holder.textRelativeElectricPowerConsumeGrade.text =
             list[position].relativeElectricPowerConsumeGrade.toString() +
