@@ -2,7 +2,6 @@ package com.toyproject.ecosave
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -21,14 +20,21 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 
-import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.toyproject.ecosave.databinding.ActivityAddDeviceBinding
+import com.toyproject.ecosave.models.DeviceTypeList
+import com.toyproject.ecosave.utilities.getCO2EmissionUnit
+import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
+import com.toyproject.ecosave.widget.simpleDialog
 
 import java.io.File
 import java.io.IOException
@@ -39,14 +45,15 @@ class AddDeviceActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddDeviceBinding
     private var photoFile: File? = null
     private var mCurrentPhotoPath: String? = null
+    private lateinit var finalBitmap: Bitmap
+    private lateinit var photoURI: Uri
+
+    private var energyConsumption = 0.0
+    private var amountOfCO2 = 0.0
 
     companion object {
         private const val REQUEST_CAMERA_PERMISSION = 1000
         private const val CAPTURE_IMAGE_REQUEST = 1
-    }
-
-    private fun displayMessage(context: Context, message: String) {
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
     private fun getPermissionForCamera() {
@@ -106,7 +113,7 @@ class AddDeviceActivity : AppCompatActivity() {
                 photoFile = createImageFile()
                 // Continue only if the File was successfully created
                 if (photoFile != null) {
-                    val photoURI = FileProvider.getUriForFile(
+                    photoURI = FileProvider.getUriForFile(
                         this,
                         "com.toyproject.ecosave.fileprovider",
                         photoFile!!
@@ -118,10 +125,18 @@ class AddDeviceActivity : AppCompatActivity() {
             } catch (ex: Exception) {
                 // Error occurred while creating the File
                 Log.d("사진 촬영", ex.message.toString())
-                displayMessage(baseContext, "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")
+                Toast.makeText(
+                    baseContext,
+                    "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         } else {
-            displayMessage(baseContext, "Null")
+            Toast.makeText(
+                baseContext,
+                "Null",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -145,7 +160,13 @@ class AddDeviceActivity : AppCompatActivity() {
 
             val bitmap = BitmapFactory.decodeFile(photoFile!!.absolutePath)
             val cameraRotated = rotateBitmap(bitmap, orientation)
-            binding.deviceImage.setImageBitmap(cameraRotated)
+
+            if (cameraRotated != null) {
+                finalBitmap = cameraRotated
+                // binding.deviceImage.setImageBitmap(finalBitmap)
+                binding.deviceImage.setImageURI(photoURI)
+                recognizeText()
+            }
         }
     }
 
@@ -200,6 +221,49 @@ class AddDeviceActivity : AppCompatActivity() {
         }
     }
 
+    private fun recognizeText() {
+        val recognizer = TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
+
+        // val image = InputImage.fromBitmap(finalBitmap, 0)
+        try {
+            val image = InputImage.fromFilePath(this, photoURI)
+            Log.d("인식", photoURI.toString())
+            // [START run_detector]
+            val result = recognizer.process(image)
+                .addOnSuccessListener {
+                    processTextBlock(it)
+                }
+                .addOnFailureListener { e ->
+                    e.printStackTrace()
+                }
+            // [END run_detector]
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun processTextBlock(result: Text) {
+        // [START mlkit_process_text_block]
+        // val resultText = result.text
+        for (block in result.textBlocks) {
+//            val blockText = block.text
+//            val blockCornerPoints = block.cornerPoints
+//            val blockFrame = block.boundingBox
+            for (line in block.lines) {
+                Log.d("인식(line)", line.text)
+//                val lineText = line.text
+//                val lineCornerPoints = line.cornerPoints
+//                val lineFrame = line.boundingBox
+                for (element in line.elements) {
+                    // Log.d("인식(element)", element.text)
+//                    val elementText = element.text
+//                    val elementCornerPoints = element.cornerPoints
+//                    val elementFrame = element.boundingBox
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAddDeviceBinding.inflate(layoutInflater)
@@ -210,6 +274,11 @@ class AddDeviceActivity : AppCompatActivity() {
         supportActionBar?.title = "기기 추가"
         supportActionBar?.setDisplayHomeAsUpEnabled(true) // 앱바에 back 버튼 활성화
 
+        // 사진 촬영 버튼
+        binding.btnTakePicture.setOnClickListener {
+            getPermissionForCamera()
+        }
+
         val items = resources.getStringArray(R.array.category_list)
         val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items)
 
@@ -217,41 +286,89 @@ class AddDeviceActivity : AppCompatActivity() {
         binding.spinner.prompt = "카테고리 선택"
         binding.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             @SuppressLint("SetTextI18n")
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long) {
+                lateinit var powerOfConsumeUnit: Map<String, String>
+                lateinit var co2EmissionUnit: String
                 when (position) {
-                    0 -> {
-                        binding.textEnergyConsumption.text = "월간 소비전력량"
-                        binding.textEnergyConsumptionUnit.text = "kWh/월"
-                        binding.textCO2EmissionUnit.text = "g/시간"
+                    0 -> { // 냉장고
+                        powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.REFRIGERATOR)
+                        co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.REFRIGERATOR)
                     }
-                    1 -> {
-                        binding.textEnergyConsumption.text = "월간 소비전력량"
-                        binding.textEnergyConsumptionUnit.text = "kWh/월"
-                        binding.textCO2EmissionUnit.text = "g/시간"
+                    1 -> { // 에어컨
+                        powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.AIR_CONDITIONER)
+                        co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.AIR_CONDITIONER)
                     }
-                    2 -> {
-                        binding.textEnergyConsumption.text = "월간 소비전력량"
-                        binding.textEnergyConsumptionUnit.text = "kWh/월"
-                        binding.textCO2EmissionUnit.text = "g/시간"
+                    2 -> { // TV
+                        powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.TV)
+                        co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.TV)
                     }
-                    3 -> {
-                        binding.textEnergyConsumption.text = "1Kg당 소비전력량"
-                        binding.textEnergyConsumptionUnit.text = "Wh/kg"
-                        binding.textCO2EmissionUnit.text = "g/회"
+                    3 -> { // 세탁기
+                        powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.WASHING_MACHINE)
+                        co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.WASHING_MACHINE)
+                    }
+                    4 -> { // 전자레인지
+                        powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.MICROWAVE_OVEN)
+                        co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.MICROWAVE_OVEN)
+                    }
+                    5 -> { // 보일러
+                        powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.BOILER)
+                        co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.BOILER)
                     }
                     else -> {
-                        binding.textEnergyConsumption.text = "월간 소비전력량"
-                        binding.textEnergyConsumptionUnit.text = "kWh/월"
-                        binding.textCO2EmissionUnit.text = "g/시간"
+                        powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.OTHERS)
+                        co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.OTHERS)
                     }
+                }
+                binding.textEnergyConsumption.text = powerOfConsumeUnit["description"]
+                binding.textEnergyConsumptionUnit.text = powerOfConsumeUnit["symbol"]
+                binding.textCO2EmissionUnit.text = co2EmissionUnit
+
+                if (co2EmissionUnit == "") {
+                    binding.constraintLayoutForCO2.visibility = View.GONE
+                } else {
+                    binding.constraintLayoutForCO2.visibility = View.VISIBLE
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        // 사진 촬영 버튼
-        binding.btnTakePicture.setOnClickListener {
-            getPermissionForCamera()
+        binding.btnAddDevice.setOnClickListener {
+//            if (cameraRotated == null) {
+//                simpleDialog(
+//                    this,
+//                    "기기 추가",
+//                    "에너지 소비 등급 라벨을 촬영해 주세요."
+//                )
+//            } else {
+//                if (energyConsumption == 0.0) {
+//                    simpleDialog(
+//                        this,
+//                        "기기 추가",
+//                        "해당 기기의 에너지 소비전력을 인식하지 못했습니다. 다시 촬영해 주세요."
+//                    )
+//                } else {
+//                    if ((binding.spinner.selectedItemPosition == 0) ||
+//                        (binding.spinner.selectedItemPosition == 1) ||
+//                        (binding.spinner.selectedItemPosition == 2) ||
+//                        (binding.spinner.selectedItemPosition == 3)) {
+//                        if (amountOfCO2 == 0.0) {
+//                            simpleDialog(
+//                                this,
+//                                "기기 추가",
+//                                "해당 기기의 CO2 발생량을 인식하지 못했습니다. 다시 촬영해 주세요."
+//                            )
+//                        } else {
+//                            //
+//                        }
+//                    } else {
+//                        //
+//                    }
+//                }
+//            }
         }
     }
 
