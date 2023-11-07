@@ -48,6 +48,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.0")
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
