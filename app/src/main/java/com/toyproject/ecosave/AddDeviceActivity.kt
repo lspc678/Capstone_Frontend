@@ -19,13 +19,11 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
-
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
@@ -34,8 +32,6 @@ import com.toyproject.ecosave.databinding.ActivityAddDeviceBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.utilities.getCO2EmissionUnit
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
-import com.toyproject.ecosave.widget.simpleDialog
-
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -48,12 +44,13 @@ class AddDeviceActivity : AppCompatActivity() {
     private lateinit var finalBitmap: Bitmap
     private lateinit var photoURI: Uri
 
-    private var energyConsumption = 0.0
-    private var amountOfCO2 = 0.0
+    private var energyConsumption = 0.0F
+    private var amountOfCO2 = 0.0F
 
     companion object {
         private const val REQUEST_CAMERA_PERMISSION = 1000
         private const val CAPTURE_IMAGE_REQUEST = 1
+        private const val GET_ENERGY_CONSUMPTION_AND_CO2 = 50
     }
 
     private fun getPermissionForCamera() {
@@ -167,6 +164,23 @@ class AddDeviceActivity : AppCompatActivity() {
                 binding.deviceImage.setImageURI(photoURI)
                 recognizeText()
             }
+        } else if (requestCode == GET_ENERGY_CONSUMPTION_AND_CO2) {
+            if (data != null) {
+                Log.d("기기추가", data.getFloatExtra("energyConsumption", 0.0F).toString())
+                Log.d("기기추가", data.getFloatExtra("amountOfCO2", 0.0F).toString())
+
+                energyConsumption = data.getFloatExtra("energyConsumption", 0.0F)
+                if (energyConsumption > 0.0F) {
+                    binding.editEnergyConsumption.text = energyConsumption.toString()
+                }
+
+                amountOfCO2 = data.getFloatExtra("amountOfCO2", 0.0F)
+                if (amountOfCO2 > 0.0F) {
+                    binding.editCO2Emission.text = amountOfCO2.toString()
+                }
+            } else {
+                Log.d("기기추가", "null")
+            }
         }
     }
 
@@ -243,27 +257,17 @@ class AddDeviceActivity : AppCompatActivity() {
     }
 
     private fun processTextBlock(result: Text) {
-        // [START mlkit_process_text_block]
-        // val resultText = result.text
         for (block in result.textBlocks) {
-//            val blockText = block.text
-//            val blockCornerPoints = block.cornerPoints
-//            val blockFrame = block.boundingBox
             for (line in block.lines) {
                 Log.d("인식(line)", line.text)
-//                val lineText = line.text
-//                val lineCornerPoints = line.cornerPoints
-//                val lineFrame = line.boundingBox
                 for (element in line.elements) {
-                    // Log.d("인식(element)", element.text)
-//                    val elementText = element.text
-//                    val elementCornerPoints = element.cornerPoints
-//                    val elementFrame = element.boundingBox
+
                 }
             }
         }
     }
 
+    @androidx.camera.core.ExperimentalGetImage
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAddDeviceBinding.inflate(layoutInflater)
@@ -276,7 +280,10 @@ class AddDeviceActivity : AppCompatActivity() {
 
         // 사진 촬영 버튼
         binding.btnTakePicture.setOnClickListener {
-            getPermissionForCamera()
+            // getPermissionForCamera()
+            val intent = Intent(this, LivePreviewActivity::class.java)
+            intent.putExtra("selectedItemPosition", binding.spinner.selectedItemPosition)
+            startActivityForResult(intent, GET_ENERGY_CONSUMPTION_AND_CO2)
         }
 
         val items = resources.getStringArray(R.array.category_list)
