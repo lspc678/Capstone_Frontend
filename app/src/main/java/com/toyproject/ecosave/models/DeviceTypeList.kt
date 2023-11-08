@@ -6,5 +6,6 @@ enum class DeviceTypeList {
     TV,
     WASHING_MACHINE, // 세탁기
     MICROWAVE_OVEN,  // 전자레인지
-    BOILER           // 보일러
+    BOILER,          // 보일러
+    OTHERS           // 그 외
 }
