@@ -5,5 +5,7 @@
         <item>에어컨</item>
         <item>TV</item>
         <item>세탁기</item>
+        <item>전자레인지</item>
+        <item>보일러</item>
     </string-array>
 </resources>
