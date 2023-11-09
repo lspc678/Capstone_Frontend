@@ -2,6 +2,7 @@ package com.toyproject.ecosave
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.media.Image
 import android.net.Uri
 
@@ -26,13 +27,14 @@ import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 
 import com.toyproject.ecosave.databinding.ActivityLivePreviewBinding
 import com.toyproject.ecosave.models.DeviceTypeList
+import com.toyproject.ecosave.utilities.checkLineUpHorizontal
 import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 @androidx.camera.core.ExperimentalGetImage
 class TextReaderAnalyzer(
-    private val textFoundListener: (String) -> Unit
+    private val textFoundListener: (String, Rect?) -> Unit
 ) : ImageAnalysis.Analyzer{
     override fun analyze(imageProxy: ImageProxy) {
         imageProxy.image?.let { process(it, imageProxy) }
@@ -63,9 +65,8 @@ class TextReaderAnalyzer(
 
     private fun processTextFromImage(visionText: Text, imageProxy: ImageProxy) {
         for (block in visionText.textBlocks) {
-            // textFoundListener(block.text)
             for (line in block.lines) {
-               textFoundListener(line.text)
+                textFoundListener(line.text, line.boundingBox)
             }
         }
     }
@@ -75,6 +76,11 @@ class TextReaderAnalyzer(
 class LivePreviewActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLivePreviewBinding
     private val cameraExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
+
+    private var amountOfCO2DescriptionPosition: Rect? = null
+    private var amountOfCO2UnitPosition: Rect? = null
+    private var energyConsumptionDescriptionPosition: Rect? = null
+    private var energyConsumptionUnitPosition: Rect? = null
 
     private var amountOfCO2Map = mutableMapOf<Float, Int>()
     private var energyConsumptionMap = mutableMapOf<Float, Int>()
@@ -98,13 +104,13 @@ class LivePreviewActivity : AppCompatActivity() {
             }
     }
 
-    private fun onTextFound(foundText: String) {
+    private fun onTextFound(foundText: String, lineFrame: Rect?) {
         when (deviceType) {
             DeviceTypeList.TV -> {
                 onTextFoundTV(foundText)
             }
             DeviceTypeList.WASHING_MACHINE -> {
-                onTextFoundWashingMachine(foundText)
+                onTextFoundWashingMachine(foundText, lineFrame)
             }
             else -> {
 
@@ -163,7 +169,6 @@ class LivePreviewActivity : AppCompatActivity() {
             try {
                 val text = foundText.replace(" ", "") // 10g시간 or 10g/시간
                 val length = text.length
-                Log.d("라이브프리뷰", text)
                 if (length >= 4) {
                     var amountOfCO2Text: Float? = null
                     if (text.substring(length - 4, length) == "g/시간") {
@@ -188,66 +193,32 @@ class LivePreviewActivity : AppCompatActivity() {
         }
     }
 
-    private fun onTextFoundWashingMachine(foundText: String) {
-        if (foundText.length >= 6) {
-            try {
-                val text = foundText.replace(" ", "") // 10Wh/kg or 10Whkg
-                val length = text.length
-                Log.d("라이브프리뷰", text)
-                if (length >= 5) {
-                    var energyConsumptionText: Float? = null
-
-                    val unit1 = "Wh/kg"
-                    val unit2 = "Whkg"
-
-                    if (text.substring(length - unit1.length, length) == unit1) {
-                        energyConsumptionText = text.substring(0, length - unit1.length).toFloatOrNull()
-                    } else if (text.substring(length - unit2.length, length) == unit2) {
-                        energyConsumptionText = text.substring(0, length - unit2.length).toFloatOrNull()
-                    }
-
-                    if ((energyConsumptionText != null) && (energyConsumptionText > 1.0F)) { // 숫자로 변환할 수 있으며 CO2 배출량이 1 보다 큰 경우
-                        val cnt = energyConsumptionMap[energyConsumptionText]
-                        if (cnt != null) {
-                            energyConsumptionMap[energyConsumptionText] = cnt + 1
-                        } else {
-                            energyConsumptionMap[energyConsumptionText] = 1
+    private fun onTextFoundWashingMachine(foundText: String, lineFrame: Rect?) {
+        if (lineFrame != null) {
+            if (foundText == "1kg당소비전력량") {
+                energyConsumptionDescriptionPosition = lineFrame
+            } else if ((foundText == "Wh/kg") || (foundText == "Whkg")) {
+                energyConsumptionUnitPosition = lineFrame
+            } else if (foundText == "CO2") {
+                amountOfCO2DescriptionPosition = lineFrame
+            } else if ((foundText == "g/회") || (foundText == "g회")) {
+                amountOfCO2UnitPosition = lineFrame
+            } else {
+                if ((energyConsumptionDescriptionPosition != null) && (energyConsumptionUnitPosition != null)) {
+                    if (energyConsumptionDescriptionPosition!!.right < energyConsumptionUnitPosition!!.left) {
+                        if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, energyConsumptionUnitPosition, lineFrame)) {
+                            Log.d("라이브프리뷰", "pass: $foundText")
                         }
                     }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.d("라이브프리뷰", e.toString())
-            }
-        } else if (foundText.length >= 3) {
-            try {
-                val text = foundText.replace(" ", "") // 10g/회 or 10g회
-                val length = text.length
-                Log.d("라이브프리뷰", text)
-                if (length >= 3) {
-                    var amountOfCO2Text: Float? = null
 
-                    val unit1 = "g/회"
-                    val unit2 = "g회"
-
-                    if (text.substring(length - unit1.length, length) == unit1) {
-                        amountOfCO2Text = text.substring(0, length - unit1.length).toFloatOrNull()
-                    } else if (text.substring(length - unit2.length, length) == unit2) {
-                        amountOfCO2Text = text.substring(0, length - unit2.length).toFloatOrNull()
-                    }
-
-                    if ((amountOfCO2Text != null) && (amountOfCO2Text > 1.0F)) { // 숫자로 변환할 수 있으며 CO2 배출량이 1 보다 큰 경우
-                        val cnt = amountOfCO2Map[amountOfCO2Text]
-                        if (cnt != null) {
-                            amountOfCO2Map[amountOfCO2Text] = cnt + 1
-                        } else {
-                            amountOfCO2Map[amountOfCO2Text] = 1
+                if ((amountOfCO2DescriptionPosition != null) && (amountOfCO2UnitPosition != null)) {
+                    if (amountOfCO2DescriptionPosition!!.right < amountOfCO2UnitPosition!!.left) {
+                        if (checkLineUpHorizontal(amountOfCO2DescriptionPosition, amountOfCO2UnitPosition, lineFrame)) {
+                            Log.d("라이브프리뷰", "pass: $foundText")
                         }
                     }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.d("라이브프리뷰", e.toString())
             }
         }
     }
