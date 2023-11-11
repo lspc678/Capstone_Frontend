@@ -34,12 +34,10 @@ fun checkLineUpHorizontal(rectLeft: Rect?, rectRight: Rect?) : Boolean {
 
     Log.d("라이브프리뷰", "${rectRight.top}, $rectLeftCenterY, ${rectRight.bottom}")
     Log.d("라이브프리뷰", "${rectLeft.top}, $rectRightCenterY, ${rectLeft.bottom}")
-    Log.d("라이브프리뷰", "${rectLeft.right}, ${rectRight.left}")
     Log.d("라이브프리뷰", "===================================")
 
     return ((rectRight.top <= rectLeftCenterY)
             && (rectLeftCenterY <= rectRight.bottom)
             && (rectLeft.top <= rectRightCenterY)
-            && (rectRightCenterY <= rectLeft.bottom)
-            && (rectLeft.right <= rectRight.left))
+            && (rectRightCenterY <= rectLeft.bottom))
 }
