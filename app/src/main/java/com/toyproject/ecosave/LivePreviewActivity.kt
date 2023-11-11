@@ -264,11 +264,12 @@ class LivePreviewActivity : AppCompatActivity() {
 
     private fun onTextFoundMicrowaveOven(foundText: String, lineFrame: Rect?) {
         if (lineFrame != null) {
-            val text = foundText.replace(" ", "")
+            var text = foundText.replace(" ", "")
             val length = text.length
-            Log.d("라이브프리뷰", foundText)
+            Log.d("라이브프리뷰", text)
 
             // 정격소비전력
+            // 정격소비전력 : 1,200W
             val res = findPattern(text, "정격소비전력")
             if (res[0] != -1 && res[1] != -1) {
                 energyConsumptionDescriptionPosition = lineFrame
@@ -276,6 +277,7 @@ class LivePreviewActivity : AppCompatActivity() {
             }
 
             // 1,250W
+            // 정격소비전력 : 1,200W
             if (text[length - 1] == 'W') {
                 if (energyConsumptionDescriptionPosition != null) {
                     if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame)) {
@@ -285,13 +287,21 @@ class LivePreviewActivity : AppCompatActivity() {
             }
 
             if (energyConsumptionDescriptionPosition != null && energyConsumptionUnitPosition != null) {
-                if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame)) {
-                    var energyConsumptionText = text.replace(",", "")
-                    energyConsumptionText = energyConsumptionText.substring(0, energyConsumptionText.length - 1)
+                if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame)
+                    && checkLineUpHorizontal(lineFrame, energyConsumptionUnitPosition)) {
+                    var energyConsumptionText = ""
+
+                    for (idx in 0 until length - 1) {
+                        if (text[idx].digitToIntOrNull() != null) {
+                            energyConsumptionText += text[idx].digitToInt()
+                        }
+                    }
+
                     val _energyConsumption = energyConsumptionText.toFloatOrNull()
+
                     if (_energyConsumption != null) {
-                        Log.d("라이브프리뷰", "pass: $energyConsumption")
                         energyConsumption = _energyConsumption
+                        Log.d("라이브프리뷰", "pass: $energyConsumption")
                     }
                 }
             }
