@@ -28,6 +28,7 @@ import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.toyproject.ecosave.databinding.ActivityLivePreviewBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.utilities.checkLineUpHorizontal
+import com.toyproject.ecosave.utilities.findPattern
 import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -84,6 +85,7 @@ class LivePreviewActivity : AppCompatActivity() {
 
     private var amountOfCO2Map = mutableMapOf<Float, Int>()
     private var energyConsumptionMap = mutableMapOf<Float, Int>()
+    private var energyConsumption: Float = 0.0F
 
     private var deviceType = DeviceTypeList.OTHERS
 
@@ -112,36 +114,54 @@ class LivePreviewActivity : AppCompatActivity() {
             DeviceTypeList.WASHING_MACHINE -> {
                 onTextFoundWashingMachine(foundText, lineFrame)
             }
+            DeviceTypeList.MICROWAVE_OVEN -> {
+                onTextFoundMicrowaveOven(foundText, lineFrame)
+            }
             else -> {
 
             }
         }
 
-        if (amountOfCO2Map.isNotEmpty() && energyConsumptionMap.isNotEmpty()) {
-            var maxCount = 0
-            var energyConsumption = 0.0F
-            var amountOfCO2 = 0.0F
+        when (deviceType) {
+            DeviceTypeList.TV -> {
+                if (amountOfCO2Map.isNotEmpty() && energyConsumptionMap.isNotEmpty()) {
+                    var maxCount = 0
+                    var energyConsumption = 0.0F
+                    var amountOfCO2 = 0.0F
 
-            for (entry in energyConsumptionMap) {
-                if (entry.value > maxCount) {
-                    maxCount = entry.value
-                    energyConsumption = entry.key
+                    for (entry in energyConsumptionMap) {
+                        if (entry.value > maxCount) {
+                            maxCount = entry.value
+                            energyConsumption = entry.key
+                        }
+                    }
+
+                    maxCount = 0
+                    for (entry in amountOfCO2Map) {
+                        if (entry.value > maxCount) {
+                            maxCount = entry.value
+                            amountOfCO2 = entry.key
+                        }
+                    }
+
+                    val intent = Intent()
+                    intent.putExtra("energyConsumption", energyConsumption)
+                    intent.putExtra("amountOfCO2", amountOfCO2)
+                    setResult(GET_ENERGY_CONSUMPTION_AND_CO2, intent)
+                    finish()
                 }
             }
-
-            maxCount = 0
-            for (entry in amountOfCO2Map) {
-                if (entry.value > maxCount) {
-                    maxCount = entry.value
-                    amountOfCO2 = entry.key
+            DeviceTypeList.MICROWAVE_OVEN -> {
+                if (energyConsumption != 0.0F) {
+                    val intent = Intent()
+                    intent.putExtra("energyConsumption", energyConsumption)
+                    setResult(GET_ENERGY_CONSUMPTION_AND_CO2, intent)
+                    finish()
                 }
             }
+            else -> {
 
-            val intent = Intent()
-            intent.putExtra("energyConsumption", energyConsumption)
-            intent.putExtra("amountOfCO2", amountOfCO2)
-            setResult(GET_ENERGY_CONSUMPTION_AND_CO2, intent)
-            finish()
+            }
         }
     }
 
@@ -195,19 +215,38 @@ class LivePreviewActivity : AppCompatActivity() {
 
     private fun onTextFoundWashingMachine(foundText: String, lineFrame: Rect?) {
         if (lineFrame != null) {
-            if (foundText == "1kg당소비전력량") {
+            val text = foundText.replace(" ", "")
+            Log.d("라이브프리뷰", foundText)
+            if (text == "1kg당소비전력량") {
                 energyConsumptionDescriptionPosition = lineFrame
-            } else if ((foundText == "Wh/kg") || (foundText == "Whkg")) {
+            } else if ((text == "Wh/kg") || (text == "Whkg")) {
                 energyConsumptionUnitPosition = lineFrame
-            } else if (foundText == "CO2") {
+            } else if (text == "CO2") {
                 amountOfCO2DescriptionPosition = lineFrame
-            } else if ((foundText == "g/회") || (foundText == "g회")) {
+            } else if ((text == "g/회") || (text == "g회")) {
                 amountOfCO2UnitPosition = lineFrame
             } else {
+                val length = text.length
+
+                // 1kg당소비전력량67.2
+                // 67.2Wh/kg
+                // 67.2Whkg
+                // 1kg당소비전력량67.2Wh/kg
+
+                if (length >= 5) {
+                    if (text.substring(length - 5, length) == "Wh/kg") {
+                        energyConsumptionDescriptionPosition = lineFrame
+                        // amountOfCO2Text = text.substring(0, length - 4).toFloatOrNull()
+                    } else if (text.substring(length - 4, length) == "Whkg") {
+                        energyConsumptionDescriptionPosition = lineFrame
+                        // amountOfCO2Text = text.substring(0, length - 3).toFloatOrNull()
+                    }
+                }
+
                 if ((energyConsumptionDescriptionPosition != null) && (energyConsumptionUnitPosition != null)) {
                     if (energyConsumptionDescriptionPosition!!.right < energyConsumptionUnitPosition!!.left) {
                         if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, energyConsumptionUnitPosition, lineFrame)) {
-                            Log.d("라이브프리뷰", "pass: $foundText")
+                            Log.d("라이브프리뷰", "pass: $text")
                         }
                     }
                 }
@@ -215,8 +254,44 @@ class LivePreviewActivity : AppCompatActivity() {
                 if ((amountOfCO2DescriptionPosition != null) && (amountOfCO2UnitPosition != null)) {
                     if (amountOfCO2DescriptionPosition!!.right < amountOfCO2UnitPosition!!.left) {
                         if (checkLineUpHorizontal(amountOfCO2DescriptionPosition, amountOfCO2UnitPosition, lineFrame)) {
-                            Log.d("라이브프리뷰", "pass: $foundText")
+                            Log.d("라이브프리뷰", "pass: $text")
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun onTextFoundMicrowaveOven(foundText: String, lineFrame: Rect?) {
+        if (lineFrame != null) {
+            val text = foundText.replace(" ", "")
+            val length = text.length
+            Log.d("라이브프리뷰", foundText)
+
+            // 정격소비전력
+            val res = findPattern(text, "정격소비전력")
+            if (res[0] != -1 && res[1] != -1) {
+                energyConsumptionDescriptionPosition = lineFrame
+                return
+            }
+
+            // 1,250W
+            if (text[length - 1] == 'W') {
+                if (energyConsumptionDescriptionPosition != null) {
+                    if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame)) {
+                        energyConsumptionUnitPosition = lineFrame
+                    }
+                }
+            }
+
+            if (energyConsumptionDescriptionPosition != null && energyConsumptionUnitPosition != null) {
+                if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame)) {
+                    var energyConsumptionText = text.replace(",", "")
+                    energyConsumptionText = energyConsumptionText.substring(0, energyConsumptionText.length - 1)
+                    val _energyConsumption = energyConsumptionText.toFloatOrNull()
+                    if (_energyConsumption != null) {
+                        Log.d("라이브프리뷰", "pass: $energyConsumption")
+                        energyConsumption = _energyConsumption
                     }
                 }
             }
