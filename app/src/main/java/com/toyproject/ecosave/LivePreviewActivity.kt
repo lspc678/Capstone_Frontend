@@ -264,7 +264,7 @@ class LivePreviewActivity : AppCompatActivity() {
 
     private fun onTextFoundMicrowaveOven(foundText: String, lineFrame: Rect?) {
         if (lineFrame != null) {
-            var text = foundText.replace(" ", "")
+            val text = foundText.replace(" ", "")
             val length = text.length
             Log.d("라이브프리뷰", text)
 
