@@ -334,6 +334,9 @@ class AddDeviceActivity : AppCompatActivity() {
                 binding.textEnergyConsumptionUnit.text = powerOfConsumeUnit["symbol"]
                 binding.textCO2EmissionUnit.text = co2EmissionUnit
 
+                binding.editEnergyConsumption.text = "0"
+                binding.editCO2Emission.text = "0"
+
                 if (co2EmissionUnit == "") {
                     binding.constraintLayoutForCO2.visibility = View.GONE
                 } else {
