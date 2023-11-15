@@ -2,7 +2,7 @@ package com.toyproject.ecosave.utilities
 
 import android.graphics.Rect
 
-fun isRectContainsOtherRects (
+fun isRectReachesOtherRects (
     rectForDescription: Rect?, rect: Rect?, rectForUnit: Rect?) : Boolean {
     // rect 객체가 rectForDescription, rectForUnit 객체를 포함하는지 확인
     if (rectForDescription == null || rect == null || rectForUnit == null) {

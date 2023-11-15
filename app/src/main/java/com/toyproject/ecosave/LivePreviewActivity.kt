@@ -29,7 +29,7 @@ import com.toyproject.ecosave.databinding.ActivityLivePreviewBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.utilities.checkLineUpHorizontal
 import com.toyproject.ecosave.utilities.findPattern
-import com.toyproject.ecosave.utilities.isRectContainsOtherRects
+import com.toyproject.ecosave.utilities.isRectReachesOtherRects
 import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -244,7 +244,7 @@ class LivePreviewActivity : AppCompatActivity() {
             // 에너지 소비전력에 해당하는 텍스트를 추출
             if (energyConsumptionDescriptionPosition != null && energyConsumptionUnitPosition != null) {
                 if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)
-                    && isRectContainsOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
+                    && isRectReachesOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
                     // 현재 인식된 텍스트의 위치는 에너지 소비전력 설명과 단위 사이에 있음
                     var energyConsumptionText = ""
 
@@ -274,7 +274,7 @@ class LivePreviewActivity : AppCompatActivity() {
             // CO2 배출량에 해당하는 텍스트를 추출
             if (amountOfCO2DescriptionPosition != null && amountOfCO2UnitPosition != null) {
                 if (checkLineUpHorizontal(amountOfCO2DescriptionPosition, lineFrame, amountOfCO2UnitPosition)
-                    && isRectContainsOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
+                    && isRectReachesOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
                     // 현재 인식된 텍스트의 위치는 CO2 배출량 설명과 단위 사이에 있음
                     var amountOfCO2EmissionText = ""
 
@@ -392,7 +392,7 @@ class LivePreviewActivity : AppCompatActivity() {
             // 에너지 소비전력에 해당하는 텍스트를 추출
             if (energyConsumptionDescriptionPosition != null && energyConsumptionUnitPosition != null) {
                 if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)
-                    && isRectContainsOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
+                    && isRectReachesOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
                     // 현재 인식된 텍스트의 위치는 에너지 소비전력 설명과 단위 사이에 있음
                     var energyConsumptionText = ""
 
@@ -432,7 +432,7 @@ class LivePreviewActivity : AppCompatActivity() {
             // CO2 배출량에 해당하는 텍스트를 추출
             if (amountOfCO2DescriptionPosition != null && amountOfCO2UnitPosition != null) {
                 if (checkLineUpHorizontal(amountOfCO2DescriptionPosition, lineFrame, amountOfCO2UnitPosition)
-                    && isRectContainsOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
+                    && isRectReachesOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
                     // 현재 인식된 텍스트의 위치는 CO2 배출량 설명과 단위 사이에 있음
                     var amountOfCO2EmissionText = ""
 
