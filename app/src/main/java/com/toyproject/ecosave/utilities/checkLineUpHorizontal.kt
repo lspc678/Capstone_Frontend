@@ -3,25 +3,52 @@ package com.toyproject.ecosave.utilities
 import android.graphics.Rect
 import android.util.Log
 
-fun checkLineUpHorizontal(rectLeft: Rect?, rectRight: Rect?, rect: Rect?) : Boolean {
-    if (rectLeft == null || rectRight == null || rect == null) {
+fun checkLineUpHorizontal(rectLeft: Rect?, rectCenter: Rect?, rectRight: Rect?) : Boolean {
+    if (rectLeft == null || rectRight == null || rectCenter == null) {
         return false
     }
 
-    val centerY = rect.exactCenterY()
+    // 3개의 Rect 객체가 같은 가로줄에 있다고 판단할 수 있는 최대 오차(px 단위)
+    val ALLOW_ERROR_PX = 0
 
-    Log.d("라이브프리뷰", "${rectLeft.top}, $centerY, ${rectLeft.bottom}")
-    Log.d("라이브프리뷰", "${rectRight.top}, $centerY, ${rectRight.bottom}")
-    Log.d("라이브프리뷰", "${rectLeft.right}, ${rect.left}")
-    Log.d("라이브프리뷰", "${rect.right}, ${rectRight.left}")
+    val rectLeftCenterY = rectLeft.exactCenterY()
+    val rectCenterY = rectCenter.exactCenterY()
+    val rectRightCenterY = rectRight.exactCenterY()
+
+    val rectLeftHeight = rectLeft.height()
+    val rectCenterHeight = rectCenter.height()
+    val rectRightHeight = rectRight.height()
+
+    val maxHeight = maxOf(rectLeftHeight, rectCenterHeight, rectRightHeight)
+
+    Log.d("라이브프리뷰", "${rectLeft.top}, ${rectLeft.bottom}")
+    Log.d("라이브프리뷰", "${rectCenter.top}, ${rectCenter.bottom}")
+    Log.d("라이브프리뷰", "${rectRight.top}, ${rectRight.bottom}")
     Log.d("라이브프리뷰", "===================================")
 
-    return ((rectLeft.top <= centerY)
-            && (centerY <= rectLeft.bottom)
-            && (rectRight.top <= centerY)
-            && (centerY <= rectRight.bottom)
-            && (rectLeft.right <= rect.left)
-            && (rect.right <= rectRight.left))
+    return when (maxHeight) {
+        rectLeftHeight -> {
+            ((rectLeft.top - ALLOW_ERROR_PX <= rectCenterY)
+                    && (rectCenterY <= rectLeft.bottom + ALLOW_ERROR_PX)
+                    && (rectLeft.top - ALLOW_ERROR_PX <= rectRightCenterY)
+                    && (rectRightCenterY <= rectLeft.bottom + ALLOW_ERROR_PX))
+        }
+        rectCenterHeight -> {
+            ((rectCenter.top - ALLOW_ERROR_PX <= rectLeftCenterY)
+                    && (rectLeftCenterY <= rectCenter.bottom + ALLOW_ERROR_PX)
+                    && (rectCenter.top - ALLOW_ERROR_PX <= rectRightCenterY)
+                    && (rectRightCenterY <= rectCenter.bottom + ALLOW_ERROR_PX))
+        }
+        rectRightHeight -> {
+            ((rectRight.top - ALLOW_ERROR_PX <= rectLeftCenterY)
+                    && (rectLeftCenterY <= rectRight.bottom + ALLOW_ERROR_PX)
+                    && (rectRight.top - ALLOW_ERROR_PX <= rectCenterY)
+                    && (rectCenterY <= rectRight.bottom + ALLOW_ERROR_PX))
+        }
+        else -> {
+            return false
+        }
+    }
 }
 
 fun checkLineUpHorizontal(rectLeft: Rect?, rectRight: Rect?) : Boolean {
