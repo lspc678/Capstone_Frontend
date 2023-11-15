@@ -29,6 +29,7 @@ import com.toyproject.ecosave.databinding.ActivityLivePreviewBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.utilities.checkLineUpHorizontal
 import com.toyproject.ecosave.utilities.findPattern
+import com.toyproject.ecosave.utilities.isRectContainsOtherRects
 import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -113,7 +114,7 @@ class LivePreviewActivity : AppCompatActivity() {
                 onTextFoundRefrigerator(foundText, lineFrame)
             }
             DeviceTypeList.TV -> {
-                onTextFoundTV(foundText)
+                onTextFoundTV(foundText, lineFrame)
             }
             DeviceTypeList.WASHING_MACHINE -> {
                 onTextFoundWashingMachine(foundText, lineFrame)
@@ -127,7 +128,8 @@ class LivePreviewActivity : AppCompatActivity() {
         }
 
         when (deviceType) {
-            DeviceTypeList.REFRIGERATOR -> {
+            DeviceTypeList.REFRIGERATOR,
+            DeviceTypeList.TV -> {
                 if ((energyConsumption != 0.0F) && (amountOfCO2Emission != 0.0F)) {
                     // 에너지 소비전력과 CO2 배출량을 모두 찾았을 경우
                     val intent = Intent()
@@ -135,34 +137,6 @@ class LivePreviewActivity : AppCompatActivity() {
                     // 두 가지 정보를 intent에 저장
                     intent.putExtra("energyConsumption", energyConsumption)
                     intent.putExtra("amountOfCO2", amountOfCO2Emission)
-                    setResult(GET_ENERGY_CONSUMPTION_AND_CO2, intent)
-                    finish()
-                }
-            }
-            DeviceTypeList.TV -> {
-                if (amountOfCO2Map.isNotEmpty() && energyConsumptionMap.isNotEmpty()) {
-                    var maxCount = 0
-                    var energyConsumption = 0.0F
-                    var amountOfCO2 = 0.0F
-
-                    for (entry in energyConsumptionMap) {
-                        if (entry.value > maxCount) {
-                            maxCount = entry.value
-                            energyConsumption = entry.key
-                        }
-                    }
-
-                    maxCount = 0
-                    for (entry in amountOfCO2Map) {
-                        if (entry.value > maxCount) {
-                            maxCount = entry.value
-                            amountOfCO2 = entry.key
-                        }
-                    }
-
-                    val intent = Intent()
-                    intent.putExtra("energyConsumption", energyConsumption)
-                    intent.putExtra("amountOfCO2", amountOfCO2)
                     setResult(GET_ENERGY_CONSUMPTION_AND_CO2, intent)
                     finish()
                 }
@@ -175,9 +149,7 @@ class LivePreviewActivity : AppCompatActivity() {
                     finish()
                 }
             }
-            else -> {
-
-            }
+            else -> {}
         }
     }
 
@@ -271,10 +243,8 @@ class LivePreviewActivity : AppCompatActivity() {
             // 에너지 소비전력 설명 및 단위가 있는 위치를 찾았을 경우
             // 에너지 소비전력에 해당하는 텍스트를 추출
             if (energyConsumptionDescriptionPosition != null && energyConsumptionUnitPosition != null) {
-                if (checkLineUpHorizontal(
-                        energyConsumptionDescriptionPosition,
-                        lineFrame,
-                        energyConsumptionUnitPosition)) {
+                if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)
+                    && isRectContainsOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
                     // 현재 인식된 텍스트의 위치는 에너지 소비전력 설명과 단위 사이에 있음
                     var energyConsumptionText = ""
 
@@ -303,10 +273,8 @@ class LivePreviewActivity : AppCompatActivity() {
             // CO2 배출량 설명 및 단위가 있는 위치를 찾았을 경우
             // CO2 배출량에 해당하는 텍스트를 추출
             if (amountOfCO2DescriptionPosition != null && amountOfCO2UnitPosition != null) {
-                if (checkLineUpHorizontal(
-                        amountOfCO2DescriptionPosition,
-                        lineFrame,
-                        amountOfCO2UnitPosition)) {
+                if (checkLineUpHorizontal(amountOfCO2DescriptionPosition, lineFrame, amountOfCO2UnitPosition)
+                    && isRectContainsOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
                     // 현재 인식된 텍스트의 위치는 CO2 배출량 설명과 단위 사이에 있음
                     var amountOfCO2EmissionText = ""
 
@@ -344,50 +312,160 @@ class LivePreviewActivity : AppCompatActivity() {
         }
     }
 
-    private fun onTextFoundTV(foundText: String) {
-        if (foundText.length >= 7) {
-            try {
-                val text = foundText.replace(" ", "") // 소비전력:28.2W
-                if ((text.substring(0, 4) == "소비전력") && text.last() == 'W') {
-                    val length = text.length
-                    val energyConsumptionText = text.substring(5, length - 1).toFloatOrNull()
-                    if (energyConsumptionText != null) { // 숫자로 변환이 가능한 경우
-                        val cnt = energyConsumptionMap[energyConsumptionText]
-                        if (cnt != null) {
-                            energyConsumptionMap[energyConsumptionText] = cnt + 1
-                        } else {
-                            energyConsumptionMap[energyConsumptionText] = 1
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.d("라이브프리뷰", e.toString())
+    private fun onTextFoundTV(foundText: String, lineFrame: Rect?) {
+        if (lineFrame != null) {
+            // foundText에 있는 공백 제거
+            var text = foundText.replace(" ", "")
+
+            // 로그 출력
+            Log.d("라이브프리뷰", "텍스트: $text")
+
+            var length = text.length
+
+            // 아래와 같이 텍스트를 추출하는 경우가 발생
+            // 1. 설명
+            // 예: 소비전력
+            // 예: CO2
+            // 2. 값
+            // 예: 28.2
+            // 예: 10
+            // 3. 단위
+            // 예: W
+            // 예: g/시간
+            // 4. 설명 + 값
+            // 예: 소비전력28.2
+            // 예: CO210
+            // 5. 값 + 단위
+            // 예: 28.2W
+            // 예: 10g/시간
+            // 6. 설명 + 값 + 단위
+            // 예: 소비전력28.2W
+            // 예: CO210g/시간
+
+            // 에너지 소비전력 설명 텍스트 인식
+            // 경우 1, 4, 6
+            var res = findPattern(text, "소비전력")
+            if (res[0] != -1 && res[1] != -1) {
+                // 에너지 소비전력 설명에 해당하는 텍스트를 찾음
+                // 에너지 소비전력 설명이 있는 위치 저장
+                energyConsumptionDescriptionPosition = lineFrame
+                Log.d("라이브프리뷰", "에너지 소비전력 설명 위치 확인")
             }
-        } else if (foundText.length >= 4) {
-            try {
-                val text = foundText.replace(" ", "") // 10g시간 or 10g/시간
-                val length = text.length
-                if (length >= 4) {
-                    var amountOfCO2Text: Float? = null
-                    if (text.substring(length - 4, length) == "g/시간") {
-                        amountOfCO2Text = text.substring(0, length - 4).toFloatOrNull()
-                    } else if (text.substring(length - 3, length) == "g시간") {
-                        amountOfCO2Text = text.substring(0, length - 3).toFloatOrNull()
+
+            // 에너지 소비전력 단위 텍스트 인식
+            // 경우 3, 5, 6
+            // TV의 경우 맨 마지막에 W가 있는지만 확인하면 됨
+            if (text[length - 1] == 'W') {
+                energyConsumptionUnitPosition = lineFrame
+                Log.d("라이브프리뷰", "에너지 소비전력 단위 위치 확인")
+            }
+
+            // CO2 배출량 설명 텍스트 인식
+            // 경우 1, 4, 6
+            res = findPattern(text, "CO2")
+            if (res[0] != -1 && res[1] != -1) {
+                // CO2 배출량 설명에 해당하는 텍스트를 찾음
+                // CO2 배출량 설명이 있는 위치 저장
+                amountOfCO2DescriptionPosition = lineFrame
+                Log.d("라이브프리뷰", "CO2 배출량 설명 위치 확인")
+            }
+
+            // CO2 배출량 단위 텍스트 인식
+            // 경우 3, 5, 6
+            res = findPattern(text, "g/시간")
+            if (res[0] != -1 && res[1] != -1) {
+                // CO2 배출량 단위에 해당하는 텍스트를 찾음
+                // CO2 배출량 단위가 있는 위치 저장
+                amountOfCO2UnitPosition = lineFrame
+                Log.d("라이브프리뷰", "CO2 배출량 단위 위치 확인")
+            } else {
+                res = findPattern(text, "g시간")
+                if (res[0] != -1 && res[1] != -1) {
+                    // CO2 배출량 단위에 해당하는 텍스트를 찾음
+                    // CO2 배출량 단위가 있는 위치 저장
+                    amountOfCO2UnitPosition = lineFrame
+                    Log.d("라이브프리뷰", "CO2 배출량 단위 위치 확인")
+                }
+            }
+
+            // 에너지 소비전력 설명 및 단위가 있는 위치를 찾았을 경우
+            // 에너지 소비전력에 해당하는 텍스트를 추출
+            if (energyConsumptionDescriptionPosition != null && energyConsumptionUnitPosition != null) {
+                if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)
+                    && isRectContainsOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
+                    // 현재 인식된 텍스트의 위치는 에너지 소비전력 설명과 단위 사이에 있음
+                    var energyConsumptionText = ""
+
+                    // text에서 소비전력을 찾음
+                    // 소비전력 이후에 적혀있는 문자만 인정
+                    res = findPattern(text, "소비전력")
+                    if (res[0] != -1 && res[1] != -1) {
+                        text = text.substring(res[1])
+
+                        // 문자열 길이 재설정
+                        length = text.length
                     }
 
-                    if ((amountOfCO2Text != null) && (amountOfCO2Text > 1.0F)) { // 숫자로 변환할 수 있으며 CO2 배출량이 1 보다 큰 경우
-                        val cnt = amountOfCO2Map[amountOfCO2Text]
-                        if (cnt != null) {
-                            amountOfCO2Map[amountOfCO2Text] = cnt + 1
-                        } else {
-                            amountOfCO2Map[amountOfCO2Text] = 1
+                    for (idx in 0 until length) {
+                        if (text[idx] == '.') {
+                            // 소수점의 경우 정상적으로 인식
+                            energyConsumptionText += '.'
+                        } else if (text[idx].digitToIntOrNull() != null) {
+                            energyConsumptionText += text[idx].digitToInt()
                         }
                     }
+
+                    Log.d("라이브프리뷰", "에너지 소비전력 텍스트 추출")
+                    Log.d("라이브프리뷰", energyConsumptionText)
+
+                    val _energyConsumption = energyConsumptionText.toFloatOrNull()
+
+                    if ((_energyConsumption != null) && (_energyConsumption > 0.0F)) {
+                        energyConsumption = _energyConsumption
+                        Log.d("라이브프리뷰", "pass(energy): $energyConsumption")
+                        return
+                    }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.d("라이브프리뷰", e.toString())
+            }
+
+            // CO2 배출량 설명 및 단위가 있는 위치를 찾았을 경우
+            // CO2 배출량에 해당하는 텍스트를 추출
+            if (amountOfCO2DescriptionPosition != null && amountOfCO2UnitPosition != null) {
+                if (checkLineUpHorizontal(amountOfCO2DescriptionPosition, lineFrame, amountOfCO2UnitPosition)
+                    && isRectContainsOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
+                    // 현재 인식된 텍스트의 위치는 CO2 배출량 설명과 단위 사이에 있음
+                    var amountOfCO2EmissionText = ""
+
+                    // text에서 CO2를 찾아서 제거
+                    // 맨 마지막에 있는 2를 숫자로 인식하는 것을 방지
+                    res = findPattern(text, "CO2")
+                    if (res[0] != -1 && res[1] != -1) {
+                        text = text.substring(res[1])
+
+                        // 문자열 길이 재설정
+                        length = text.length
+                    }
+
+                    for (idx in 0 until length) {
+                        if (text[idx] == '.') {
+                            // 소수점의 경우 정상적으로 인식
+                            amountOfCO2EmissionText += '.'
+                        } else if (text[idx].digitToIntOrNull() != null) {
+                            amountOfCO2EmissionText += text[idx].digitToInt()
+                        }
+                    }
+
+                    Log.d("라이브프리뷰", "CO2 배출량 텍스트 추출")
+                    Log.d("라이브프리뷰", amountOfCO2EmissionText)
+
+                    val _amountOfCO2EmissionText = amountOfCO2EmissionText.toFloatOrNull()
+
+                    if ((_amountOfCO2EmissionText != null) && (_amountOfCO2EmissionText > 0.0F)) {
+                        amountOfCO2Emission = _amountOfCO2EmissionText
+                        Log.d("라이브프리뷰", "pass(CO2): $amountOfCO2Emission")
+                        return
+                    }
+                }
             }
         }
     }
