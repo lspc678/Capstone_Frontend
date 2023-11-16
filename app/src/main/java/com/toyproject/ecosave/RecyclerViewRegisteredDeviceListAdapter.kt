@@ -44,7 +44,7 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
         when (list[position].deviceType) {
             DeviceTypeList.REFRIGERATOR -> holder.imageDevice.setImageResource(R.drawable.img_refrigerator)
             DeviceTypeList.AIR_CONDITIONER -> holder.imageDevice.setImageResource(R.drawable.img_air_conditioner)
-            DeviceTypeList.TV -> holder.imageDevice.setImageResource(R.drawable.ic_tv)
+            DeviceTypeList.TV -> holder.imageDevice.setImageResource(R.drawable.img_tv)
             DeviceTypeList.WASHING_MACHINE -> holder.imageDevice.setImageResource(R.drawable.img_washing_machine)
             DeviceTypeList.MICROWAVE_OVEN -> holder.imageDevice.setImageResource(R.drawable.img_microwave_oven)
             DeviceTypeList.BOILER -> holder.imageDevice.setImageResource(R.drawable.img_boiler)
