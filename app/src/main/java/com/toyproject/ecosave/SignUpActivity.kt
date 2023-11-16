@@ -24,7 +24,7 @@ class SignUpActivity : AppCompatActivity() {
 
             // Log.d("이메일 인증", binding.textInputEmail.text.toString())
 
-            api.signUp(binding.textInputEmail.text.toString()).enqueue(
+            api.signUp(binding.editTextForEmail.text.toString()).enqueue(
                 object : Callback<SignUpSendMailResponse> {
                     override fun onResponse(
                         call: Call<SignUpSendMailResponse>,
