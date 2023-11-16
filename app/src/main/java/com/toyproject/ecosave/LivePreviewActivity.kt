@@ -122,6 +122,9 @@ class LivePreviewActivity : AppCompatActivity() {
             DeviceTypeList.MICROWAVE_OVEN -> {
                 onTextFoundMicrowaveOven(foundText, lineFrame)
             }
+            DeviceTypeList.BOILER -> {
+                onTextFoundBoiler(foundText, lineFrame)
+            }
             else -> {
 
             }
@@ -142,7 +145,8 @@ class LivePreviewActivity : AppCompatActivity() {
                     finish()
                 }
             }
-            DeviceTypeList.MICROWAVE_OVEN -> {
+            DeviceTypeList.MICROWAVE_OVEN,
+            DeviceTypeList.BOILER-> {
                 if (energyConsumption != 0.0F) {
                     val intent = Intent()
                     intent.putExtra("energyConsumption", energyConsumption)
@@ -679,6 +683,99 @@ class LivePreviewActivity : AppCompatActivity() {
                     if (_energyConsumption != null) {
                         energyConsumption = _energyConsumption
                         Log.d("라이브프리뷰", "pass: $energyConsumption")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun onTextFoundBoiler(foundText: String, lineFrame: Rect?) {
+        if (lineFrame != null) {
+            // foundText에 있는 공백 제거
+            var text = foundText.replace(" ", "")
+
+            // 로그 출력
+            Log.d("라이브프리뷰", "텍스트: $text")
+
+            var length = text.length
+
+            // 아래와 같이 텍스트를 추출하는 경우가 발생
+            // 1. 설명
+            // 예: 난방열효율
+            //
+            // 2. 값
+            // 예: 92.4
+            //
+            // 3. 단위
+            // 예: %
+            //
+            // 4. 설명 + 값
+            // 예: 난방열효율92.4
+            //
+            // 5. 값 + 단위
+            // 예: 92.4%
+            //
+            // 6. 설명 + 값 + 단위
+            // 예: 난방열효율92.4%
+
+            // 에너지 소비전력 설명 텍스트 인식
+            // 경우 1, 4, 6
+            val res = findPattern(text, "난방열효율")
+            if (res[0] != -1 && res[1] != -1) {
+                // 에너지 소비전력 설명에 해당하는 텍스트를 찾음
+                // 에너지 소비전력 설명이 있는 위치 저장
+                energyConsumptionDescriptionPosition = lineFrame
+                Log.d("라이브프리뷰", "에너지 소비전력 설명 위치 확인")
+            }
+
+            // 에너지 소비전력 단위 텍스트 인식
+            // 경우 3, 5, 6
+            // 보일러의 경우 맨 마지막에 %가 있는지만 확인하면 됨
+            if (text[length - 1] == '%') {
+                energyConsumptionUnitPosition = lineFrame
+                Log.d("라이브프리뷰", "에너지 소비전력 단위 위치 확인")
+            }
+
+            // 에너지 소비전력 설명 및 단위가 있는 위치를 찾았을 경우
+            // 에너지 소비전력에 해당하는 텍스트를 추출
+            if (energyConsumptionDescriptionPosition != null && energyConsumptionUnitPosition != null) {
+                if (checkLineUpHorizontal(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)
+                    && isRectReachesOtherRects(energyConsumptionDescriptionPosition, lineFrame, energyConsumptionUnitPosition)) {
+                    // 현재 인식된 텍스트의 위치는 에너지 소비전력 설명과 단위 사이에 있음
+                    var energyConsumptionText = ""
+                    
+                    // 맨 마지막에 %가 있을 경우 제거
+                    if (text[length - 1] == '%') {
+                        text = text.substring(0, length - 1)
+
+                        // 문자열 길이 재설정
+                        length = text.length
+                    }
+
+                    for (idx in 0 until length) {
+                        if (text[idx] == '.') {
+                            // 소수점의 경우 정상적으로 인식
+                            energyConsumptionText += '.'
+                        } else if (text[idx].digitToIntOrNull() != null) {
+                            energyConsumptionText += text[idx].digitToInt()
+                        } else {
+                            energyConsumptionText = ""
+                        }
+                    }
+
+                    Log.d("라이브프리뷰", "에너지 소비전력 텍스트 추출")
+                    Log.d("라이브프리뷰", energyConsumptionText)
+
+                    val _energyConsumption = energyConsumptionText.toFloatOrNull()
+
+                    if ((_energyConsumption != null)
+                        && (_energyConsumption > 75.0F)
+                        && (_energyConsumption < 97.0F)) {
+                        // 최소 난방열효율을 75%로 설정
+                        // 최대 난방열효율은 97%로 설정
+                        energyConsumption = _energyConsumption
+                        Log.d("라이브프리뷰", "pass(energy): $energyConsumption")
+                        return
                     }
                 }
             }
