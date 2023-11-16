@@ -67,6 +67,7 @@
                 android:layout_marginTop="15dp">
 
                 <TextView
+                    android:id="@+id/textPowerOfConsumeType"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/power_of_consume"
