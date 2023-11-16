@@ -3,7 +3,6 @@ package com.toyproject.ecosave
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 
 import android.view.LayoutInflater
 import android.view.View
@@ -24,6 +23,7 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageDevice: ImageView = itemView.findViewById(R.id.imageDevice)
         val textRelativeElectricPowerConsumeGrade: TextView = itemView.findViewById(R.id.textRelativeElectricPowerConsumeGrade)
+        val textPowerOfConsumeType: TextView = itemView.findViewById(R.id.textPowerOfConsumeType)
         val textPowerOfConsume: TextView = itemView.findViewById(R.id.textPowerOfConsume)
         val registeredDeviceListItem: CardView = itemView.findViewById(R.id.registeredDeviceListItem)
     }
@@ -45,10 +45,13 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
             DeviceTypeList.REFRIGERATOR -> holder.imageDevice.setImageResource(R.drawable.img_refrigerator)
             DeviceTypeList.AIR_CONDITIONER -> holder.imageDevice.setImageResource(R.drawable.img_air_conditioner)
             DeviceTypeList.TV -> holder.imageDevice.setImageResource(R.drawable.ic_tv)
+            DeviceTypeList.WASHING_MACHINE -> holder.imageDevice.setImageResource(R.drawable.img_washing_machine)
+            DeviceTypeList.MICROWAVE_OVEN -> holder.imageDevice.setImageResource(R.drawable.img_microwave_oven)
             DeviceTypeList.BOILER -> holder.imageDevice.setImageResource(R.drawable.img_boiler)
             else -> holder.imageDevice.setImageResource(R.drawable.ic_image)
         }
 
+        holder.textPowerOfConsumeType.text = getPowerOfConsumeUnit(list[position].deviceType)["description"]
         holder.textPowerOfConsume.text = "${list[position].powerOfConsume} ${getPowerOfConsumeUnit(list[position].deviceType)["symbol"]}"
 
         when (list[position].relativeElectricPowerConsumeGrade) {
@@ -72,6 +75,8 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
                 DeviceTypeList.REFRIGERATOR -> intent.putExtra("deviceType", DeviceTypeList.REFRIGERATOR)
                 DeviceTypeList.AIR_CONDITIONER -> intent.putExtra("deviceType", DeviceTypeList.AIR_CONDITIONER)
                 DeviceTypeList.TV -> intent.putExtra("deviceType", DeviceTypeList.TV)
+                DeviceTypeList.WASHING_MACHINE -> intent.putExtra("deviceType", DeviceTypeList.WASHING_MACHINE)
+                DeviceTypeList.MICROWAVE_OVEN -> intent.putExtra("deviceType", DeviceTypeList.MICROWAVE_OVEN)
                 DeviceTypeList.BOILER -> intent.putExtra("deviceType", DeviceTypeList.BOILER)
                 else -> {}
             }
