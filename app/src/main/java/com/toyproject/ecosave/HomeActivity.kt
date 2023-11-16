@@ -103,16 +103,23 @@ class HomeActivity : AppCompatActivity() {
         list.add(data)
 
         data = RelativeGradeData(
-            DeviceTypeList.AIR_CONDITIONER,
-            4, 28, 195.2F,
-            5, 42, 77.4F
+            DeviceTypeList.WASHING_MACHINE,
+            3, 21, 62.8F,
+            3, 17, 219.0F
         )
         list.add(data)
 
         data = RelativeGradeData(
-            DeviceTypeList.AIR_CONDITIONER,
-            6, 64, 195.2F,
-            7, 81, 77.4F
+            DeviceTypeList.MICROWAVE_OVEN,
+            4, 28, 1200.0F,
+            null, null, null
+        )
+        list.add(data)
+
+        data = RelativeGradeData(
+            DeviceTypeList.TV,
+            6, 64, 153.0F,
+            7, 81, 65.0F
         )
         list.add(data)
 
