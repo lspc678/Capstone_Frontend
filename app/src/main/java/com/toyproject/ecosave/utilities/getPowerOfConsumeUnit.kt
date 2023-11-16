@@ -25,8 +25,8 @@ fun getPowerOfConsumeUnit(deviceType: DeviceTypeList?) : Map<String, String> {
             "symbol" to "W"
         )
         DeviceTypeList.BOILER -> mapOf(
-            "description" to "정격소비전력",
-            "symbol" to "W"
+            "description" to "난방열효율",
+            "symbol" to "%"
         )
         else -> mapOf(
             "description" to "Error",
