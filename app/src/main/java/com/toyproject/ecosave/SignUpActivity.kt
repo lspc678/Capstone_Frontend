@@ -1,8 +1,12 @@
 package com.toyproject.ecosave
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.util.Patterns
+import androidx.core.view.isEmpty
+import androidx.core.view.isNotEmpty
 import com.toyproject.ecosave.apis.SignUpAPI
 import com.toyproject.ecosave.databinding.ActivitySignUpBinding
 import com.toyproject.ecosave.models.SignUpSendMailResponse
@@ -20,6 +24,22 @@ class SignUpActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.btnSendAuthentication.setOnClickListener {
+            val intent = Intent(this, EmailAuthenticationActivity::class.java)
+            val email = binding.editTextForEmail.text.toString()
+
+            // 유효한 이메일 주소인지 확인
+            if (email.isNotEmpty()
+                && Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                // 유효한 이메일
+                intent.putExtra("email", email)
+                startActivity(intent)
+            } else if (email.isEmpty()) {
+                simpleDialog(this, "이메일 인증", "이메일 주소를 입력해 주세요.")
+            } else {
+                simpleDialog(this, "이메일 인증", "유효한 이메일 주소가 아닙니다.")
+            }
+
+            /*
             val api = SignUpAPI.create()
 
             // Log.d("이메일 인증", binding.textInputEmail.text.toString())
@@ -77,6 +97,7 @@ class SignUpActivity : AppCompatActivity() {
                     }
                 }
             )
+            */
         }
     }
 }
