@@ -34,4 +34,8 @@
     <string name="nickname_kor">닉네임</string>
     <string name="password_confirm_kor">비밀번호 확인</string>
     <string name="finish_signup">회원가입 완료</string>
+    <string name="email_authentication">이메일 인증</string>
+    <string name="enter_6digit_verification_number">인증번호 6자리를 입력해 주세요.</string>
+    <string name="authentication_confirmation_email_has_been_sent">인증 확인 메일이 전송되었습니다.</string>
+    <string name="finish_email_authentication">이메일 인증 완료</string>
 </resources>
