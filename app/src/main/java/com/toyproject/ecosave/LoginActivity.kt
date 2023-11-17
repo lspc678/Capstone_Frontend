@@ -20,6 +20,7 @@ import com.toyproject.ecosave.test.TestMainActivity
 import com.toyproject.ecosave.test.testapis.TestAPI
 import com.toyproject.ecosave.test.testmodels.TestRequestPost
 import com.toyproject.ecosave.test.testmodels.TestResponsePost
+import com.toyproject.ecosave.widget.simpleDialog
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -28,6 +29,11 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.textRegister.setOnClickListener {
+            val intent = Intent(this, SignUpActivity::class.java)
+            startActivity(intent)
+        }
 
         // 로그인 버튼 클릭시
         binding.btnLogin.setOnClickListener {
@@ -45,17 +51,25 @@ class LoginActivity : AppCompatActivity() {
                 ) {
                     if (response.isSuccessful) {
                         val result = response.body()
-                        Log.d("로그인 성공", "$result")
+                        if (result?.success == "true") {
+                            Log.d("로그인", "$result")
 
-                        val intent = Intent(this@LoginActivity, HomeActivity::class.java)
-                        startActivity(intent)
-                        finish()
+                            val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        } else {
+                            simpleDialog(
+                                this@LoginActivity,
+                                "로그인 실패",
+                                "이메일 또는 비밀번호가 맞지 않습니다."
+                            )
+                        }
                     }
                 }
 
                 override fun onFailure(call: Call<LoginResponseBody>, t: Throwable) {
                     Toast.makeText(this@LoginActivity, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
-                    Log.d("로그인 실패", t.message.toString())
+                    Log.d("로그인", t.message.toString())
                 }
             })
         }
