@@ -3,17 +3,9 @@ package com.toyproject.ecosave
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.util.Patterns
-import androidx.core.view.isEmpty
-import androidx.core.view.isNotEmpty
-import com.toyproject.ecosave.apis.SignUpAPI
 import com.toyproject.ecosave.databinding.ActivitySignUpBinding
-import com.toyproject.ecosave.models.SignUpSendMailResponse
 import com.toyproject.ecosave.widget.simpleDialog
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 class SignUpActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySignUpBinding
