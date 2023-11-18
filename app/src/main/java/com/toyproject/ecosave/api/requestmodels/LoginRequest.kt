@@ -1,6 +1,6 @@
-package com.toyproject.ecosave.models
+package com.toyproject.ecosave.api.requestmodels
 
-data class LoginRequestBody(
+data class LoginRequest(
     val mail: String,
     val pw: String
 )

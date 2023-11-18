@@ -1,6 +1,6 @@
-package com.toyproject.ecosave.apis.naverapi
+package com.toyproject.ecosave.api.naver
 
-import com.toyproject.ecosave.models.ReverseGeocodingResponse
+import com.toyproject.ecosave.api.responsemodels.ReverseGeocodingResponse
 
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient

@@ -1,6 +1,6 @@
-package com.toyproject.ecosave.apis
+package com.toyproject.ecosave.api
 
-import com.toyproject.ecosave.apis.responsemodel.EmailAuthenticationResponseBody
+import com.toyproject.ecosave.api.responsemodels.EmailAuthenticationResponse
 
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -18,7 +18,7 @@ interface EmailAuthenticationAPI {
     @GET("account/sign-up/certification")
     fun call(
         @Query("mail") mail: String,
-        @Query("code") code: String) : Call<EmailAuthenticationResponseBody>
+        @Query("code") code: String) : Call<EmailAuthenticationResponse>
 
     companion object {
         private const val BASE_URL = "http://13.125.246.213:8000/"

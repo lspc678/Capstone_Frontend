@@ -26,11 +26,11 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
-import com.toyproject.ecosave.apis.naverapi.ReverseGeocodingAPI
+import com.toyproject.ecosave.api.naver.ReverseGeocodingAPI
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RelativeGradeData
-import com.toyproject.ecosave.models.ReverseGeocodingResponse
+import com.toyproject.ecosave.api.responsemodels.ReverseGeocodingResponse
 import com.toyproject.ecosave.widget.createDialog
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog

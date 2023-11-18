@@ -1,4 +1,4 @@
-package com.toyproject.ecosave.models
+package com.toyproject.ecosave.api.responsemodels
 
 data class SignUpSendMailResponse(
     val success: Boolean,

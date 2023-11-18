@@ -1,6 +1,6 @@
-package com.toyproject.ecosave.apis
+package com.toyproject.ecosave.api
 
-import com.toyproject.ecosave.models.SignUpSendMailResponse
+import com.toyproject.ecosave.api.responsemodels.SignUpSendMailResponse
 
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient

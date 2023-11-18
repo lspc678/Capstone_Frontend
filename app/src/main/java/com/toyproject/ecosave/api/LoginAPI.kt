@@ -1,7 +1,7 @@
-package com.toyproject.ecosave.apis
+package com.toyproject.ecosave.api
 
-import com.toyproject.ecosave.models.LoginRequestBody
-import com.toyproject.ecosave.models.LoginResponseBody
+import com.toyproject.ecosave.api.requestmodels.LoginRequest
+import com.toyproject.ecosave.api.responsemodels.LoginResponse
 
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -17,7 +17,7 @@ import retrofit2.http.POST
 interface LoginAPI {
     @Headers("Content-Type: application/json")
     @POST("account/log-in")
-    fun postLogin(@Body userInfo: LoginRequestBody) : Call<LoginResponseBody>
+    fun postLogin(@Body userInfo: LoginRequest) : Call<LoginResponse>
 
     companion object {
         private const val BASE_URL = "http://13.125.246.213:8000/"

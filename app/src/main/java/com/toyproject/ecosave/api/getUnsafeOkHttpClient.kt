@@ -1,4 +1,4 @@
-package com.toyproject.ecosave.apis
+package com.toyproject.ecosave.api
 
 import android.annotation.SuppressLint
 import okhttp3.OkHttpClient

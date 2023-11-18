@@ -1,8 +1,8 @@
-package com.toyproject.ecosave.models
+package com.toyproject.ecosave.api.responsemodels
 
 import com.google.gson.annotations.SerializedName
 
-data class LoginResponseBody(
+data class LoginResponse(
     @SerializedName("success")
     val success: String?,
     @SerializedName("message")
