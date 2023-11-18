@@ -1,14 +1,16 @@
 package com.toyproject.ecosave
 
+import android.annotation.SuppressLint
+import android.content.DialogInterface
 import androidx.appcompat.app.AppCompatActivity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 
 import com.toyproject.ecosave.databinding.ActivityLoginBinding
-import com.toyproject.ecosave.apis.LoginAPI
-import com.toyproject.ecosave.models.LoginRequestBody
-import com.toyproject.ecosave.models.LoginResponseBody
+import com.toyproject.ecosave.api.LoginAPI
+import com.toyproject.ecosave.api.requestmodels.LoginRequest
+import com.toyproject.ecosave.api.responsemodels.LoginResponse
 
 import retrofit2.Call
 import retrofit2.Callback
@@ -17,9 +19,12 @@ import retrofit2.Response
 // 테스트용 (정식 버전에서는 삭제 예정)
 import android.util.Log
 import com.toyproject.ecosave.test.TestMainActivity
-import com.toyproject.ecosave.test.testapis.TestAPI
-import com.toyproject.ecosave.test.testmodels.TestRequestPost
-import com.toyproject.ecosave.test.testmodels.TestResponsePost
+import com.toyproject.ecosave.test.api.TestAPIClient
+import com.toyproject.ecosave.test.api.TestAPIInterface
+import com.toyproject.ecosave.test.api.requestmodel.TestLoginRequest
+import com.toyproject.ecosave.test.api.responsemodel.TestLoginResponse
+import com.toyproject.ecosave.widget.createDialog
+import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
 
 class LoginActivity : AppCompatActivity() {
@@ -39,15 +44,15 @@ class LoginActivity : AppCompatActivity() {
         binding.btnLogin.setOnClickListener {
             val api = LoginAPI.create()
 
-            val userData = LoginRequestBody(
+            val userData = LoginRequest(
                 binding.textInputEmail.editText?.text.toString(),
                 binding.textInputPassword.editText?.text.toString()
             )
 
-            api.postLogin(userData).enqueue(object : Callback<LoginResponseBody> {
+            api.postLogin(userData).enqueue(object : Callback<LoginResponse> {
                 override fun onResponse(
-                    call: Call<LoginResponseBody>,
-                    response: Response<LoginResponseBody>
+                    call: Call<LoginResponse>,
+                    response: Response<LoginResponse>
                 ) {
                     if (response.isSuccessful) {
                         val result = response.body()
@@ -67,7 +72,7 @@ class LoginActivity : AppCompatActivity() {
                     }
                 }
 
-                override fun onFailure(call: Call<LoginResponseBody>, t: Throwable) {
+                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                     Toast.makeText(this@LoginActivity, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
                     Log.d("로그인", t.message.toString())
                 }
@@ -76,29 +81,66 @@ class LoginActivity : AppCompatActivity() {
 
         // 게스트로 로그인 (테스트용 버튼이며 정식 버전에서는 삭제 예정)
         binding.btnLoginForGuest.setOnClickListener {
+            val userData = TestLoginRequest(
+                binding.textInputEmail.editText?.text.toString(),
+                binding.textInputPassword.editText?.text.toString()
+            )
+
             // 테스팅용 API를 날림
-            val api = TestAPI.create()
+            val apiInterface = TestAPIClient.getClient().create(TestAPIInterface::class.java)
+            val call = apiInterface.login(userData)
+            call.enqueue(
+                object : Callback<TestLoginResponse> {
+                    @SuppressLint("SetTextI18n")
+                    override fun onResponse(
+                        call: Call<TestLoginResponse>,
+                        response: Response<TestLoginResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            // status code가 200 ~ 299일 때
+                            val result = response.body()
+                            Log.d("API 테스트", "결과: 성공 (statusCode: ${response.code()})")
+                            Log.d("API 테스트", result.toString())
 
-            api.postUser(TestRequestPost("pawan", "programmer")).enqueue(object : Callback<TestResponsePost> {
-                override fun onResponse(
-                    call: Call<TestResponsePost>,
-                    response: Response<TestResponsePost>
-                ) {
-                    if (response.isSuccessful) {
-                        val result = response.body()
-                        Log.d("테스트 로그인 성공", "$result")
+                            val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        } else {
+                            // status code가 200 ~ 299가 아닐 때
 
-                        val intent = Intent(this@LoginActivity, HomeActivity::class.java)
-                        startActivity(intent)
-                        finish()
+                            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                                binding.editTextForEmail.setText("eve.holt@reqres.in")
+                                binding.editTextForPassword.setText("cityslicka")
+                            }
+
+                            createDialog(
+                                this@LoginActivity,
+                                "로그인 실패",
+                                "이메일 또는 비밀번호가 맞지 않습니다.\n" +
+                                        "자동으로 테스트용 이메일, 비밀번호를 입력하시겠습니까?\n\n" +
+                                        "테스트용 이메일: eve.holt@reqres.in\n테스트용 비밀번호: cityslicka",
+                                positiveButtonOnClickListener,
+                                defaultNegativeDialogInterfaceOnClickListener
+                            )
+
+                            Log.d("API 테스트", "결과: 실패 (statusCode: ${response.code()})")
+                            Log.d("API 테스트", response.message())
+                        }
+                    }
+
+                    override fun onFailure(call: Call<TestLoginResponse>, t: Throwable) {
+                        simpleDialog(
+                            this@LoginActivity,
+                            "로그인 실패",
+                            "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해주세요."
+                        )
+                        Log.d("API 테스트", "결과: 실패")
+                        if (t.message != null) {
+                            Log.d("API 테스트", t.message!!)
+                        }
                     }
                 }
-
-                override fun onFailure(call: Call<TestResponsePost>, t: Throwable) {
-                    Toast.makeText(this@LoginActivity, "테스트 로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
-                    Log.d("테스트 로그인 실패", t.message.toString())
-                }
-            })
+            )
         }
 
         // 개발자 도구 (테스트용 버튼이며 정식 버전에서는 삭제 예정)

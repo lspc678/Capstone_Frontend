@@ -43,6 +43,7 @@
             app:layout_constraintTop_toBottomOf="@id/textLogin">
 
             <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/editTextForEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/manrope_medium"
@@ -63,6 +64,7 @@
             app:layout_constraintTop_toBottomOf="@id/textInputEmail">
 
             <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/editTextForPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/manrope_medium"
