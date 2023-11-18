@@ -11,10 +11,11 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import androidx.appcompat.widget.AppCompatButton
-import com.toyproject.ecosave.apis.EmailAuthenticationAPI
+import com.toyproject.ecosave.api.APIClientForServer
+import com.toyproject.ecosave.api.APIInterface
 
 import com.toyproject.ecosave.databinding.ActivityEmailAuthenticationBinding
-import com.toyproject.ecosave.models.EmailAuthenticationResponseBody
+import com.toyproject.ecosave.api.responsemodels.EmailAuthenticationResponse
 import com.toyproject.ecosave.widget.simpleDialog
 
 import retrofit2.Call
@@ -129,13 +130,14 @@ class EmailAuthenticationActivity : AppCompatActivity() {
             }
 
             if (code.length == 6) {
-                val api = EmailAuthenticationAPI.create()
                 if (email != null) {
-                    api.call(email, code).enqueue(
-                        object : Callback<EmailAuthenticationResponseBody> {
+                    val apiInterface = APIClientForServer.getClient().create(APIInterface::class.java)
+                    val call = apiInterface.sendEmailAuthenticationRequest(email, code)
+                    call.enqueue(
+                        object : Callback<EmailAuthenticationResponse> {
                             override fun onResponse(
-                                call: Call<EmailAuthenticationResponseBody>,
-                                response: Response<EmailAuthenticationResponseBody>
+                                call: Call<EmailAuthenticationResponse>,
+                                response: Response<EmailAuthenticationResponse>
                             ) {
                                 if (response.isSuccessful) {
                                     // response code가 200 ~ 299일 때
@@ -165,7 +167,7 @@ class EmailAuthenticationActivity : AppCompatActivity() {
                             }
 
                             override fun onFailure(
-                                call: Call<EmailAuthenticationResponseBody>,
+                                call: Call<EmailAuthenticationResponse>,
                                 t: Throwable
                             ) {
                                 simpleDialog(
@@ -173,9 +175,11 @@ class EmailAuthenticationActivity : AppCompatActivity() {
                                     "통신 오류",
                                     "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해 주세요."
                                 )
-                                Log.d("이메일 인증 실패", t.message.toString())
+                                Log.d("이메일 인증", "결과: 실패")
+                                if (t.message != null) {
+                                    Log.d("이메일 인증", t.message!!)
+                                }
                             }
-
                         }
                     )
                 }
