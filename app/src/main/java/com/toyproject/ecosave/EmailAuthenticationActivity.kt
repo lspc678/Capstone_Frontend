@@ -5,13 +5,21 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import androidx.appcompat.widget.AppCompatButton
+import com.toyproject.ecosave.apis.EmailAuthenticationAPI
 
 import com.toyproject.ecosave.databinding.ActivityEmailAuthenticationBinding
+import com.toyproject.ecosave.models.EmailAuthenticationResponseBody
+import com.toyproject.ecosave.widget.simpleDialog
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class EmailAuthenticationActivity : AppCompatActivity() {
     private lateinit var binding: ActivityEmailAuthenticationBinding
@@ -84,9 +92,9 @@ class EmailAuthenticationActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
-        // window.setBackgroundDrawable(ColorDrawable(baseContext.resources.getColor(android.R.color.transparent)))
 
-        binding.textEmail.text = intent.getStringExtra("email")
+        val email = intent.getStringExtra("email")
+        binding.textEmail.text = email
 
         editTextVerificationNumber0 = binding.editTextVerificationNumber0
         editTextVerificationNumber1 = binding.editTextVerificationNumber1
@@ -108,14 +116,70 @@ class EmailAuthenticationActivity : AppCompatActivity() {
             editText.addTextChangedListener(textWatcher)
         }
 
-//        editTextVerificationNumber0.addTextChangedListener(textWatcher)
-//        editTextVerificationNumber1.addTextChangedListener(textWatcher)
-//        editTextVerificationNumber2.addTextChangedListener(textWatcher)
-//        editTextVerificationNumber3.addTextChangedListener(textWatcher)
-//        editTextVerificationNumber4.addTextChangedListener(textWatcher)
-//        editTextVerificationNumber5.addTextChangedListener(textWatcher)
-
         // 맨 왼쪽에 있는 입력칸에 대하여 키보드 창이 열리도록 설정
         showKeyboard(editTextVerificationNumber0)
+
+        // 이메일 인증 완료 버튼 클릭 시
+        binding.btnFinishEmailAuthentication.setOnClickListener {
+            var code = ""
+
+            // 입력한 인증번호를 code에 저장
+            for (editText in editTextVerificationNumber) {
+                code += editText.text.toString()
+            }
+
+            if (code.length == 6) {
+                val api = EmailAuthenticationAPI.create()
+                if (email != null) {
+                    api.call(email, code).enqueue(
+                        object : Callback<EmailAuthenticationResponseBody> {
+                            override fun onResponse(
+                                call: Call<EmailAuthenticationResponseBody>,
+                                response: Response<EmailAuthenticationResponseBody>
+                            ) {
+                                if (response.isSuccessful) {
+                                    // response code가 200 ~ 299일 때
+                                    val result = response.body()
+                                    if ((result != null) &&
+                                        (result.success == true)) {
+                                        simpleDialog(
+                                            this@EmailAuthenticationActivity,
+                                            "이메일 인증",
+                                            "이메일 인증에 성공하였습니다."
+                                        )
+                                    } else {
+                                        simpleDialog(
+                                            this@EmailAuthenticationActivity,
+                                            "이메일 인증",
+                                            "이메일 인증에 실패하였습니다. 다시 시도해주세요."
+                                        )
+                                    }
+                                } else {
+                                    // response code가 200 ~ 299가 아닐 때
+                                    simpleDialog(
+                                        this@EmailAuthenticationActivity,
+                                        "통신 오류",
+                                        "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해 주세요."
+                                    )
+                                }
+                            }
+
+                            override fun onFailure(
+                                call: Call<EmailAuthenticationResponseBody>,
+                                t: Throwable
+                            ) {
+                                simpleDialog(
+                                    this@EmailAuthenticationActivity,
+                                    "통신 오류",
+                                    "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해 주세요."
+                                )
+                                Log.d("이메일 인증 실패", t.message.toString())
+                            }
+
+                        }
+                    )
+                }
+            }
+        }
     }
 }
