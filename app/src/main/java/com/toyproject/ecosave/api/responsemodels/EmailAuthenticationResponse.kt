@@ -1,4 +1,4 @@
-package com.toyproject.ecosave.models
+package com.toyproject.ecosave.apis.responsemodel
 
 import com.google.gson.annotations.SerializedName
 

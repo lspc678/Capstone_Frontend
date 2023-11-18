@@ -1,6 +1,6 @@
 package com.toyproject.ecosave.apis
 
-import com.toyproject.ecosave.models.EmailAuthenticationResponseBody
+import com.toyproject.ecosave.apis.responsemodel.EmailAuthenticationResponseBody
 
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
