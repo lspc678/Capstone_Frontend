@@ -5,16 +5,20 @@ import android.content.DialogInterface
 import androidx.appcompat.app.AppCompatActivity
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 
 import com.toyproject.ecosave.databinding.ActivityLoginBinding
-import com.toyproject.ecosave.api.LoginAPI
 import com.toyproject.ecosave.api.requestmodels.LoginRequest
 import com.toyproject.ecosave.api.responsemodels.LoginResponse
 
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+
+import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
+import com.toyproject.ecosave.api.APIInterface
+import com.toyproject.ecosave.widget.createDialog
+import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
+import com.toyproject.ecosave.widget.simpleDialog
 
 // 테스트용 (정식 버전에서는 삭제 예정)
 import android.util.Log
@@ -23,9 +27,6 @@ import com.toyproject.ecosave.test.api.TestAPIClient
 import com.toyproject.ecosave.test.api.TestAPIInterface
 import com.toyproject.ecosave.test.api.requestmodel.TestLoginRequest
 import com.toyproject.ecosave.test.api.responsemodel.TestLoginResponse
-import com.toyproject.ecosave.widget.createDialog
-import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
-import com.toyproject.ecosave.widget.simpleDialog
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -42,41 +43,70 @@ class LoginActivity : AppCompatActivity() {
 
         // 로그인 버튼 클릭시
         binding.btnLogin.setOnClickListener {
-            val api = LoginAPI.create()
-
             val userData = LoginRequest(
                 binding.textInputEmail.editText?.text.toString(),
                 binding.textInputPassword.editText?.text.toString()
             )
 
-            api.postLogin(userData).enqueue(object : Callback<LoginResponse> {
-                override fun onResponse(
-                    call: Call<LoginResponse>,
-                    response: Response<LoginResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        val result = response.body()
-                        if (result?.success == "true") {
-                            Log.d("로그인", "$result")
+            val apiInterface = APIClientForServerByPassSSLCertificate
+                .getClient()
+                .create(APIInterface::class.java)
+            val call = apiInterface.login(userData)
 
-                            val intent = Intent(this@LoginActivity, HomeActivity::class.java)
-                            startActivity(intent)
-                            finish()
+            call.enqueue(
+                object : Callback<LoginResponse> {
+                    override fun onResponse(
+                        call: Call<LoginResponse>,
+                        response: Response<LoginResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            // status code가 200 ~ 299일 때
+                            val result = response.body()
+                            if (result != null) {
+                                if (result.success == true) {
+                                    Log.d("로그인", "$result")
+
+                                    val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+                                    startActivity(intent)
+                                    finish()
+                                } else {
+                                    simpleDialog(
+                                        this@LoginActivity,
+                                        "로그인 실패",
+                                        "이메일 또는 비밀번호가 맞지 않습니다."
+                                    )
+                                }
+                            }
                         } else {
-                            simpleDialog(
-                                this@LoginActivity,
-                                "로그인 실패",
-                                "이메일 또는 비밀번호가 맞지 않습니다."
-                            )
+                            // status code가 200 ~ 299가 아닐 때
+                            val errorResult = response.errorBody()
+                            val result = response.body()
+
+                            if (errorResult != null) {
+                                simpleDialog(
+                                    this@LoginActivity,
+                                    "로그인 실패",
+                                    "이메일 또는 비밀번호가 맞지 않습니다."
+                                )
+
+                                Log.d("로그인", "결과: 실패")
+                                Log.d("로그인", errorResult.string())
+                                Log.d("로그인", result.toString())
+                            }
                         }
                     }
-                }
 
-                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                    Toast.makeText(this@LoginActivity, "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show()
-                    Log.d("로그인", t.message.toString())
+                    override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                        simpleDialog(
+                            this@LoginActivity,
+                            "로그인 실패",
+                            "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해주세요."
+                        )
+                        Log.d("로그인", "결과: 실패")
+                        Log.d("로그인", t.message.toString())
+                    }
                 }
-            })
+            )
         }
 
         // 게스트로 로그인 (테스트용 버튼이며 정식 버전에서는 삭제 예정)

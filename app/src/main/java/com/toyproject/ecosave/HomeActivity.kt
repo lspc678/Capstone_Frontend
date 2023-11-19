@@ -26,7 +26,8 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
-import com.toyproject.ecosave.api.naver.ReverseGeocodingAPI
+import com.toyproject.ecosave.api.APIClientForNaverMap
+import com.toyproject.ecosave.api.APIInterface
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RelativeGradeData
@@ -202,11 +203,15 @@ class HomeActivity : AppCompatActivity() {
 
     // 현재 위치를 기반으로 지번 주소와 도로명 주소를 찾음
     private fun searchAddress(latitude: Double, longitude: Double) {
-        val api = ReverseGeocodingAPI.create()
-
         val coords = "$longitude,$latitude" // 경도, 위도
         Log.d("위치", coords)
-        api.searchAddressByPoint(coords, "json", "addr,roadaddr").enqueue(
+
+        val apiInterface = APIClientForNaverMap
+            .getClient()
+            .create(APIInterface::class.java)
+        val call = apiInterface.searchAddressByPoint(coords, "json", "addr,roadaddr")
+
+        call.enqueue(
             object : Callback<ReverseGeocodingResponse> {
                 override fun onResponse(
                     call: Call<ReverseGeocodingResponse>,
