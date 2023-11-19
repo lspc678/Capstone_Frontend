@@ -87,7 +87,7 @@
                     android:textColor="@color/black"
                     android:fontFamily="@font/outfit_bold" />
 
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp">
@@ -95,24 +95,23 @@
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
+                        android:layout_alignParentStart="true">
 
                         <ImageView
-                            android:id="@+id/energyConsumePyramid"
-                            android:layout_width="169dp"
-                            android:layout_height="164dp"
+                            android:id="@+id/CO2Pyramid"
+                            android:layout_width="170dp"
+                            android:layout_height="179dp"
                             android:src="@drawable/pyramid"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
+                            android:id="@+id/textCO2EmissionGrade"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="100dp"
-                            android:layout_marginTop="28dp"
+                            android:layout_marginStart="128dp"
+                            android:layout_marginTop="100dp"
                             android:fontFamily="@font/outfit_bold"
                             android:text=""
                             android:textSize="12sp"
@@ -123,32 +122,30 @@
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
+                        android:layout_alignParentEnd="true">
 
                         <ImageView
-                            android:id="@+id/CO2Pyramid"
-                            android:layout_width="169dp"
-                            android:layout_height="164dp"
+                            android:id="@+id/energyConsumePyramid"
+                            android:layout_width="170dp"
+                            android:layout_height="179dp"
                             android:src="@drawable/pyramid"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent" />
 
                         <TextView
-                            android:id="@+id/textCO2EmissionGrade"
+                            android:id="@+id/textEnergyConsumeGrade"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="90dp"
-                            android:layout_marginEnd="0dp"
+                            android:layout_marginStart="128dp"
+                            android:layout_marginTop="100dp"
                             android:fontFamily="@font/outfit_bold"
                             android:text=""
                             android:textSize="12sp"
-                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                </RelativeLayout>
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"

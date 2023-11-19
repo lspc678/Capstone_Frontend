@@ -1,6 +1,7 @@
 package com.toyproject.ecosave
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -14,6 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -32,6 +34,7 @@ import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RelativeGradeData
 import com.toyproject.ecosave.api.responsemodels.ReverseGeocodingResponse
+import com.toyproject.ecosave.utilities.fromDpToPx
 import com.toyproject.ecosave.widget.createDialog
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
@@ -62,8 +65,21 @@ class HomeActivity : AppCompatActivity() {
     )
 
     companion object {
-        const val REQUEST_CODE_PERMISSIONS = 1001
-        const val LOCATION_REQUEST_INTERVAL_MILLIS = (1000 * 100).toLong()
+        private const val REQUEST_CODE_PERMISSIONS = 1001
+        private const val LOCATION_REQUEST_INTERVAL_MILLIS = (1000 * 100).toLong()
+        private const val MARGIN_SIDE = 20.0F
+        private const val MARGIN_BETWEEN_PYRAMIDS = 10
+        private val MARGIN_TEXT = arrayOf(
+            arrayOf(92.0F, 5.0F),
+            arrayOf(100.0F, 31.0F),
+            arrayOf(100.0F, 31.0F),
+            arrayOf(108.0F, 54.0F),
+            arrayOf(108.0F, 54.0F),
+            arrayOf(118.0F, 76.0F),
+            arrayOf(118.0F, 76.0F),
+            arrayOf(128.0F, 100.0F),
+            arrayOf(128.0F, 100.0F)
+        )
     }
 
     private val locationCallback = object : LocationCallback() {
@@ -130,6 +146,173 @@ class HomeActivity : AppCompatActivity() {
             9, 97, 77.4F
         )
         list.add(data)
+
+        // 피라미드에 종합 에너지 소비 효율 등급을 나타냄
+        setPyramid()
+    }
+
+    // 피라미드에 종합 상대적 에너지 소비 효율 등급을 나타냄
+    @SuppressLint("SetTextI18n")
+    private fun setPyramid() {
+        // 피라미드 크기 조정
+        val metrics = resources.displayMetrics
+        val screenWidth = metrics.widthPixels
+        val width_margin_px = fromDpToPx(resources, MARGIN_SIDE)
+        val pyramidWidth = (screenWidth - 2 * width_margin_px - MARGIN_BETWEEN_PYRAMIDS) / 2
+        val pyramidHeight = pyramidWidth * 1.055
+
+        val paramsForCO2Pyramid = ConstraintLayout.LayoutParams(pyramidWidth, pyramidHeight.toInt())
+        paramsForCO2Pyramid.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+        paramsForCO2Pyramid.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+        paramsForCO2Pyramid.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
+        binding.CO2Pyramid.layoutParams = paramsForCO2Pyramid
+
+        // CO2 배출량이 표기되어 있는 기기의 개수
+        var numOfCO2Devices = 0
+        
+        // 소비전력이 표기되어 있는 기기의 개수
+        var numOfEnergyConsumeDevices = 0
+
+        // CO2 배출량에 대한 상대적 에너지 소비 효율 백분위(%)의 합
+        var sumOfRelativeCO2EmissionPercentage = 0.0F
+
+        // CO2 배출량에 대한 종합 상대적 에너지 소비 효율 등급
+        val totalRelativeCO2EmissionGrade: Int
+
+        // 소비전력에 대한 상대적 에너지 소비 효율 백분위(%)의 합
+        var sumOfRelativeEnergyConsumePercentage = 0.0F
+
+        // 소비전력에 대한 상대적 에너지 소비 효율 등급
+        val totalRelativeEnergyConsumeGrade: Int
+
+        // list에 있는 각각의 상대적 에너지 소비 효율 데이터를 통해 평균치를 구함
+        for (relativeGradeData in list) {
+            if ((relativeGradeData.relativeCO2EmissionGrade != null)
+                && (relativeGradeData.relativeCO2EmissionPercentage != null)
+                && (relativeGradeData.amountOfCO2Emission != null)) {
+                numOfCO2Devices += 1
+                sumOfRelativeCO2EmissionPercentage += relativeGradeData.relativeCO2EmissionPercentage
+            }
+
+            numOfEnergyConsumeDevices += 1
+            sumOfRelativeEnergyConsumePercentage += relativeGradeData.relativeElectricPowerConsumePercentage
+        }
+
+        if (numOfCO2Devices >= 1) {
+            val averageRelativeCO2EmissionPercentage = sumOfRelativeCO2EmissionPercentage / numOfCO2Devices
+
+            if (averageRelativeCO2EmissionPercentage <= 4.0F) { // 1등급 (CO2)
+                binding.CO2Pyramid.setImageResource(R.drawable.pyramid1_co2)
+                binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_1))
+                totalRelativeCO2EmissionGrade = 1
+            } else if (averageRelativeCO2EmissionPercentage <= 11.0F) { // 2등급 (CO2)
+                binding.CO2Pyramid.setImageResource(R.drawable.pyramid2_co2)
+                binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_2_and_3))
+                totalRelativeCO2EmissionGrade = 2
+            } else if (averageRelativeCO2EmissionPercentage <= 23.0F) { // 3등급 (CO2)
+                binding.CO2Pyramid.setImageResource(R.drawable.pyramid2_co2)
+                binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_2_and_3))
+                totalRelativeCO2EmissionGrade = 3
+            } else if (averageRelativeCO2EmissionPercentage <= 40.0F) { // 4등급 (CO2)
+                binding.CO2Pyramid.setImageResource(R.drawable.pyramid3_co2)
+                binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_4_and_5))
+                totalRelativeCO2EmissionGrade = 4
+            } else if (averageRelativeCO2EmissionPercentage <= 60.0F) { // 5등급 (CO2)
+                binding.CO2Pyramid.setImageResource(R.drawable.pyramid3_co2)
+                binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_4_and_5))
+                totalRelativeCO2EmissionGrade = 5
+            } else if (averageRelativeCO2EmissionPercentage <= 77.0F) { // 6등급 (CO2)
+                binding.CO2Pyramid.setImageResource(R.drawable.pyramid4_co2)
+                binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_6_and_7))
+                totalRelativeCO2EmissionGrade = 6
+            } else if (averageRelativeCO2EmissionPercentage <= 89.0F) { // 7등급 (CO2)
+                binding.CO2Pyramid.setImageResource(R.drawable.pyramid4_co2)
+                binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_6_and_7))
+                totalRelativeCO2EmissionGrade = 7
+            } else if (averageRelativeCO2EmissionPercentage <= 96.0F) { // 8등급 (CO2)
+                binding.CO2Pyramid.setImageResource(R.drawable.pyramid5_co2)
+                binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_8_and_9))
+                totalRelativeCO2EmissionGrade = 8
+            } else { // 9등급 (CO2)
+                binding.CO2Pyramid.setImageResource(R.drawable.pyramid5_co2)
+                binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_8_and_9))
+                totalRelativeCO2EmissionGrade = 9
+            }
+
+            val paramsForCO2Grade = ConstraintLayout.LayoutParams(
+                ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                ConstraintLayout.LayoutParams.WRAP_CONTENT,
+            )
+
+            binding.textCO2EmissionGrade.text = "상위 ${averageRelativeCO2EmissionPercentage.toInt()}%"
+
+            paramsForCO2Grade.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+            paramsForCO2Grade.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+            paramsForCO2Grade.marginStart = fromDpToPx(
+                resources, MARGIN_TEXT[totalRelativeCO2EmissionGrade - 1][0]
+            )
+            paramsForCO2Grade.topMargin = fromDpToPx(
+                resources, MARGIN_TEXT[totalRelativeCO2EmissionGrade - 1][1])
+
+            binding.textCO2EmissionGrade.layoutParams = paramsForCO2Grade
+        }
+
+        if (numOfEnergyConsumeDevices >= 1) {
+            val averageRelativeEnergyConsumePercentage = sumOfRelativeEnergyConsumePercentage / numOfEnergyConsumeDevices
+
+            if (averageRelativeEnergyConsumePercentage <= 4.0F) { // 1등급 (소비전력)
+                binding.energyConsumePyramid.setImageResource(R.drawable.pyramid1_energy)
+                binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_1))
+                totalRelativeEnergyConsumeGrade = 1
+            } else if (averageRelativeEnergyConsumePercentage <= 11.0F) { // 2등급 (소비전력)
+                binding.energyConsumePyramid.setImageResource(R.drawable.pyramid2_energy)
+                binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_2_and_3))
+                totalRelativeEnergyConsumeGrade = 2
+            } else if (averageRelativeEnergyConsumePercentage <= 23.0F) { // 3등급 (소비전력)
+                binding.energyConsumePyramid.setImageResource(R.drawable.pyramid2_energy)
+                binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_2_and_3))
+                totalRelativeEnergyConsumeGrade = 3
+            } else if (averageRelativeEnergyConsumePercentage <= 40.0F) { // 4등급 (소비전력)
+                binding.energyConsumePyramid.setImageResource(R.drawable.pyramid3_energy)
+                binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_4_and_5))
+                totalRelativeEnergyConsumeGrade = 4
+            } else if (averageRelativeEnergyConsumePercentage <= 60.0F) { // 5등급 (소비전력)
+                binding.energyConsumePyramid.setImageResource(R.drawable.pyramid3_energy)
+                binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_4_and_5))
+                totalRelativeEnergyConsumeGrade = 5
+            } else if (averageRelativeEnergyConsumePercentage <= 77.0F) { // 6등급 (소비전력)
+                binding.energyConsumePyramid.setImageResource(R.drawable.pyramid4_energy)
+                binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_6_and_7))
+                totalRelativeEnergyConsumeGrade = 6
+            } else if (averageRelativeEnergyConsumePercentage <= 89.0F) { // 7등급 (소비전력)
+                binding.energyConsumePyramid.setImageResource(R.drawable.pyramid4_energy)
+                binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_6_and_7))
+                totalRelativeEnergyConsumeGrade = 7
+            } else if (averageRelativeEnergyConsumePercentage <= 96.0F) { // 8등급 (소비전력)
+                binding.energyConsumePyramid.setImageResource(R.drawable.pyramid5_energy)
+                binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_8_and_9))
+                totalRelativeEnergyConsumeGrade = 8
+            } else { // 9등급 (소비전력)
+                binding.energyConsumePyramid.setImageResource(R.drawable.pyramid5_energy)
+                binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_8_and_9))
+                totalRelativeEnergyConsumeGrade = 9
+            }
+
+            val paramsForEnergyConsumeGrade = ConstraintLayout.LayoutParams(
+                ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                ConstraintLayout.LayoutParams.WRAP_CONTENT,
+            )
+
+            binding.textEnergyConsumeGrade.text = "상위 ${averageRelativeEnergyConsumePercentage.toInt()}%"
+
+            paramsForEnergyConsumeGrade.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+            paramsForEnergyConsumeGrade.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+            paramsForEnergyConsumeGrade.marginStart =
+                fromDpToPx(resources, MARGIN_TEXT[totalRelativeEnergyConsumeGrade - 1][0])
+            paramsForEnergyConsumeGrade.topMargin =
+                fromDpToPx(resources, MARGIN_TEXT[totalRelativeEnergyConsumeGrade - 1][1])
+            binding.textEnergyConsumeGrade.layoutParams = paramsForEnergyConsumeGrade
+        }
     }
 
     private fun showDialogForError() {
@@ -323,6 +506,8 @@ class HomeActivity : AppCompatActivity() {
         val layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
         recyclerView!!.layoutManager = layoutManager
         recyclerView!!.adapter = recyclerViewRegisteredDeviceListAdapter
+
+        // 서버로 부터 상대적 에너지 소비 효율 등급 관련 데이터를 받아옴
         prepareListData()
 
         drawerLayout = binding.drawerLayout
