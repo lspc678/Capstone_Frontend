@@ -38,6 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="50dp"
             android:hint="@string/email_kor"
+            app:startIconDrawable="@drawable/ic_email"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/textLogin">
@@ -48,6 +49,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/manrope_medium"
                 android:inputType="textEmailAddress"
+                android:maxLines="1"
                 android:maxLength="50" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -59,6 +61,7 @@
             android:layout_marginTop="25dp"
             android:hint="@string/password_kor"
             app:endIconMode="password_toggle"
+            app:startIconDrawable="@drawable/ic_lock"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/textInputEmail">
@@ -69,6 +72,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/manrope_medium"
                 android:inputType="textPassword"
+                android:maxLines="1"
                 android:maxLength="15" />
         </com.google.android.material.textfield.TextInputLayout>
 
