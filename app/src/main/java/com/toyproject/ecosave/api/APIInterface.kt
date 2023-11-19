@@ -1,10 +1,13 @@
 package com.toyproject.ecosave.api
 
 import com.toyproject.ecosave.api.requestmodels.LoginRequest
+import com.toyproject.ecosave.api.requestmodels.SignUpRequest
+import com.toyproject.ecosave.api.responsemodels.CheckDuplicateNicknameResponse
 import com.toyproject.ecosave.api.responsemodels.EmailAuthenticationResponse
 import com.toyproject.ecosave.api.responsemodels.LoginResponse
 import com.toyproject.ecosave.api.responsemodels.ReverseGeocodingResponse
 import com.toyproject.ecosave.api.responsemodels.SearchAddressResponse
+import com.toyproject.ecosave.api.responsemodels.SignUpResponse
 import com.toyproject.ecosave.api.responsemodels.SignUpSendMailResponse
 
 import retrofit2.Call
@@ -22,6 +25,13 @@ interface APIInterface {
 
     @GET("account/sign-up/send-mail")
     fun sendMail(@Query("mail") mail: String) : Call<SignUpSendMailResponse>
+
+    @GET("account/duplicate-nickname")
+    fun checkDuplicateNickname(@Query("nickname") nickname: String) : Call<CheckDuplicateNicknameResponse>
+
+    @Headers("Content-Type: application/json")
+    @POST("account")
+    fun signUp(@Body signupInfo: SignUpRequest) : Call<SignUpResponse>
 
     @Headers("Content-Type: application/json")
     @POST("account/log-in")
