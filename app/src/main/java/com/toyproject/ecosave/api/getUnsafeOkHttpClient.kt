@@ -1,14 +1,17 @@
 package com.toyproject.ecosave.api
 
 import android.annotation.SuppressLint
+
 import okhttp3.OkHttpClient
+
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
-fun getUnsafeOkHttpClient(): OkHttpClient.Builder {
+// SSL 인증서(certificate) 검사를 우회하는 함수
+fun getUnsafeOkHttpClient() : OkHttpClient.Builder {
     val trustAllCerts = arrayOf<TrustManager>(
         @SuppressLint("CustomX509TrustManager")
         object : X509TrustManager {
