@@ -3,6 +3,7 @@ package com.toyproject.ecosave.test
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doOnTextChanged
 
 import com.toyproject.ecosave.databinding.ActivityTestMainBinding
 import com.toyproject.ecosave.test.api.TestAPIClient
@@ -155,6 +156,25 @@ class TestMainActivity : AppCompatActivity() {
                     }
                 }
             )
+        }
+
+        // 중복 확인 클릭 시 Readonly 모드로 전환
+        binding.btnTestCheckDuplicateNickname.setOnClickListener {
+            val editTextForNickname = binding.editTextForNickname
+            editTextForNickname.isEnabled = false
+            Log.d("닉네임 중복 확인(테스트)", binding.editTextForNickname.text.toString())
+        }
+
+        // 비밀번호 일치 확인
+        binding.editTextForPasswordConfirm.doOnTextChanged { _, _, _, _ ->
+            val password = binding.editTextForPassword.text.toString()
+            val passwordConfirm = binding.editTextForPasswordConfirm.text.toString()
+
+            if (password != passwordConfirm) {
+                binding.textInputForPasswordConfirm.error = "비밀번호가 일치하지 않습니다."
+            } else {
+                binding.textInputForPasswordConfirm.error = null
+            }
         }
     }
 }
