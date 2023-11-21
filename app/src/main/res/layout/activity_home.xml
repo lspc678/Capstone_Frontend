@@ -87,7 +87,18 @@
                     android:textColor="@color/black"
                     android:fontFamily="@font/outfit_bold" />
 
+                <TextView
+                    android:id="@+id/textNoRelativeGradeData"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:text="내 거주지 설정 이후 상대적 에너지 소비 효율 등급을 확인할 수 있습니다."
+                    android:textSize="15sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/outfit_bold" />
+
                 <RelativeLayout
+                    android:id="@+id/relativeLayoutForPyramid"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp">
