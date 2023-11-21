@@ -80,51 +80,65 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
 
         // 사용 여부를 재설정할 때 동작
         // 스위치 ON/OFF에 따라 상대적 에너지 소비 효율 등급 재설정
-        holder.switchForUseOrNot.setOnClickListener {
-            if (holder.switchForUseOrNot.isChecked) {
-                // 사용 여부를 ON으로 설정할 때
+        // 에어컨, TV, 보일러만 사용 여부를 설정할 수 있음
+        when (list[position].deviceType) {
+            DeviceTypeList.AIR_CONDITIONER,
+            DeviceTypeList.TV,
+            DeviceTypeList.BOILER -> {
+                holder.switchForUseOrNot.isEnabled = true
+                holder.switchForUseOrNot.setOnClickListener {
+                    if (holder.switchForUseOrNot.isChecked) {
+                        // 사용 여부를 ON으로 설정할 때
 
-                // 확인 버튼 누를 시
-                val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                    // HomeActivity에 있는 resetPyramid() 함수를 실행함
-                    (context as HomeActivity).resetPyramid("ON", list[position])
+                        // 확인 버튼 누를 시
+                        val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                            // HomeActivity에 있는 resetPyramid() 함수를 실행함
+                            (context as HomeActivity).resetPyramid("ON", list[position])
+                        }
+
+                        // 취소 버튼 누를 시
+                        val negativeButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                            // 다시 OFF로 되돌림
+                            holder.switchForUseOrNot.isChecked = false
+                        }
+
+                        createDialog(
+                            context,
+                            "기기 사용 여부 설정",
+                            "해당 기기를 사용하는 것으로 설정 하시겠습니까?",
+                            positiveButtonOnClickListener,
+                            negativeButtonOnClickListener
+                        )
+                    } else {
+                        // 사용 여부를 OFF로 설정할 때
+
+                        // 확인 버튼 누를 시
+                        val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                            // HomeActivity에 있는 resetPyramid() 함수를 실행함
+                            (context as HomeActivity).resetPyramid("OFF", list[position])
+                        }
+
+                        // 취소 버튼 누를 시
+                        val negativeButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                            // 다시 ON으로 되돌림
+                            holder.switchForUseOrNot.isChecked = true
+                        }
+
+                        createDialog(
+                            context,
+                            "기기 사용 여부 설정",
+                            "해당 기기를 사용하지 않는 것으로 설정 하시겠습니까?",
+                            positiveButtonOnClickListener,
+                            negativeButtonOnClickListener
+                        )
+                    }
                 }
+            }
 
-                // 취소 버튼 누를 시
-                val negativeButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                    // 다시 OFF로 되돌림
-                    holder.switchForUseOrNot.isChecked = false
-                }
-
-                createDialog(
-                    context,
-                    "기기 사용 여부 설정",
-                    "해당 기기를 사용하는 것으로 설정 하시겠습니까?",
-                    positiveButtonOnClickListener,
-                    negativeButtonOnClickListener
-                )
-            } else {
-                // 사용 여부를 OFF로 설정할 때
-
-                // 확인 버튼 누를 시
-                val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                    // HomeActivity에 있는 resetPyramid() 함수를 실행함
-                    (context as HomeActivity).resetPyramid("OFF", list[position])
-                }
-
-                // 취소 버튼 누를 시
-                val negativeButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                    // 다시 ON으로 되돌림
-                    holder.switchForUseOrNot.isChecked = true
-                }
-
-                createDialog(
-                    context,
-                    "기기 사용 여부 설정",
-                    "해당 기기를 사용하지 않는 것으로 설정 하시겠습니까?",
-                    positiveButtonOnClickListener,
-                    negativeButtonOnClickListener
-                )
+            // 나머지 기기의 경우 사용 여부를 설정할 수 없음
+            else -> {
+                holder.switchForUseOrNot.isEnabled = false
+                holder.switchForUseOrNot.isActivated = false
             }
         }
 
