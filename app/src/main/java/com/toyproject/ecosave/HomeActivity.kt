@@ -50,9 +50,6 @@ class HomeActivity : AppCompatActivity() {
 
     private var recyclerView: RecyclerView? = null
     private var recyclerViewRegisteredDeviceListAdapter: RecyclerViewRegisteredDeviceListAdapter? = null
-    
-    // 등록된 기기 목록
-    private var list = mutableListOf<RegisteredDeviceData>()
 
     private var currentLatitude = 0.0 // 위도
     private var currentLongitude = 0.0 // 경도
@@ -91,6 +88,9 @@ class HomeActivity : AppCompatActivity() {
             arrayOf(128.0F, 100.0F),
             arrayOf(128.0F, 100.0F)
         )
+
+        // 등록된 기기 목록
+        var list = mutableListOf<RegisteredDeviceData>()
 
         // 등록된 기기의 개수
         private var numOfRegisteredDevices = 0
@@ -147,6 +147,7 @@ class HomeActivity : AppCompatActivity() {
             DeviceTypeList.REFRIGERATOR,
             1, 3, 35.9F,
             1, 4, 21.0F,
+            null
         )
         list.add(data)
 
@@ -154,6 +155,7 @@ class HomeActivity : AppCompatActivity() {
             DeviceTypeList.AIR_CONDITIONER,
             2, 8, 131.3F,
             3, 14, 52.3F,
+            7.8F
         )
         list.add(data)
 
@@ -161,6 +163,7 @@ class HomeActivity : AppCompatActivity() {
             DeviceTypeList.BOILER,
             3, 21, 83.0F,
             null, null, null,
+            null
         )
         list.add(data)
 
@@ -168,6 +171,7 @@ class HomeActivity : AppCompatActivity() {
             DeviceTypeList.WASHING_MACHINE,
             3, 21, 62.8F,
             3, 17, 219.0F,
+            null
         )
         list.add(data)
 
@@ -175,20 +179,23 @@ class HomeActivity : AppCompatActivity() {
             DeviceTypeList.MICROWAVE_OVEN,
             4, 28, 1200.0F,
             null, null, null,
+            null
         )
         list.add(data)
 
-        data = RegisteredDeviceData(
-            DeviceTypeList.TV,
-            5, 56, 126.0F,
-            5, 53, 43.0F,
-        )
-        list.add(data)
+//        data = RegisteredDeviceData(
+//            DeviceTypeList.TV,
+//            5, 56, 126.0F,
+//            5, 53, 43.0F,
+//            6.0F
+//        )
+//        list.add(data)
 
         data = RegisteredDeviceData(
             DeviceTypeList.TV,
             6, 64, 153.0F,
             7, 81, 65.0F,
+            6.0F
         )
         list.add(data)
 
@@ -196,6 +203,7 @@ class HomeActivity : AppCompatActivity() {
             DeviceTypeList.AIR_CONDITIONER,
             8, 90, 195.2F,
             9, 97, 77.4F,
+            7.8F
         )
         list.add(data)
 
