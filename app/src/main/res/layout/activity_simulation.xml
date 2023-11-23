@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SimulationActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="30dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="25dp"
+                android:text="만약 기기를 변경한다면...?"
+                android:textSize="25sp"
+                android:textColor="@color/black"
+                android:fontFamily="@font/outfit_bold" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="25dp">
+
+                <TextView
+                    android:id="@+id/textPowerOfConsumeType"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:text="소비전력량"
+                    android:textSize="15sp"
+                    android:textColor="@color/light_grey"
+                    android:fontFamily="@font/outfit_regular" />
+
+                <RelativeLayout
+                    android:layout_width="180dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentEnd="true">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/non_editable_textfield" />
+
+                    <TextView
+                        android:id="@+id/textPowerOfConsume"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentStart="true"
+                        android:text="0.0"
+                        android:textSize="15sp"
+                        android:textColor="@color/light_grey"
+                        android:fontFamily="@font/outfit_regular" />
+
+                    <TextView
+                        android:id="@+id/textPowerOfConsumeUnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="20dp"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentEnd="true"
+                        android:text="kWh/월"
+                        android:textSize="15sp"
+                        android:textColor="@color/light_grey"
+                        android:fontFamily="@font/outfit_regular" />
+                </RelativeLayout>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="25dp">
+
+                <TextView
+                    android:id="@+id/textAfterPowerOfConsumeType"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:text="기기 변경 후"
+                    android:textSize="15sp"
+                    android:textColor="@color/light_grey"
+                    android:fontFamily="@font/outfit_regular" />
+
+                <RelativeLayout
+                    android:id="@+id/relativeLayoutForAfterPowerOfConsume"
+                    android:layout_width="180dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentEnd="true">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/editable_textfield" />
+
+                    <TextView
+                        android:id="@+id/textAfterPowerOfConsume"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentStart="true"
+                        android:text="0.0"
+                        android:textSize="15sp"
+                        android:textColor="@color/light_grey"
+                        android:fontFamily="@font/outfit_regular" />
+
+                    <TextView
+                        android:id="@+id/textAfterPowerOfConsumeUnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="20dp"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentEnd="true"
+                        android:text="kWh/월"
+                        android:textSize="15sp"
+                        android:textColor="@color/light_grey"
+                        android:fontFamily="@font/outfit_regular" />
+                </RelativeLayout>
+            </RelativeLayout>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnApply"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="25dp"
+                android:text="적용"
+                android:textSize="16sp"
+                android:textColor="@color/white"
+                android:fontFamily="@font/outfit_bold"
+                android:background="@drawable/btn_rounded_light_blue"
+                android:layout_gravity="end"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dp"
+                android:text="시뮬레이션 결과"
+                android:textSize="25sp"
+                android:textColor="@color/black"
+                android:fontFamily="@font/outfit_regular" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="35dp"
+                android:text="기기 변경을 하면 한 달에 얼마나 많이 전기 요금을 절약할 수 있는지 보여줍니다."
+                android:textSize="15sp"
+                android:textColor="@color/light_grey"
+                android:fontFamily="@font/outfit_regular" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="25dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:text="기기 변경 전 총 소비전력량"
+                    android:textSize="15sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/outfit_regular" />
+
+                <TextView
+                    android:id="@+id/textTotalPowerOfConsumeForMonth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentEnd="true"
+                    android:text="0 kWh/월"
+                    android:textSize="15sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/outfit_regular" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="25dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:text="기기 변경 후 총 소비전력량"
+                    android:textSize="15sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/outfit_regular" />
+
+                <TextView
+                    android:id="@+id/textAfterTotalPowerOfConsumeForMonth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentEnd="true"
+                    android:text="kWh/월"
+                    android:textSize="15sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/outfit_regular" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="25dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:text="한 달 전기 요금 변화량"
+                    android:textSize="15sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/outfit_regular" />
+
+                <TextView
+                    android:id="@+id/textMonthlyElectricityBillChange"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentEnd="true"
+                    android:text="-"
+                    android:textSize="15sp"
+                    android:textColor="@color/green"
+                    android:fontFamily="@font/outfit_bold" />
+            </RelativeLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
