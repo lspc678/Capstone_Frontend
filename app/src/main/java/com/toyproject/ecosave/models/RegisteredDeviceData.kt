@@ -23,4 +23,7 @@ data class RegisteredDeviceData(
 
     // CO2 배출량
     val amountOfCO2Emission: Float?,
+
+    // 하루 평균 사용 시간
+    var averageUsageTimePerDay: Float?
 )
