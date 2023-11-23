@@ -174,6 +174,12 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
 
             // CO2 배출량 누적 비율(%)을 intent에 저장
             intent.putExtra("relativeCO2EmissionPercentage", list[position].relativeCO2EmissionPercentage)
+            
+            // position 정보 저장 (list에서 몇 번째에 있는 정보인지)
+            intent.putExtra("position", position)
+
+            // 하루 평균 사용 시간을 intent에 저장
+            intent.putExtra("averageUsageTimePerDay", list[position].averageUsageTimePerDay)
 
             ContextCompat.startActivity(holder.itemView.context, intent, null)
         }
