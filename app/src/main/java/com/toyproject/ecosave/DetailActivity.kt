@@ -1,11 +1,17 @@
 package com.toyproject.ecosave
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
+import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 
 import com.toyproject.ecosave.databinding.ActivityDetailBinding
@@ -14,6 +20,8 @@ import com.toyproject.ecosave.utilities.fromDpToPx
 import com.toyproject.ecosave.utilities.getCO2EmissionUnit
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
+import com.toyproject.ecosave.widget.createDialog
+import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 
 class DetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityDetailBinding
@@ -169,6 +177,8 @@ class DetailActivity : AppCompatActivity() {
         val amountOfCO2Emission = intent.getFloatExtra("amountOfCO2Emission", -1.0F)
         val relativeCO2EmissionGrade = intent.getIntExtra("relativeCO2EmissionGrade", -1)
         val relativeCO2EmissionPercentage = intent.getIntExtra("relativeCO2EmissionPercentage", -1)
+        val position = intent.getIntExtra("position", -1)
+        val averageUsageTimePerDay = intent.getFloatExtra("averageUsageTimePerDay", -1.0F)
 
         val toolbar = binding.toolbar
         setSupportActionBar(toolbar)
@@ -185,6 +195,25 @@ class DetailActivity : AppCompatActivity() {
             binding.textCO2Emission.text = ""
         }
 
+        // 시뮬레이션 버튼 클릭시
+        binding.btnSimulation.setOnClickListener {
+            val intent = Intent(this, SimulationActivity::class.java)
+
+            // 기기 종류를 intent에 저장
+            intent.putExtra("deviceType", deviceType)
+
+            // 소비전력을 intent에 저장
+            intent.putExtra("powerOfConsume", powerOfConsume)
+
+            // 전력 소비 누적 비율(%)을 intent에 저장
+            intent.putExtra("relativeElectricPowerConsumePercentage", relativeElectricPowerConsumePercentage)
+
+            // position 정보를 intent에 저장
+            intent.putExtra("position", position)
+
+            startActivity(intent)
+        }
+
         when (deviceType) {
             deviceType -> {
                 supportActionBar?.title = "상세 페이지 (${getTranslatedDeviceType(deviceType)})"
@@ -195,6 +224,49 @@ class DetailActivity : AppCompatActivity() {
             else -> {
                 supportActionBar?.title = "상세 페이지"
             }
+        }
+
+        if ((deviceType == DeviceTypeList.AIR_CONDITIONER)
+            || (deviceType == DeviceTypeList.TV)) {
+            // 에어컨, TV의 경우 하루 평균 사용 시간 설정 가능
+            binding.relativeLayoutForUsageTimeFor1Day.visibility = View.VISIBLE
+
+            if (averageUsageTimePerDay > 0.0F) {
+                binding.textUsageTimeFor1Day.text = averageUsageTimePerDay.toString()
+            }
+        } else {
+            binding.relativeLayoutForUsageTimeFor1Day.visibility = View.GONE
+        }
+
+        // 하루 평균 사용 시간 클릭 시
+        binding.relativeLayoutForEditableField.setOnClickListener {
+            val editText = EditText(this)
+            editText.inputType = EditorInfo.TYPE_CLASS_NUMBER
+
+            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                val text = editText.text.toString()
+
+                if (text.toFloatOrNull() != null) {
+                    // 하루 평균 사용 시간 재설정
+                    binding.textUsageTimeFor1Day.text = text
+
+                    if (position >= 0) {
+                        HomeActivity.list[position].averageUsageTimePerDay = text.toFloat()
+                    }
+
+                    Log.d("하루 평균 사용 시간 변경", (powerOfConsume * text.toFloat() * 30).toString())
+                    Log.d("하루 평균 사용 시간 변경", (amountOfCO2Emission * text.toFloat() * 30).toString())
+
+                    // 서버와의 통신을 통해 상대적 에너지 소비 효율 등급을 알아냄
+                }
+            }
+
+            val alertDialog = AlertDialog.Builder(this)
+            alertDialog.setTitle("하루 평균 사용 시간 변경")
+            alertDialog.setView(editText)
+            alertDialog.setPositiveButton("확인", positiveButtonOnClickListener)
+            alertDialog.setNegativeButton("취소", defaultNegativeDialogInterfaceOnClickListener)
+            alertDialog.show()
         }
 
         // CO2 배출량이 표기되어 있지 않은 제품(예: 보일러)의 경우 CO2 배출량에 관한 UI가 보이지 않도록 설정
