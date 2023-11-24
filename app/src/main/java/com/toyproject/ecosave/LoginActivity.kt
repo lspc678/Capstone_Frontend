@@ -36,6 +36,17 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 토큰 정보 가져오기
+        val token = App.prefs.token
+        if (token != null) {
+            // 토큰 정보가 남아있으므로 이메일, 비밀번호 입력 과정 없이 로그인 진행
+            Log.d("로그인", token)
+
+            val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+
         binding.textRegister.setOnClickListener {
             val intent = Intent(this, SignUpActivity::class.java)
             startActivity(intent)
@@ -65,6 +76,9 @@ class LoginActivity : AppCompatActivity() {
                             if (result != null) {
                                 if (result.success == true) {
                                     Log.d("로그인", "$result")
+
+                                    // 토큰 정보를 Shared Preferences에 저장
+                                    App.prefs.token = result.token
 
                                     val intent = Intent(this@LoginActivity, HomeActivity::class.java)
                                     startActivity(intent)
@@ -110,6 +124,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         // 게스트로 로그인 (테스트용 버튼이며 정식 버전에서는 삭제 예정)
+        // 토큰 저장 기능은 없음
         binding.btnLoginForGuest.setOnClickListener {
             val userData = TestLoginRequest(
                 binding.textInputEmail.editText?.text.toString(),
@@ -129,8 +144,8 @@ class LoginActivity : AppCompatActivity() {
                         if (response.isSuccessful) {
                             // status code가 200 ~ 299일 때
                             val result = response.body()
-                            Log.d("API 테스트", "결과: 성공 (statusCode: ${response.code()})")
-                            Log.d("API 테스트", result.toString())
+                            Log.d("로그인", "결과: 성공 (statusCode: ${response.code()})")
+                            Log.d("로그인", result.toString())
 
                             val intent = Intent(this@LoginActivity, HomeActivity::class.java)
                             startActivity(intent)
@@ -153,8 +168,8 @@ class LoginActivity : AppCompatActivity() {
                                 defaultNegativeDialogInterfaceOnClickListener
                             )
 
-                            Log.d("API 테스트", "결과: 실패 (statusCode: ${response.code()})")
-                            Log.d("API 테스트", response.message())
+                            Log.d("로그인", "결과: 실패 (statusCode: ${response.code()})")
+                            Log.d("로그인", response.message())
                         }
                     }
 
@@ -164,9 +179,9 @@ class LoginActivity : AppCompatActivity() {
                             "로그인 실패",
                             "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해주세요."
                         )
-                        Log.d("API 테스트", "결과: 실패")
+                        Log.d("로그인", "결과: 실패")
                         if (t.message != null) {
-                            Log.d("API 테스트", t.message!!)
+                            Log.d("로그인", t.message!!)
                         }
                     }
                 }
