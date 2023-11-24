@@ -26,6 +26,7 @@ class APIClientForServer {
             val client = OkHttpClient.Builder()
                 .addInterceptor(headerInterceptor)
                 .addInterceptor(httpLoggingInterceptor)
+                .addInterceptor(AuthInterceptor())
                 .build()
 
             return Retrofit.Builder()
@@ -57,6 +58,7 @@ class APIClientForServerByPassSSLCertificate {
             val client = OkHttpClient.Builder()
                 .addInterceptor(headerInterceptor)
                 .addInterceptor(httpLoggingInterceptor)
+                .addInterceptor(AuthInterceptor())
                 .build()
 
             // getUnsafeOkHttpClient()를 이용하여 SSL 인증서 검사를 우회함
