@@ -152,6 +152,15 @@ class LoginActivity : AppCompatActivity() {
                             finish()
                         } else {
                             // status code가 200 ~ 299가 아닐 때
+                            val errorResult = response.errorBody()
+                            val result = response.body()
+
+                            if (errorResult != null) {
+                                Log.d("로그인", "결과: 실패 (response.isSuccessful 통과하지 못함)")
+                                Log.d("로그인", "statusCode: ${response.code()}")
+                                Log.d("로그인", errorResult.string())
+                                Log.d("로그인", result.toString())
+                            }
 
                             val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
                                 binding.editTextForEmail.setText("eve.holt@reqres.in")
@@ -167,9 +176,6 @@ class LoginActivity : AppCompatActivity() {
                                 positiveButtonOnClickListener,
                                 defaultNegativeDialogInterfaceOnClickListener
                             )
-
-                            Log.d("로그인", "결과: 실패 (statusCode: ${response.code()})")
-                            Log.d("로그인", response.message())
                         }
                     }
 
@@ -179,10 +185,8 @@ class LoginActivity : AppCompatActivity() {
                             "로그인 실패",
                             "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해주세요."
                         )
-                        Log.d("로그인", "결과: 실패")
-                        if (t.message != null) {
-                            Log.d("로그인", t.message!!)
-                        }
+                        Log.d("로그인", "결과: 실패 (onFailure)")
+                        Log.d("로그인", t.message.toString())
                     }
                 }
             )
