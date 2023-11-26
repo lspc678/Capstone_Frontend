@@ -8,11 +8,15 @@ import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 import com.toyproject.ecosave.databinding.ActivitySimulationBinding
 import com.toyproject.ecosave.models.DeviceTypeList
+import com.toyproject.ecosave.models.RecommendProductData
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
@@ -30,6 +34,65 @@ class SimulationActivity : AppCompatActivity() {
     // 기기 변경 후 등록된 모든 기기의 총 소비 전력량 (월간)
     // kWh 단위
     private var afterTotalPowerOfConsumeForMonth = 0.0
+
+    private var recyclerView: RecyclerView? = null
+    private var recyclerViewProductRecommendationListAdapter:
+            RecyclerViewProductRecommendationListAdapter? = null
+
+    var productRecommendationList = mutableListOf<RecommendProductData>()
+
+    private val dummyData = mutableListOf(
+        RecommendProductData(
+            "",
+            "NCB752-27L‚ LNG‚ FF",
+            93.2
+        ),
+        RecommendProductData(
+            "",
+            "DRC-45S FC (LNG)",
+            93.0
+        ),
+        RecommendProductData(
+            "",
+            "AST 콘덴싱-37H (LNG‚FE)",
+            92.8
+        ),
+        RecommendProductData(
+            "",
+            "NCB354-33L (FF‚ LNG)",
+            92.5
+        ),
+        RecommendProductData(
+            "",
+            "NCB384-15L (FF‚ LNG)",
+            92.5
+        ),
+        RecommendProductData(
+            "",
+            "거꾸로 NEW 콘덴싱 P10-30H",
+            92.2
+        ),
+        RecommendProductData(
+            "",
+            "NCB384-22K (FF‚ LNG)",
+            92.2
+        ),
+        RecommendProductData(
+            "",
+            "거꾸로 NEW 콘덴싱 P10-30HW",
+            92.0
+        ),
+        RecommendProductData(
+            "",
+            "거꾸로 ECO 콘덴싱 S11-18HEN",
+            92.0
+        ),
+        RecommendProductData(
+            "",
+            "NCB551-14K‚LNG‚FE",
+            91.8
+        ),
+    )
 
     // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
     @SuppressLint("SetTextI18n")
@@ -280,6 +343,36 @@ class SimulationActivity : AppCompatActivity() {
         return (baseFee + electricalEnergy + climateEnvironmentFee + fuelCostAdjustmentFee).toInt()
     }
 
+    // 추천 제품 목록 가져오기
+    @SuppressLint("NotifyDataSetChanged")
+    private fun getProductRecommendationList(deviceType: DeviceTypeList?) {
+        productRecommendationList.clear()
+
+        val input = binding.textAfterPowerOfConsume.text.toString().toInt()
+
+        when (deviceType) {
+            DeviceTypeList.BOILER -> {
+                for (recommendProductData in dummyData) {
+                    if (recommendProductData.powerOfConsume != null) {
+                        if ((recommendProductData.powerOfConsume - 0.5 <= input)
+                            && (input <= recommendProductData.powerOfConsume + 0.5)) {
+                            productRecommendationList.add(recommendProductData)
+                        }
+                    }
+                }
+            }
+            else -> {}
+        }
+
+        try {
+            Log.d("시뮬레이션", productRecommendationList.toString())
+            recyclerViewProductRecommendationListAdapter?.notifyDataSetChanged()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d("시뮬레이션", e.toString())
+        }
+    }
+
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -293,6 +386,7 @@ class SimulationActivity : AppCompatActivity() {
         }
 
         val powerOfConsume = intent.getDoubleExtra("powerOfConsume", -1.0)
+        val _powerOfConsume = BigDecimal(powerOfConsume).setScale(1, RoundingMode.HALF_UP)
         val relativeElectricPowerConsumePercentage = intent.getIntExtra("relativeElectricPowerConsumePercentage", -1)
         val position = intent.getIntExtra("position", -1)
 
@@ -304,7 +398,7 @@ class SimulationActivity : AppCompatActivity() {
                 supportActionBar?.title = "시뮬레이션 (${getTranslatedDeviceType(deviceType)})"
                 binding.textPowerOfConsumeType.text = getPowerOfConsumeUnit(deviceType)["description"]
                 binding.textPowerOfConsumeUnit.text = getPowerOfConsumeUnit(deviceType)["symbol"]
-                binding.textPowerOfConsume.text = powerOfConsume.toString()
+                binding.textPowerOfConsume.text = _powerOfConsume.toString()
                 binding.textAfterPowerOfConsumeType.text = "기기 변경 후"
                 binding.textAfterPowerOfConsumeUnit.text = getPowerOfConsumeUnit(deviceType)["symbol"]
                 binding.textAfterPowerOfConsume.text = ""
@@ -312,6 +406,19 @@ class SimulationActivity : AppCompatActivity() {
             else -> {
                 supportActionBar?.title = "시뮬레이션"
             }
+        }
+
+        when (deviceType) {
+            DeviceTypeList.WASHING_MACHINE,
+            DeviceTypeList.BOILER -> {
+                // 세탁기, 보일러에 대해서는 아직 시뮬레이션 기능을 제공하지 않음
+                binding.textSimulationResults.visibility = View.GONE
+                binding.textSimulationResultsDescription.visibility = View.GONE
+                binding.relativeLayoutForTotalPowerConsumptionBeforeDeviceChange.visibility = View.GONE
+                binding.relativeLayoutForTotalPowerConsumptionAfterDeviceChange.visibility = View.GONE
+                binding.relativeLayoutForMonthlyElectricityBillChange.visibility = View.GONE
+            }
+            else -> {}
         }
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true) // 앱바에 back 버튼 활성화
@@ -363,7 +470,23 @@ class SimulationActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
+            if ((deviceType != DeviceTypeList.WASHING_MACHINE)
+                && (deviceType != DeviceTypeList.BOILER)) {
+                calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
+            }
+
+            // 추천 제품 목록 가져오기
+            getProductRecommendationList(deviceType)
+        }
+
+        recyclerView = binding.recyclerView
+
+        if (deviceType != null) {
+            recyclerViewProductRecommendationListAdapter =
+                RecyclerViewProductRecommendationListAdapter(this, productRecommendationList, deviceType)
+            val layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
+            recyclerView!!.layoutManager = layoutManager
+            recyclerView!!.adapter = recyclerViewProductRecommendationListAdapter
         }
     }
 
