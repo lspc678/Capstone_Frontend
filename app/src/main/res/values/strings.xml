@@ -39,4 +39,5 @@
     <string name="authentication_confirmation_email_has_been_sent">인증 확인 메일이 전송되었습니다.</string>
     <string name="finish_email_authentication">이메일 인증 완료</string>
     <string name="swipe_to_left">화면을 왼쪽으로 밀어주세요</string>
+    <string name="product_recommendation_list">추천 제품 목록</string>
 </resources>
