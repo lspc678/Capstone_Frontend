@@ -38,4 +38,5 @@
     <string name="enter_6digit_verification_number">인증번호 6자리를 입력해 주세요.</string>
     <string name="authentication_confirmation_email_has_been_sent">인증 확인 메일이 전송되었습니다.</string>
     <string name="finish_email_authentication">이메일 인증 완료</string>
+    <string name="swipe_to_left">화면을 왼쪽으로 밀어주세요</string>
 </resources>
