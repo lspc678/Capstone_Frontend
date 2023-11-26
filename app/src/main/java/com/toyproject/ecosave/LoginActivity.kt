@@ -22,6 +22,7 @@ import com.toyproject.ecosave.widget.simpleDialog
 
 // 테스트용 (정식 버전에서는 삭제 예정)
 import android.util.Log
+import android.view.View
 import com.toyproject.ecosave.test.TestMainActivity
 import com.toyproject.ecosave.test.api.TestAPIClient
 import com.toyproject.ecosave.test.api.TestAPIInterface
@@ -51,6 +52,9 @@ class LoginActivity : AppCompatActivity() {
             val intent = Intent(this, SignUpActivity::class.java)
             startActivity(intent)
         }
+
+        binding.btnLoginForGuest.visibility = View.GONE
+        binding.btnDevelopersTool.visibility = View.GONE
 
         // 로그인 버튼 클릭시
         binding.btnLogin.setOnClickListener {
