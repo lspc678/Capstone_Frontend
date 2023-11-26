@@ -31,5 +31,5 @@ data class RegisteredDeviceData(
     var amountOfCO2Emission: Double?,
 
     // 하루 평균 사용 시간
-    var averageUsageTimePerDay: Float?
+    var averageUsageTimePerDay: Double?
 )
