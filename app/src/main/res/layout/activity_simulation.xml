@@ -158,6 +158,7 @@
                 android:layout_gravity="end"/>
 
             <TextView
+                android:id="@+id/textSimulationResults"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="15dp"
@@ -167,6 +168,7 @@
                 android:fontFamily="@font/outfit_regular" />
 
             <TextView
+                android:id="@+id/textSimulationResultsDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="35dp"
@@ -176,6 +178,7 @@
                 android:fontFamily="@font/outfit_regular" />
 
             <RelativeLayout
+                android:id="@+id/relativeLayoutForTotalPowerConsumptionBeforeDeviceChange"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="25dp">
@@ -203,6 +206,7 @@
             </RelativeLayout>
 
             <RelativeLayout
+                android:id="@+id/relativeLayoutForTotalPowerConsumptionAfterDeviceChange"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="25dp">
@@ -230,6 +234,7 @@
             </RelativeLayout>
 
             <RelativeLayout
+                android:id="@+id/relativeLayoutForMonthlyElectricityBillChange"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="25dp">
@@ -255,6 +260,44 @@
                     android:textColor="@color/green"
                     android:fontFamily="@font/outfit_bold" />
             </RelativeLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/icThumbUp"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:src="@drawable/ic_thumb_up"
+                    app:layout_constraintDimensionRatio="H,1:1"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/textProductRecommendationList" />
+
+                <TextView
+                    android:id="@+id/textProductRecommendationList"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:fontFamily="@font/outfit_bold"
+                    android:text="@string/product_recommendation_list"
+                    android:textColor="#FFD700"
+                    android:textSize="20sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/icThumbUp"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="80dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
