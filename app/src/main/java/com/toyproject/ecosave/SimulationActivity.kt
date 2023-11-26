@@ -18,51 +18,50 @@ import com.toyproject.ecosave.utilities.getTranslatedDeviceType
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
 
-// 다이얼로그에서 값 받아오기 위한 인터페이스
-interface SelectedAfterPowerOfConsumeInterface {
-    fun onSelectedAfterPowerOfConsume(selected: Int)
-}
-
 class SimulationActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySimulationBinding
 
     // 기기 변경 전 등록된 모든 기기의 총 소비 전력량 (월간)
     // kWh 단위
-    private var totalPowerOfConsumeForMonth = 0.0F
+    private var totalPowerOfConsumeForMonth = 0.0
 
     // 기기 변경 후 등록된 모든 기기의 총 소비 전력량 (월간)
     // kWh 단위
-    private var afterTotalPowerOfConsumeForMonth = 0.0F
+    private var afterTotalPowerOfConsumeForMonth = 0.0
 
     // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
     @SuppressLint("SetTextI18n")
     private fun calculateCurrentTotalPowerOfConsumeForMonth() {
-        totalPowerOfConsumeForMonth = 0.0F
+        totalPowerOfConsumeForMonth = 0.0
 
         for (relativeGradeData in HomeActivity.list) {
+            if (relativeGradeData.powerOfConsume == null) {
+                continue
+            }
+
             when (relativeGradeData.deviceType) {
                 DeviceTypeList.REFRIGERATOR,
                 DeviceTypeList.WASHING_MACHINE -> {
-                    totalPowerOfConsumeForMonth += relativeGradeData.powerOfConsume
+                    totalPowerOfConsumeForMonth += relativeGradeData.powerOfConsume!!
                 }
                 DeviceTypeList.MICROWAVE_OVEN -> {
                     // 전자레인지의 경우 하루에 10분씩 사용한다고 가정
                     // 전자레인지에 대한 월간 소비 전력량 = 소비전력 * 1/6(시간) * 30(일)
                     // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
-                    totalPowerOfConsumeForMonth += (relativeGradeData.powerOfConsume / 6 * 30) / 1000
+                    totalPowerOfConsumeForMonth += (relativeGradeData.powerOfConsume!! / 6 * 30) / 1000
                 }
                 DeviceTypeList.AIR_CONDITIONER -> {
                     // 에어컨의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                     // 월간 소비 전력량 = 표준 월간 소비 전력량 * (하루 평균 사용 시간 / 7.8)
                     totalPowerOfConsumeForMonth +=
-                        relativeGradeData.powerOfConsume * (relativeGradeData.averageUsageTimePerDay!! / 7.8F)
+                        relativeGradeData.powerOfConsume!! * (relativeGradeData.averageUsageTimePerDay!! / 7.8F)
                 }
                 DeviceTypeList.TV -> {
                     // TV의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                     // 월간 소비 전력량 = 소비전력 * 하루 평균 사용 시간 * 30(일)
                     // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
                     totalPowerOfConsumeForMonth +=
-                        (relativeGradeData.powerOfConsume * relativeGradeData.averageUsageTimePerDay!! * 30) / 1000
+                        (relativeGradeData.powerOfConsume!! * relativeGradeData.averageUsageTimePerDay!! * 30) / 1000
                 }
                 DeviceTypeList.BOILER -> {
                     // 보일러의 경우 아직 시뮬레이션 기능을 제공하지 않음
@@ -82,10 +81,14 @@ class SimulationActivity : AppCompatActivity() {
     private fun calculateAfterCurrentTotalPowerOfConsumeForMonth(
         position: Int, deviceType: DeviceTypeList?, afterPowerOfConsume: Int) {
         // 소비 전력 변화량
-        val changeInPowerConsumption =
-            afterPowerOfConsume - HomeActivity.list[position].powerOfConsume
+        if (HomeActivity.list[position].powerOfConsume == null) {
+            return
+        }
 
-        afterTotalPowerOfConsumeForMonth = 0.0F
+        val changeInPowerConsumption =
+            afterPowerOfConsume - HomeActivity.list[position].powerOfConsume!!
+
+        afterTotalPowerOfConsumeForMonth = 0.0
 
         // 기기 변경 후 등록된 모든 기기의 총 소비 전력량 (월간) 계산
         when (deviceType) {
@@ -173,10 +176,10 @@ class SimulationActivity : AppCompatActivity() {
         // 12월에 대한 것만 계산 (추후 현재 날짜에 따라 1월 ~ 12월 모두 제공 예정)
 
         // 기본 요금
-        val baseFee = if (totalPowerOfConsumeForMonth <= 200.0F) {
+        val baseFee = if (totalPowerOfConsumeForMonth <= 200.0) {
             // 200kWh 이하 사용 시
             910
-        } else if (totalPowerOfConsumeForMonth <= 400.0F) {
+        } else if (totalPowerOfConsumeForMonth <= 400.0) {
             // 201 ~ 400kWh 사용 시
             1600
         } else {
@@ -185,27 +188,27 @@ class SimulationActivity : AppCompatActivity() {
         }
 
         // 전력량에 의한 전기 요금
-        var electricalEnergy = 0.0F
+        var electricalEnergy = 0.0
 
-        if (totalPowerOfConsumeForMonth <= 200.0F) {
+        if (totalPowerOfConsumeForMonth <= 200.0) {
             // 200kWh 이하 사용 시
             electricalEnergy += (105 * totalPowerOfConsumeForMonth)
         } else {
             electricalEnergy += (105 * 200)
 
-            if (totalPowerOfConsumeForMonth <= 400.0F) {
+            if (totalPowerOfConsumeForMonth <= 400.0) {
                 // 201 ~ 400kWh 사용 시
                 electricalEnergy += (174 * ((totalPowerOfConsumeForMonth - 200)))
             } else {
                 electricalEnergy += (174 * 200)
 
-                if (totalPowerOfConsumeForMonth <= 1000.0F) {
+                if (totalPowerOfConsumeForMonth <= 1000.0) {
                     // 401 ~ 1000kWh 사용 시
-                    electricalEnergy += (242.3F * ((totalPowerOfConsumeForMonth) - 400))
+                    electricalEnergy += (242.3 * ((totalPowerOfConsumeForMonth) - 400))
                 } else {
                     // 1001kWh 이상 사용 시
-                    electricalEnergy += (242.3F * 600)
-                    electricalEnergy += (601.3F * (totalPowerOfConsumeForMonth) - 1000)
+                    electricalEnergy += (242.3 * 600)
+                    electricalEnergy += (601.3 * (totalPowerOfConsumeForMonth) - 1000)
                 }
             }
         }
@@ -225,10 +228,10 @@ class SimulationActivity : AppCompatActivity() {
         // 12월에 대한 것만 계산 (추후 현재 날짜에 따라 1월 ~ 12월 모두 제공 예정)
 
         // 기본 요금
-        val baseFee = if (afterTotalPowerOfConsumeForMonth <= 200.0F) {
+        val baseFee = if (afterTotalPowerOfConsumeForMonth <= 200.0) {
             // 200kWh 이하 사용 시
             910
-        } else if (afterTotalPowerOfConsumeForMonth <= 400.0F) {
+        } else if (afterTotalPowerOfConsumeForMonth <= 400.0) {
             // 201 ~ 400kWh 사용 시
             1600
         } else {
@@ -237,27 +240,27 @@ class SimulationActivity : AppCompatActivity() {
         }
 
         // 전력량에 의한 전기 요금
-        var electricalEnergy = 0.0F
+        var electricalEnergy = 0.0
 
-        if (afterTotalPowerOfConsumeForMonth <= 200.0F) {
+        if (afterTotalPowerOfConsumeForMonth <= 200.0) {
             // 200kWh 이하 사용 시
             electricalEnergy += (105 * afterTotalPowerOfConsumeForMonth)
         } else {
             electricalEnergy += (105 * 200)
 
-            if (afterTotalPowerOfConsumeForMonth <= 400.0F) {
+            if (afterTotalPowerOfConsumeForMonth <= 400.0) {
                 // 201 ~ 400kWh 사용 시
                 electricalEnergy += (174 * (afterTotalPowerOfConsumeForMonth - 200))
             } else {
                 electricalEnergy += (174 * 200)
 
-                if (afterTotalPowerOfConsumeForMonth <= 1000.0F) {
+                if (afterTotalPowerOfConsumeForMonth <= 1000.0) {
                     // 401 ~ 1000kWh 사용 시
-                    electricalEnergy += (242.3F * (afterTotalPowerOfConsumeForMonth - 400))
+                    electricalEnergy += (242.3 * (afterTotalPowerOfConsumeForMonth - 400))
                 } else {
                     // 1001kWh 이상 사용 시
-                    electricalEnergy += (242.3F * 600)
-                    electricalEnergy += (601.3F * (afterTotalPowerOfConsumeForMonth - 1000))
+                    electricalEnergy += (242.3 * 600)
+                    electricalEnergy += (601.3 * (afterTotalPowerOfConsumeForMonth - 1000))
                 }
             }
         }
@@ -283,7 +286,7 @@ class SimulationActivity : AppCompatActivity() {
             intent.getSerializableExtra("deviceType") as DeviceTypeList
         }
 
-        val powerOfConsume = intent.getFloatExtra("powerOfConsume", -1.0F)
+        val powerOfConsume = intent.getDoubleExtra("powerOfConsume", -1.0)
         val relativeElectricPowerConsumePercentage = intent.getIntExtra("relativeElectricPowerConsumePercentage", -1)
         val position = intent.getIntExtra("position", -1)
 
