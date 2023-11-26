@@ -11,7 +11,6 @@ import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
@@ -30,12 +29,20 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
 import com.toyproject.ecosave.api.APIClientForNaverMap
+import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
 import com.toyproject.ecosave.api.APIInterface
+import com.toyproject.ecosave.api.requestmodels.ChangeMyResidenceRequest
+import com.toyproject.ecosave.api.responsemodels.ApplianceDetailResponse
+import com.toyproject.ecosave.api.responsemodels.BoilerDetailResponse
+import com.toyproject.ecosave.api.responsemodels.DefaultResponse
+import com.toyproject.ecosave.api.responsemodels.MainTotalInformationResponse
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RegisteredDeviceData
 import com.toyproject.ecosave.api.responsemodels.ReverseGeocodingResponse
 import com.toyproject.ecosave.utilities.fromDpToPx
+import com.toyproject.ecosave.utilities.getTranslatedDeviceType
+import com.toyproject.ecosave.widget.ProgressDialog
 import com.toyproject.ecosave.widget.createDialog
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
@@ -51,20 +58,11 @@ class HomeActivity : AppCompatActivity() {
     private var recyclerView: RecyclerView? = null
     private var recyclerViewRegisteredDeviceListAdapter: RecyclerViewRegisteredDeviceListAdapter? = null
 
-    private var currentLatitude = 0.0 // 위도
-    private var currentLongitude = 0.0 // 경도
-
     // 상대적 에너지 소비 효율 등급을 나타낼 수 없을 때 화면에 출력할 메세지
     private var textNoRelativeGradeData = ""
 
     // 내 거주지
     private var myLocation = ""
-
-    // 내 거주지 설정 시 필요한 권한 목록
-    private val permissions = arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION
-    )
 
     // 내 거주지 설정 방법
     private val optionsForChangeMyResidence = arrayOf(
@@ -73,8 +71,17 @@ class HomeActivity : AppCompatActivity() {
     )
 
     companion object {
-        private const val REQUEST_CODE_PERMISSIONS = 1001
-        private const val LOCATION_REQUEST_INTERVAL_MILLIS = (1000 * 100).toLong()
+        var currentLatitude = 0.0 // 위도
+        var currentLongitude = 0.0 // 경도
+
+        // 내 거주지 설정 시 필요한 권한 목록
+        val permissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+
+        const val REQUEST_CODE_PERMISSIONS = 1001
+        const val LOCATION_REQUEST_INTERVAL_MILLIS = (1000 * 100).toLong()
         private const val MARGIN_SIDE = 20.0F
         private const val MARGIN_BETWEEN_PYRAMIDS = 10
         private val MARGIN_TEXT = arrayOf(
@@ -95,20 +102,23 @@ class HomeActivity : AppCompatActivity() {
         // 등록된 기기의 개수
         private var numOfRegisteredDevices = 0
 
+        // 상세 정보를 알아낸 기기의 개수
+        private var numOfGetDetailedInformationDevices = 0
+
         // CO2 배출량에 대한 상대적 에너지 소비 효율 백분위(%)의 합
-        private var sumOfRelativeCO2EmissionPercentage = 0.0F
+        private var sumOfRelativeCO2EmissionPercentage = 0.0
 
         // CO2 배출량에 대한 종합 상대적 에너지 소비 효율 등급
         private var totalRelativeCO2EmissionGrade = -1
 
         // 소비전력에 대한 상대적 에너지 소비 효율 백분위(%)의 합
-        private var sumOfRelativeEnergyConsumePercentage = 0.0F
+        private var sumOfRelativeEnergyConsumePercentage = 0.0
 
         // 소비전력에 대한 상대적 에너지 소비 효율 등급
         var totalRelativeEnergyConsumeGrade = -1
     }
 
-    private val locationCallback = object : LocationCallback() {
+    val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             super.onLocationResult(locationResult)
 
@@ -126,88 +136,489 @@ class HomeActivity : AppCompatActivity() {
     // 서버로 부터 내 거주지를 불러옴
     private fun getMyLocationFromServer() {
         if (myLocation == "") {
-            binding.textMyResident.text = "등록된 정보가 없습니다."
+            binding.textMyResidentInfo.text = "등록된 정보가 없습니다."
             textNoRelativeGradeData = "내 거주지 설정 이후 상대적 에너지 소비 효율 등급을 확인할 수 있습니다."
             binding.textNoRelativeGradeData.visibility = View.VISIBLE
             binding.relativeLayoutForPyramid.visibility = View.GONE
         } else {
-            binding.textMyResident.text = myLocation
+            binding.textMyResidentInfo.text = myLocation
         }
     }
 
     private fun prepareListData() {
-        // 서버에서 상대적 에너지 소비 효율 등급에 대한 정보를 가져옴
-
         // list 목록 초기화
         list.clear()
 
-        var data: RegisteredDeviceData
+        // progress bar 불러오기
+        val progressDialog = ProgressDialog.getProgressDialog(this, "등록된 기기를 불러오고 있습니다")
+        progressDialog.show()
 
-        data = RegisteredDeviceData(
-            DeviceTypeList.REFRIGERATOR,
-            1, 3, 35.9F,
-            1, 4, 21.0F,
-            null
+        // 서버에서 상대적 에너지 소비 효율 등급에 대한 정보를 가져옴
+        val apiInterface = APIClientForServerByPassSSLCertificate
+            .getClient()
+            .create(APIInterface::class.java)
+        val callMainTotalInformation = apiInterface.mainTotalInformation()
+
+        Log.d("홈 화면", App.prefs.token!!)
+
+        callMainTotalInformation.enqueue(
+            object : Callback<MainTotalInformationResponse> {
+                override fun onResponse(
+                    call: Call<MainTotalInformationResponse>,
+                    response: Response<MainTotalInformationResponse>
+                ) {
+                    // progress bar 종료
+                    progressDialog.dismiss()
+
+                    if (response.isSuccessful) {
+                        val result = response.body()
+
+                        if (result != null) {
+                            if (result.success) {
+                                // 서버로부터 등록된 기기 목록에 관한 정보를 가져옴
+                                val data = result.data
+
+                                Log.d("홈 화면", data.toString())
+
+                                // 등록된 냉장고의 pkey와 소비전력량 가져오기
+                                if (data.refrigerator != null) {
+                                    for (refrigeratorData in data.refrigerator) {
+                                        val pkey = refrigeratorData.id
+                                        val energy = refrigeratorData.energy
+                                        list.add(
+                                            RegisteredDeviceData(
+                                                pkey,
+                                                DeviceTypeList.REFRIGERATOR,
+                                                "",
+                                                null, null,
+                                                energy,
+                                                null, null, null, null
+                                            )
+                                        )
+                                        recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
+                                    }
+                                }
+
+                                // 등록된 에어컨의 pkey와 소비전력량 가져오기
+                                if (data.air_conditioner != null) {
+                                    for (airConditionerData in data.air_conditioner) {
+                                        val pkey = airConditionerData.id
+                                        val energy = airConditionerData.energy
+                                        list.add(
+                                            RegisteredDeviceData(
+                                                pkey,
+                                                DeviceTypeList.AIR_CONDITIONER,
+                                                "",
+                                                null, null,
+                                                energy,
+                                                null, null, null, null
+                                            )
+                                        )
+                                        recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
+                                    }
+                                }
+
+                                // 등록된 TV의 pkey와 소비전력량 가져오기
+                                if (data.television != null) {
+                                    for (tvData in data.television) {
+                                        val pkey = tvData.id
+                                        val energy = tvData.energy
+                                        list.add(
+                                            RegisteredDeviceData(
+                                                pkey,
+                                                DeviceTypeList.TV,
+                                                "",
+                                                null, null,
+                                                energy,
+                                                null, null, null, null
+                                            )
+                                        )
+                                        recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
+                                    }
+                                }
+
+                                // 등록된 세탁기의 pkey와 소비전력량 가져오기
+                                if (data.washing_machine != null) {
+                                    for (washingMachineData in data.washing_machine) {
+                                        val pkey = washingMachineData.id
+                                        val energy = washingMachineData.energy
+                                        list.add(
+                                            RegisteredDeviceData(
+                                                pkey,
+                                                DeviceTypeList.WASHING_MACHINE,
+                                                "",
+                                                null, null,
+                                                energy,
+                                                null, null, null, null
+                                            )
+                                        )
+                                        recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
+                                    }
+                                }
+
+                                // 등록된 전자레인지의 pkey와 소비전력량 가져오기
+                                if (data.microwave != null) {
+                                    for (microwaveOvenData in data.microwave) {
+                                        val pkey = microwaveOvenData.id
+                                        val energy = microwaveOvenData.energy
+                                        list.add(
+                                            RegisteredDeviceData(
+                                                pkey,
+                                                DeviceTypeList.MICROWAVE_OVEN,
+                                                "",
+                                                null, null,
+                                                energy,
+                                                null, null, null, null
+                                            )
+                                        )
+                                        recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
+                                    }
+                                }
+
+                                // 등록된 보일러의 pkey와 소비전력량 가져오기
+                                if (data.boiler != null) {
+                                    for (boilerData in data.boiler) {
+                                        val pkey = boilerData.id
+                                        val efficiency = boilerData.efficiency
+                                        list.add(
+                                            RegisteredDeviceData(
+                                                pkey,
+                                                DeviceTypeList.BOILER,
+                                                "",
+                                                null, null,
+                                                efficiency,
+                                                null, null, null, null
+                                            )
+                                        )
+                                        recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
+                                    }
+                                }
+
+                                Log.d("홈 화면", list.toString())
+                                numOfRegisteredDevices = list.size
+                                callApplianceGet()
+                            } else {
+                                simpleDialog(
+                                    this@HomeActivity,
+                                    "홈 화면",
+                                    "기기 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
+                                )
+                                Log.d("홈 화면", "결과: 실패")
+                                Log.d("홈 화면", result.toString())
+                            }
+                        }
+                    } else {
+                        val errorResult = response.errorBody()
+                        val result = response.body()
+
+                        if (errorResult != null) {
+                            Log.d("홈 화면", "결과: 실패 (response.isSuccessful 통과하지 못함)")
+                            Log.d("홈 화면", errorResult.string())
+                            Log.d("홈 화면", result.toString())
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<MainTotalInformationResponse>, t: Throwable) {
+                    // progress bar 종료
+                    progressDialog.dismiss()
+
+                    simpleDialog(
+                        this@HomeActivity,
+                        "통신 오류",
+                        "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해주세요."
+                    )
+                    Log.d("홈 화면", "결과: 실패 (onFailure)")
+                    Log.d("홈 화면", t.message.toString())
+                }
+            }
         )
-        list.add(data)
+    }
 
-        data = RegisteredDeviceData(
-            DeviceTypeList.AIR_CONDITIONER,
-            2, 8, 131.3F,
-            3, 14, 52.3F,
-            7.8F
-        )
-        list.add(data)
-
-        data = RegisteredDeviceData(
-            DeviceTypeList.BOILER,
-            3, 21, 83.0F,
-            null, null, null,
-            null
-        )
-        list.add(data)
-
-        data = RegisteredDeviceData(
-            DeviceTypeList.WASHING_MACHINE,
-            3, 21, 62.8F,
-            3, 17, 219.0F,
-            null
-        )
-        list.add(data)
-
-        data = RegisteredDeviceData(
-            DeviceTypeList.MICROWAVE_OVEN,
-            4, 28, 1200.0F,
-            null, null, null,
-            null
-        )
-        list.add(data)
-
-//        data = RegisteredDeviceData(
-//            DeviceTypeList.TV,
-//            5, 56, 126.0F,
-//            5, 53, 43.0F,
-//            6.0F
-//        )
-//        list.add(data)
-
-        data = RegisteredDeviceData(
-            DeviceTypeList.TV,
-            6, 64, 153.0F,
-            7, 81, 65.0F,
-            6.0F
-        )
-        list.add(data)
-
-        data = RegisteredDeviceData(
-            DeviceTypeList.AIR_CONDITIONER,
-            8, 90, 195.2F,
-            9, 97, 77.4F,
-            7.8F
-        )
-        list.add(data)
+    private fun callApplianceGet() {
+        for ((idx, registeredDeviceData) in list.withIndex()) {
+            when (registeredDeviceData.deviceType) {
+                DeviceTypeList.REFRIGERATOR,
+                DeviceTypeList.AIR_CONDITIONER,
+                DeviceTypeList.TV,
+                DeviceTypeList.WASHING_MACHINE,
+                DeviceTypeList.MICROWAVE_OVEN -> {
+                    callAppliance(idx, registeredDeviceData.deviceType, list[idx].id)
+                }
+                DeviceTypeList.BOILER -> {
+                    // 나의 보일러 세부정보 호출
+                    callApplianceBoilerGet(idx, list[idx].id)
+                }
+                else -> continue
+            }
+        }
 
         checkMyLocationAndNumOfRegisteredDevices()
+    }
+
+    private fun callAppliance(idx: Int, deviceType: DeviceTypeList, id: Int) {
+        val apiInterface = APIClientForServerByPassSSLCertificate
+            .getClient()
+            .create(APIInterface::class.java)
+        val call: Call<ApplianceDetailResponse>
+
+        when (deviceType) {
+            // 나의 냉장고 세부정보 호출
+            DeviceTypeList.REFRIGERATOR -> call = apiInterface.applianceRefrigeratorGet(id)
+
+            // 나의 에어컨 세부정보 호출
+            DeviceTypeList.AIR_CONDITIONER -> call = apiInterface.applianceAirConditionerGet(id)
+
+            // 나의 TV 세부정보 호출
+            DeviceTypeList.TV -> call = apiInterface.applianceTelevisionGet(id)
+
+            // 나의 세탁기 세부정보 호출
+            DeviceTypeList.WASHING_MACHINE -> call = apiInterface.applianceWashingMachineGet(id)
+
+            // 나의 전자레인지 세부정보 호출
+            DeviceTypeList.MICROWAVE_OVEN -> call = apiInterface.applianceMicrowaveGet(id)
+
+            else -> return
+        }
+
+        var retryCnt = 0 // 재시도 횟수
+
+        call.enqueue(
+            object : Callback<ApplianceDetailResponse> {
+                override fun onResponse(
+                    call: Call<ApplianceDetailResponse>,
+                    response: Response<ApplianceDetailResponse>
+                ) {
+                    Log.d("홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)", "statusCode: ${response.code()}")
+                    Log.d("홈 화면 (보일러 세부정보 호출)", "결과: ${response.body()?.data}")
+
+                    if (response.isSuccessful) {
+                        val result = response.body()
+
+                        if (result != null) {
+                            if (result.success) {
+                                val data = result.data
+
+                                list[idx].powerOfConsume = data.energy.toDouble()
+                                list[idx].amountOfCO2Emission = data.co2.toDouble()
+                                list[idx].model = ""
+                                list[idx].relativeElectricPowerConsumeGrade = data.tier
+                                list[idx].relativeElectricPowerConsumePercentage = data.relativePercent
+
+                                // 상세 정보를 알아낸 기기의 개수 1 증가
+                                numOfGetDetailedInformationDevices++
+
+                                // 전력 소비 누적 비율(%)
+                                sumOfRelativeEnergyConsumePercentage += data.relativePercent
+
+                                // CO2 배출량 누적 비율(%)은 전력 소비 누적 비율(%)과 동일하다고 가정(임시)
+                                sumOfRelativeCO2EmissionPercentage += data.relativePercent
+
+                                recyclerViewRegisteredDeviceListAdapter?.notifyItemChanged(idx)
+
+                                if (numOfGetDetailedInformationDevices == numOfRegisteredDevices) {
+                                    binding.progressBar.visibility = View.GONE
+                                    binding.relativeLayoutForPyramid.visibility = View.VISIBLE
+                                    showPyramid()
+                                }
+                            }
+                        } else {
+                            val errorBody = response.errorBody()
+
+                            if (errorBody != null) {
+                                Log.d(
+                                    "홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)",
+                                    "errorBody: ${errorBody.string()}"
+                                )
+                            }
+                        }
+                    } else {
+                        if (response.code() == 500) {
+                            // 500 Internal Server Error
+                            // request 재시도
+                            // 재시도는 최대 3번만 가능
+                            retryCnt++
+                            if (retryCnt <= 3) {
+                                call.clone().enqueue(this)
+                            } else {
+                                Log.d(
+                                    "홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)",
+                                    "재시도 횟수 3회 초과"
+                                )
+                            }
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<ApplianceDetailResponse>, t: Throwable) {
+                    Log.d(
+                        "홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)",
+                        "결과: 실패 (onFailure)"
+                    )
+                    Log.d(
+                        "홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)",
+                        t.message.toString()
+                    )
+                }
+            }
+        )
+    }
+
+    // 나의 보일러 세부정보 호출
+    private fun callApplianceBoilerGet(idx: Int, id: Int) {
+        val apiInterface = APIClientForServerByPassSSLCertificate
+            .getClient()
+            .create(APIInterface::class.java)
+        val callApplianceBoilerGet = apiInterface.applianceBoilerGet(id)
+
+        var retryCnt = 0 // 재시도 횟수
+
+        callApplianceBoilerGet.enqueue(
+            object : Callback<BoilerDetailResponse> {
+                override fun onResponse(
+                    call: Call<BoilerDetailResponse>,
+                    response: Response<BoilerDetailResponse>
+                ) {
+                    Log.d("홈 화면 (보일러 세부정보 호출)", "statusCode: ${response.code()}")
+                    Log.d("홈 화면 (보일러 세부정보 호출)", "결과: ${response.body()?.data}")
+
+                    if (response.isSuccessful) {
+                        val result = response.body()
+
+                        if (result != null) {
+                            if (result.success) {
+                                val data = result.data
+
+                                list[idx].powerOfConsume = data.efficiency.toDouble()
+                                list[idx].model = ""
+                                list[idx].relativeElectricPowerConsumeGrade = data.tier
+                                list[idx].relativeElectricPowerConsumePercentage = data.relativePercent
+
+                                // 상세 정보를 알아낸 기기의 개수 1 증가
+                                numOfGetDetailedInformationDevices++
+
+                                // 전력 소비 누적 비율(%)
+                                sumOfRelativeEnergyConsumePercentage += data.relativePercent
+
+                                // CO2 배출량 누적 비율(%)은 전력 소비 누적 비율(%)과 동일하다고 가정(임시)
+                                sumOfRelativeCO2EmissionPercentage += data.relativePercent
+
+                                recyclerViewRegisteredDeviceListAdapter?.notifyItemChanged(idx)
+
+                                if (numOfGetDetailedInformationDevices == numOfRegisteredDevices) {
+                                    binding.progressBar.visibility = View.GONE
+                                    binding.relativeLayoutForPyramid.visibility = View.VISIBLE
+                                    showPyramid()
+                                }
+                            }
+                        } else {
+                            val errorBody = response.errorBody()
+
+                            if (errorBody != null) {
+                                Log.d("홈 화면 (보일러 세부정보 호출)", "errorBody: ${errorBody.string()}")
+                            }
+                        }
+                    } else {
+                        if (response.code() == 500) {
+                            // 500 Internal Server Error
+                            // request 재시도
+                            // 재시도는 최대 3번만 가능
+                            retryCnt++
+                            if (retryCnt <= 3) {
+                                call.clone().enqueue(this)
+                            } else {
+                                Log.d(
+                                    "홈 화면 (보일러 세부정보 호출)",
+                                    "재시도 횟수 3회 초과"
+                                )
+                            }
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<BoilerDetailResponse>, t: Throwable) {
+                    Log.d("홈 화면 (보일러 세부정보 호출)", "결과: 실패 (onFailure)")
+                    Log.d("홈 화면 (보일러 세부정보 호출)", t.message.toString())
+                }
+            }
+        )
+    }
+
+    private fun callChangeMyResidence(latitude: Double, longitude: Double) {
+        val apiInterface = APIClientForServerByPassSSLCertificate
+            .getClient()
+            .create(APIInterface::class.java)
+
+        val call = apiInterface.changeMyResidence(
+            ChangeMyResidenceRequest(latitude, longitude)
+        )
+
+        // progress bar 호출
+        val progressDialog = ProgressDialog.getProgressDialog(this, "처리 중 입니다")
+        progressDialog.show()
+
+        call.enqueue(
+            object : Callback<DefaultResponse> {
+                override fun onResponse(
+                    call: Call<DefaultResponse>,
+                    response: Response<DefaultResponse>
+                ) {
+                    // progress bar 종료
+                    progressDialog.dismiss()
+
+                    if (response.isSuccessful) {
+                        // status code가 200 ~ 299일 때
+                        val result = response.body()
+
+                        if (result != null) {
+                            if ((result.success) && (result.message == "전송성공")) {
+                                Log.d("홈 화면 (내 거주지 변경)", "결과: 성공")
+                                Log.d("홈 화면 (내 거주지 변경)", result.toString())
+
+                                simpleDialog(
+                                    this@HomeActivity,
+                                    "내 거주지 변경",
+                                    "거주지 변경이 완료되었습니다."
+                                )
+                            } else {
+                                simpleDialog(
+                                    this@HomeActivity,
+                                    "내 거주지 변경",
+                                    "거주지 변경에 실패했습니다. 다시 시도해주세요."
+                                )
+
+                                Log.d("홈 화면 (내 거주지 변경)", "결과: 실패")
+                                Log.d("홈 화면 (내 거주지 변경)", result.toString())
+                            }
+                        }
+                    } else {
+                        // status code가 200 ~ 299가 아닐 때
+                        val errorResult = response.errorBody()
+                        val result = response.body()
+
+                        if (errorResult != null) {
+                            Log.d("홈 화면 (내 거주지 변경)", "결과: 실패 (response.isSuccessful 통과하지 못함)")
+                            Log.d("홈 화면 (내 거주지 변경)", "statusCode: ${response.code()}")
+                            Log.d("홈 화면 (내 거주지 변경)", errorResult.string())
+                            Log.d("홈 화면 (내 거주지 변경)", result.toString())
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<DefaultResponse>, t: Throwable) {
+                    // progress bar 종료
+                    progressDialog.dismiss()
+
+                    simpleDialog(
+                        this@HomeActivity,
+                        "통신 오류",
+                        "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해주세요."
+                    )
+                    Log.d("홈 화면 (내 거주지 변경)", "결과: 실패 (onFailure)")
+                    Log.d("홈 화면 (내 거주지 변경)", t.message.toString())
+                }
+            }
+        )
     }
 
     private fun checkMyLocationAndNumOfRegisteredDevices() {
@@ -230,32 +641,37 @@ class HomeActivity : AppCompatActivity() {
     fun resetPyramid(mode: String, registeredDeviceData: RegisteredDeviceData) {
         if (mode == "OFF") {
             // 사용 여부를 OFF로 설정할 때
-            numOfRegisteredDevices -= 1
 
-            if ((registeredDeviceData.relativeCO2EmissionGrade == null)
-                || (registeredDeviceData.relativeCO2EmissionPercentage == null)
-                || (registeredDeviceData.amountOfCO2Emission == null)) {
-                // CO2 배출량이 적혀있지 않은 제품의 경우 CO2 배출량 상대 등급과 누적 비율(%)은 동일하다고 가정
-                sumOfRelativeCO2EmissionPercentage -= registeredDeviceData.relativeElectricPowerConsumePercentage
-            } else {
-                sumOfRelativeCO2EmissionPercentage -= registeredDeviceData.relativeCO2EmissionPercentage
+            if (registeredDeviceData.relativeElectricPowerConsumePercentage != null) {
+                numOfRegisteredDevices -= 1
+
+                if ((registeredDeviceData.relativeCO2EmissionGrade == null)
+                    || (registeredDeviceData.relativeCO2EmissionPercentage == null)
+                    || (registeredDeviceData.amountOfCO2Emission == null)) {
+                    // CO2 배출량이 적혀있지 않은 제품의 경우 CO2 배출량 상대 등급과 누적 비율(%)은 동일하다고 가정
+                    sumOfRelativeCO2EmissionPercentage -= registeredDeviceData.relativeElectricPowerConsumePercentage!!
+                } else {
+                    sumOfRelativeCO2EmissionPercentage -= registeredDeviceData.relativeCO2EmissionPercentage!!
+                }
+
+                sumOfRelativeEnergyConsumePercentage -= registeredDeviceData.relativeElectricPowerConsumePercentage!!
             }
-
-            sumOfRelativeEnergyConsumePercentage -= registeredDeviceData.relativeElectricPowerConsumePercentage
         } else if (mode == "ON") {
             // 사용 여부를 ON으로 설정할 때
-            numOfRegisteredDevices += 1
+            if (registeredDeviceData.relativeElectricPowerConsumePercentage != null) {
+                numOfRegisteredDevices += 1
 
-            if ((registeredDeviceData.relativeCO2EmissionGrade == null)
-                || (registeredDeviceData.relativeCO2EmissionPercentage == null)
-                || (registeredDeviceData.amountOfCO2Emission == null)) {
-                // CO2 배출량이 적혀있지 않은 제품의 경우 CO2 배출량 상대 등급과 누적 비율(%)은 동일하다고 가정
-                sumOfRelativeCO2EmissionPercentage += registeredDeviceData.relativeElectricPowerConsumePercentage
-            } else {
-                sumOfRelativeCO2EmissionPercentage += registeredDeviceData.relativeCO2EmissionPercentage
+                if ((registeredDeviceData.relativeCO2EmissionGrade == null)
+                    || (registeredDeviceData.relativeCO2EmissionPercentage == null)
+                    || (registeredDeviceData.amountOfCO2Emission == null)) {
+                    // CO2 배출량이 적혀있지 않은 제품의 경우 CO2 배출량 상대 등급과 누적 비율(%)은 동일하다고 가정
+                    sumOfRelativeCO2EmissionPercentage += registeredDeviceData.relativeElectricPowerConsumePercentage!!
+                } else {
+                    sumOfRelativeCO2EmissionPercentage += registeredDeviceData.relativeCO2EmissionPercentage!!
+                }
+
+                sumOfRelativeEnergyConsumePercentage += registeredDeviceData.relativeElectricPowerConsumePercentage!!
             }
-
-            sumOfRelativeEnergyConsumePercentage += registeredDeviceData.relativeElectricPowerConsumePercentage
         }
 
         // 피라미드 재설정
@@ -277,7 +693,7 @@ class HomeActivity : AppCompatActivity() {
         paramsForCO2Pyramid.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
         binding.CO2Pyramid.layoutParams = paramsForCO2Pyramid
 
-        calculateRelativeGradeData()
+        // calculateRelativeGradeData()
     }
 
     private fun calculateRelativeGradeData() {
@@ -285,22 +701,24 @@ class HomeActivity : AppCompatActivity() {
 
         // 데이터 초기화
         numOfRegisteredDevices = 0
-        sumOfRelativeCO2EmissionPercentage = 0.0F
+        sumOfRelativeCO2EmissionPercentage = 0.0
         totalRelativeCO2EmissionGrade = -1
-        sumOfRelativeEnergyConsumePercentage = 0.0F
+        sumOfRelativeEnergyConsumePercentage = 0.0
         totalRelativeEnergyConsumeGrade = -1
 
         for (relativeGradeData in list) {
-            numOfRegisteredDevices += 1
-            sumOfRelativeEnergyConsumePercentage += relativeGradeData.relativeElectricPowerConsumePercentage
+            if (relativeGradeData.relativeElectricPowerConsumePercentage != null) {
+                numOfRegisteredDevices += 1
+                sumOfRelativeEnergyConsumePercentage += relativeGradeData.relativeElectricPowerConsumePercentage!!
 
-            if ((relativeGradeData.relativeCO2EmissionGrade == null)
-                || (relativeGradeData.relativeCO2EmissionPercentage == null)
-                || (relativeGradeData.amountOfCO2Emission == null)) {
-                // CO2 배출량이 적혀있지 않은 제품의 경우 CO2 배출량 상대 등급과 누적 비율(%)은 동일하다고 가정
-                sumOfRelativeCO2EmissionPercentage += relativeGradeData.relativeElectricPowerConsumePercentage
-            } else {
-                sumOfRelativeCO2EmissionPercentage += relativeGradeData.relativeCO2EmissionPercentage
+                if ((relativeGradeData.relativeCO2EmissionGrade == null)
+                    || (relativeGradeData.relativeCO2EmissionPercentage == null)
+                    || (relativeGradeData.amountOfCO2Emission == null)) {
+                    // CO2 배출량이 적혀있지 않은 제품의 경우 CO2 배출량 상대 등급과 누적 비율(%)은 동일하다고 가정
+                    sumOfRelativeCO2EmissionPercentage += relativeGradeData.relativeElectricPowerConsumePercentage!!
+                } else {
+                    sumOfRelativeCO2EmissionPercentage += relativeGradeData.relativeCO2EmissionPercentage!!
+                }
             }
         }
 
@@ -330,35 +748,35 @@ class HomeActivity : AppCompatActivity() {
         val averageRelativeCO2EmissionPercentage =
             sumOfRelativeCO2EmissionPercentage / numOfRegisteredDevices
 
-        if (averageRelativeCO2EmissionPercentage <= 4.0F) { // 1등급 (CO2)
+        if (averageRelativeCO2EmissionPercentage <= 4.0) { // 1등급 (CO2)
             binding.CO2Pyramid.setImageResource(R.drawable.pyramid1_co2)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_1))
             totalRelativeCO2EmissionGrade = 1
-        } else if (averageRelativeCO2EmissionPercentage <= 11.0F) { // 2등급 (CO2)
+        } else if (averageRelativeCO2EmissionPercentage <= 11.0) { // 2등급 (CO2)
             binding.CO2Pyramid.setImageResource(R.drawable.pyramid2_co2)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_2_and_3))
             totalRelativeCO2EmissionGrade = 2
-        } else if (averageRelativeCO2EmissionPercentage <= 23.0F) { // 3등급 (CO2)
+        } else if (averageRelativeCO2EmissionPercentage <= 23.0) { // 3등급 (CO2)
             binding.CO2Pyramid.setImageResource(R.drawable.pyramid2_co2)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_2_and_3))
             totalRelativeCO2EmissionGrade = 3
-        } else if (averageRelativeCO2EmissionPercentage <= 40.0F) { // 4등급 (CO2)
+        } else if (averageRelativeCO2EmissionPercentage <= 40.0) { // 4등급 (CO2)
             binding.CO2Pyramid.setImageResource(R.drawable.pyramid3_co2)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_4_and_5))
             totalRelativeCO2EmissionGrade = 4
-        } else if (averageRelativeCO2EmissionPercentage <= 60.0F) { // 5등급 (CO2)
+        } else if (averageRelativeCO2EmissionPercentage <= 60.0) { // 5등급 (CO2)
             binding.CO2Pyramid.setImageResource(R.drawable.pyramid3_co2)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_4_and_5))
             totalRelativeCO2EmissionGrade = 5
-        } else if (averageRelativeCO2EmissionPercentage <= 77.0F) { // 6등급 (CO2)
+        } else if (averageRelativeCO2EmissionPercentage <= 77.0) { // 6등급 (CO2)
             binding.CO2Pyramid.setImageResource(R.drawable.pyramid4_co2)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_6_and_7))
             totalRelativeCO2EmissionGrade = 6
-        } else if (averageRelativeCO2EmissionPercentage <= 89.0F) { // 7등급 (CO2)
+        } else if (averageRelativeCO2EmissionPercentage <= 89.0) { // 7등급 (CO2)
             binding.CO2Pyramid.setImageResource(R.drawable.pyramid4_co2)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_6_and_7))
             totalRelativeCO2EmissionGrade = 7
-        } else if (averageRelativeCO2EmissionPercentage <= 96.0F) { // 8등급 (CO2)
+        } else if (averageRelativeCO2EmissionPercentage <= 96.0) { // 8등급 (CO2)
             binding.CO2Pyramid.setImageResource(R.drawable.pyramid5_co2)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_8_and_9))
             totalRelativeCO2EmissionGrade = 8
@@ -396,35 +814,35 @@ class HomeActivity : AppCompatActivity() {
         val averageRelativeEnergyConsumePercentage =
             sumOfRelativeEnergyConsumePercentage / numOfRegisteredDevices
 
-        if (averageRelativeEnergyConsumePercentage <= 4.0F) { // 1등급 (소비전력)
+        if (averageRelativeEnergyConsumePercentage <= 4.0) { // 1등급 (소비전력)
             binding.energyConsumePyramid.setImageResource(R.drawable.pyramid1_energy)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_1))
             totalRelativeEnergyConsumeGrade = 1
-        } else if (averageRelativeEnergyConsumePercentage <= 11.0F) { // 2등급 (소비전력)
+        } else if (averageRelativeEnergyConsumePercentage <= 11.0) { // 2등급 (소비전력)
             binding.energyConsumePyramid.setImageResource(R.drawable.pyramid2_energy)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_2_and_3))
             totalRelativeEnergyConsumeGrade = 2
-        } else if (averageRelativeEnergyConsumePercentage <= 23.0F) { // 3등급 (소비전력)
+        } else if (averageRelativeEnergyConsumePercentage <= 23.0) { // 3등급 (소비전력)
             binding.energyConsumePyramid.setImageResource(R.drawable.pyramid2_energy)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_2_and_3))
             totalRelativeEnergyConsumeGrade = 3
-        } else if (averageRelativeEnergyConsumePercentage <= 40.0F) { // 4등급 (소비전력)
+        } else if (averageRelativeEnergyConsumePercentage <= 40.0) { // 4등급 (소비전력)
             binding.energyConsumePyramid.setImageResource(R.drawable.pyramid3_energy)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_4_and_5))
             totalRelativeEnergyConsumeGrade = 4
-        } else if (averageRelativeEnergyConsumePercentage <= 60.0F) { // 5등급 (소비전력)
+        } else if (averageRelativeEnergyConsumePercentage <= 60.0) { // 5등급 (소비전력)
             binding.energyConsumePyramid.setImageResource(R.drawable.pyramid3_energy)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_4_and_5))
             totalRelativeEnergyConsumeGrade = 5
-        } else if (averageRelativeEnergyConsumePercentage <= 77.0F) { // 6등급 (소비전력)
+        } else if (averageRelativeEnergyConsumePercentage <= 77.0) { // 6등급 (소비전력)
             binding.energyConsumePyramid.setImageResource(R.drawable.pyramid4_energy)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_6_and_7))
             totalRelativeEnergyConsumeGrade = 6
-        } else if (averageRelativeEnergyConsumePercentage <= 89.0F) { // 7등급 (소비전력)
+        } else if (averageRelativeEnergyConsumePercentage <= 89.0) { // 7등급 (소비전력)
             binding.energyConsumePyramid.setImageResource(R.drawable.pyramid4_energy)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_6_and_7))
             totalRelativeEnergyConsumeGrade = 7
-        } else if (averageRelativeEnergyConsumePercentage <= 96.0F) { // 8등급 (소비전력)
+        } else if (averageRelativeEnergyConsumePercentage <= 96.0) { // 8등급 (소비전력)
             binding.energyConsumePyramid.setImageResource(R.drawable.pyramid5_energy)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_8_and_9))
             totalRelativeEnergyConsumeGrade = 8
@@ -572,7 +990,7 @@ class HomeActivity : AppCompatActivity() {
                                 }
 
                                 val finalAddressList = addressList.toTypedArray()
-                                chooseAddress(finalAddressList)
+                                chooseAddress(finalAddressList, latitude, longitude)
                             }
                         } catch (e: Exception) {
                             simpleDialog(
@@ -580,24 +998,41 @@ class HomeActivity : AppCompatActivity() {
                                 "내 거주지 변경",
                                 "현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요."
                             )
-                            Log.d("위치", e.toString())
+                            Log.d("홈 화면 (내 거주지 변경)", e.toString())
                             e.printStackTrace()
                         }
                     } else {
-                        Log.d("위치", response.errorBody()?.string()!!)
+                        // status code가 200 ~ 299가 아닐 때
+                        val errorResult = response.errorBody()
+                        val result = response.body()
+
+                        if (errorResult != null) {
+                            Log.d("홈 화면 (내 거주지 변경)", "결과: 실패 (response.isSuccessful 통과하지 못함)")
+                            Log.d("홈 화면 (내 거주지 변경)", "statusCode: ${response.code()}")
+                            Log.d("홈 화면 (내 거주지 변경)", errorResult.string())
+                            Log.d("홈 화면 (내 거주지 변경)", result.toString())
+                        }
                     }
                 }
 
                 override fun onFailure(call: Call<ReverseGeocodingResponse>, t: Throwable) {
-                    Toast.makeText(this@HomeActivity, "주소 정보를 가져오지 못했습니다.", Toast.LENGTH_SHORT).show()
-                    Log.d("위치", t.message.toString())
+                    simpleDialog(
+                        this@HomeActivity,
+                        "내 거주지 변경",
+                        "주소 정보를 가져오지 못했습니다. 다시 시도해주세요."
+                    )
+                    Log.d("홈 화면 (내 거주지 변경)", t.message.toString())
                 }
             }
         )
     }
 
     // Dialog를 통해 거주지 설정
-    private fun chooseAddress(addressList: Array<String>) {
+    private fun chooseAddress(
+        addressList: Array<String>,
+        latitude: Double,
+        longitude: Double
+    ) {
         var selected = 0
 
         val alertDialogBuilderBtn = AlertDialog.Builder(this)
@@ -608,11 +1043,13 @@ class HomeActivity : AppCompatActivity() {
             }
         }
         alertDialogBuilderBtn.setPositiveButton("확인") { _, _ ->
-            binding.textMyResident.text = addressList[selected]
+            binding.textMyResidentInfo.text = addressList[selected]
 
             myLocation = addressList[selected]
             textNoRelativeGradeData = ""
 
+            // changeMyResidence API 호출
+            callChangeMyResidence(latitude, longitude)
             checkMyLocationAndNumOfRegisteredDevices()
         }
         alertDialogBuilderBtn.setNegativeButton("취소") { _, _ -> }
@@ -638,6 +1075,12 @@ class HomeActivity : AppCompatActivity() {
         val layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
         recyclerView!!.layoutManager = layoutManager
         recyclerView!!.adapter = recyclerViewRegisteredDeviceListAdapter
+
+        binding.textMyResidentInfo.text = "인천광역시 미추홀구 용현동 12"
+        myLocation = "인천광역시 미추홀구 용현동 12"
+
+        binding.progressBar.visibility = View.VISIBLE
+        binding.relativeLayoutForPyramid.visibility = View.GONE
 
         // 내 거주지 불러오기
         getMyLocationFromServer()
