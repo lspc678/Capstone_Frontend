@@ -17,6 +17,8 @@ import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 class SimulationActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySimulationBinding
@@ -73,7 +75,9 @@ class SimulationActivity : AppCompatActivity() {
         }
 
         // 기기 변경 전 총 소비전력량 시뮬레이션 결과에 표시
-        binding.textTotalPowerOfConsumeForMonth.text = "$totalPowerOfConsumeForMonth kWh/월"
+        val _totalPowerOfConsumeForMonth =
+            BigDecimal(totalPowerOfConsumeForMonth).setScale(2, RoundingMode.HALF_UP)
+        binding.textTotalPowerOfConsumeForMonth.text = "$_totalPowerOfConsumeForMonth kWh/월"
     }
 
     // 기기 변경 후 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
@@ -126,7 +130,9 @@ class SimulationActivity : AppCompatActivity() {
         afterTotalPowerOfConsumeForMonth += totalPowerOfConsumeForMonth
 
         // 기기 변경 후 총 소비전력량 시뮬레이션 결과에 표시
-        binding.textAfterTotalPowerOfConsumeForMonth.text = "$afterTotalPowerOfConsumeForMonth kWh/월"
+        val _afterTotalPowerOfConsumeForMonth =
+            BigDecimal(afterTotalPowerOfConsumeForMonth).setScale(2, RoundingMode.HALF_UP)
+        binding.textAfterTotalPowerOfConsumeForMonth.text = "$_afterTotalPowerOfConsumeForMonth kWh/월"
 
         Log.d("시뮬레이션", totalPowerOfConsumeForMonth.toString())
         Log.d("시뮬레이션", afterTotalPowerOfConsumeForMonth.toString())
