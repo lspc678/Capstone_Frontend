@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
@@ -19,6 +20,8 @@ import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RegisteredDeviceData
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.widget.createDialog
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 class RecyclerViewRegisteredDeviceListAdapter constructor(
     private val context: Context, private val list: List<RegisteredDeviceData>
@@ -26,6 +29,7 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageDevice: ImageView = itemView.findViewById(R.id.imageDevice)
         val textRelativeElectricPowerConsumeGrade: TextView = itemView.findViewById(R.id.textRelativeElectricPowerConsumeGrade)
+        val progressBar: ProgressBar = itemView.findViewById(R.id.progressBar)
         val textPowerOfConsumeType: TextView = itemView.findViewById(R.id.textPowerOfConsumeType)
         val textPowerOfConsume: TextView = itemView.findViewById(R.id.textPowerOfConsume)
         val registeredDeviceListItem: CardView = itemView.findViewById(R.id.registeredDeviceListItem)
@@ -66,14 +70,35 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
             else -> holder.textRelativeElectricPowerConsumeGrade.setTextColor(ContextCompat.getColor(context, R.color.black))
         }
 
-        holder.textRelativeElectricPowerConsumeGrade.text =
-            list[position].relativeElectricPowerConsumeGrade.toString() +
-                    "등급(" +
-                    list[position].relativeElectricPowerConsumePercentage + "%)"
+        val relativeElectricPowerConsumeGrade = list[position].relativeElectricPowerConsumeGrade
+        val relativeElectricPowerConsumePercentage = list[position].relativeElectricPowerConsumePercentage
+
+        if ((relativeElectricPowerConsumeGrade != null)
+            && (relativeElectricPowerConsumePercentage != null)) {
+            // progress bar가 사라지도록 설정
+            holder.textRelativeElectricPowerConsumeGrade.visibility = View.VISIBLE
+            holder.progressBar.visibility = View.GONE
+            
+            holder.textRelativeElectricPowerConsumeGrade.text =
+                list[position].relativeElectricPowerConsumeGrade.toString() +
+                        "등급(" +
+                        list[position].relativeElectricPowerConsumePercentage + "%)"
+        } else {
+            // progress bar가 보이도록 설정
+            holder.textRelativeElectricPowerConsumeGrade.visibility = View.GONE
+            holder.progressBar.visibility = View.VISIBLE
+            // holder.textRelativeElectricPowerConsumeGrade.text = "-등급(-%)"
+        }
 
         // 소비전력량 표시
         holder.textPowerOfConsumeType.text = getPowerOfConsumeUnit(list[position].deviceType)["description"]
-        holder.textPowerOfConsume.text = "${list[position].powerOfConsume} ${getPowerOfConsumeUnit(list[position].deviceType)["symbol"]}"
+        if (list[position].powerOfConsume != null) {
+            val powerOfConsume = BigDecimal(list[position].powerOfConsume!!).setScale(1, RoundingMode.HALF_UP)
+            holder.textPowerOfConsume.text = "$powerOfConsume " +
+                    "${getPowerOfConsumeUnit(list[position].deviceType)["symbol"]}"
+        } else {
+            holder.textPowerOfConsume.text = "- ${getPowerOfConsumeUnit(list[position].deviceType)["symbol"]}"
+        }
 
         // 각 기기에 대한 사용 여부는 기본적으로 ON으로 설정
         holder.switchForUseOrNot.isChecked = true
