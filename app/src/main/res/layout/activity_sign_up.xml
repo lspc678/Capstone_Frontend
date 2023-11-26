@@ -102,6 +102,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/nickname_kor"
             app:startIconDrawable="@drawable/ic_person"
+            app:helperTextTextColor="@color/red"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/btnCheckDuplicateNickname"
             app:layout_constraintStart_toStartOf="parent"
