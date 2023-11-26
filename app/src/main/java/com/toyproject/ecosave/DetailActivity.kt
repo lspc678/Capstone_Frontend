@@ -14,14 +14,25 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 
+import com.toyproject.ecosave.api.APIClientForServer
+import com.toyproject.ecosave.api.APIInterface
+import com.toyproject.ecosave.api.responsemodels.DefaultResponse
 import com.toyproject.ecosave.databinding.ActivityDetailBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.utilities.fromDpToPx
 import com.toyproject.ecosave.utilities.getCO2EmissionUnit
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
+import com.toyproject.ecosave.widget.ProgressDialog
 import com.toyproject.ecosave.widget.createDialog
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
+import com.toyproject.ecosave.widget.simpleDialog
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 class DetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityDetailBinding
@@ -39,6 +50,110 @@ class DetailActivity : AppCompatActivity() {
             arrayOf(118.0F, 76.0F),
             arrayOf(128.0F, 100.0F),
             arrayOf(128.0F, 100.0F)
+        )
+    }
+
+    private fun callApplianceDelete(deviceType: DeviceTypeList?) {
+        // progress bar 불러오기
+        val progressDialog = ProgressDialog.getProgressDialog(this, "처리 중 입니다")
+        progressDialog.show()
+
+        val type = getTranslatedDeviceType(deviceType)
+        val apiInterface = APIClientForServer
+            .getClient()
+            .create(APIInterface::class.java)
+
+        val call: Call<DefaultResponse>?
+
+        when (deviceType) {
+            DeviceTypeList.REFRIGERATOR -> {
+                call = apiInterface.applianceRefrigeratorDelete()
+            }
+            DeviceTypeList.AIR_CONDITIONER -> {
+                call = apiInterface.applianceAirConditionerDelete()
+            }
+            DeviceTypeList.TV -> {
+                call = apiInterface.applianceTelevisionDelete()
+            }
+            DeviceTypeList.WASHING_MACHINE -> {
+                call = apiInterface.applianceWashingMachineDelete()
+            }
+            DeviceTypeList.MICROWAVE_OVEN -> {
+                call = apiInterface.applianceMicrowaveDelete()
+            }
+            DeviceTypeList.BOILER -> {
+                call = apiInterface.applianceBoilerDelete()
+            }
+            else -> {
+                call = null
+            }
+        }
+
+        call?.enqueue(
+            object : Callback<DefaultResponse> {
+                override fun onResponse(
+                    call: Call<DefaultResponse>,
+                    response: Response<DefaultResponse>
+                ) {
+                    // progress bar 종료
+                    progressDialog.dismiss()
+
+                    if (response.isSuccessful) {
+                        // status code가 200 ~ 299일 때
+                        val result = response.body()
+
+                        if (result != null) {
+                            if ((result.success) && (result.message == "전송성공")) {
+                                Log.d("기기삭제 ($type)", "결과: 성공")
+                                Log.d("기기삭제 ($type)", result.toString())
+
+                                simpleDialog(
+                                    this@DetailActivity,
+                                    "기기 삭제",
+                                    "기기가 성공적으로 삭제되었습니다."
+                                )
+
+                                // 기기가 삭제되었으므로 홈 화면으로 이동
+                                finish()
+                            } else {
+                                simpleDialog(
+                                    this@DetailActivity,
+                                    "기기 삭제",
+                                    "기기 삭제에 실패했습니다. 다시 시도해주세요."
+                                )
+
+                                Log.d("기기삭제 ($type)", "결과: 실패")
+                                Log.d("기기삭제 ($type)", result.toString())
+                            }
+                        }
+                    } else {
+                        // status code가 200 ~ 299가 아닐 때
+                        val errorResult = response.errorBody()
+                        val result = response.body()
+
+                        if (errorResult != null) {
+                            Log.d("기기삭제 ($type)", "결과: 실패 (response.isSuccessful 통과하지 못함)")
+                            Log.d("기기삭제 ($type)", "statusCode: ${response.code()}")
+                            Log.d("기기삭제 ($type)", errorResult.string())
+                            Log.d("기기삭제 ($type)", result.toString())
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<DefaultResponse>, t: Throwable) {
+                    // progress bar 종료
+                    progressDialog.dismiss()
+
+                    simpleDialog(
+                        this@DetailActivity,
+                        "기기 삭제",
+                        "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해주세요."
+                    )
+
+                    Log.d("기기삭제 ($type)", "결과: 실패 (onFailure)")
+                    Log.d("기기삭제 ($type)", t.message.toString())
+                }
+            }
         )
     }
 
@@ -62,7 +177,7 @@ class DetailActivity : AppCompatActivity() {
         binding.CO2Pyramid.layoutParams = paramsForCO2Pyramid
 
         if ((relativeCO2EmissionGrade > 0)
-            && (relativeCO2EmissionPercentage > 0)) {
+            && (relativeCO2EmissionPercentage >= 0)) {
             when (relativeCO2EmissionGrade) {
                 1 -> {
                     binding.CO2Pyramid.setImageResource(R.drawable.pyramid1_co2)
@@ -115,7 +230,7 @@ class DetailActivity : AppCompatActivity() {
         binding.energyConsumePyramid.layoutParams = paramsForEnergyConsumePyramid
 
         if ((relativeElectricPowerConsumeGrade > 0) &&
-            (relativeElectricPowerConsumePercentage > 0)) {
+            (relativeElectricPowerConsumePercentage >= 0)) {
             when (relativeElectricPowerConsumeGrade) {
                 1 -> {
                     binding.energyConsumePyramid.setImageResource(R.drawable.pyramid1_energy)
@@ -160,6 +275,7 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDetailBinding.inflate(layoutInflater)
@@ -171,26 +287,28 @@ class DetailActivity : AppCompatActivity() {
             intent.getSerializableExtra("deviceType") as DeviceTypeList
         }
 
-        val powerOfConsume = intent.getFloatExtra("powerOfConsume", -1.0F)
+        val powerOfConsume = intent.getDoubleExtra("powerOfConsume", -1.0)
         val relativeElectricPowerConsumeGrade = intent.getIntExtra("relativeElectricPowerConsumeGrade", -1)
         val relativeElectricPowerConsumePercentage = intent.getIntExtra("relativeElectricPowerConsumePercentage", -1)
-        val amountOfCO2Emission = intent.getFloatExtra("amountOfCO2Emission", -1.0F)
+        val amountOfCO2Emission = intent.getDoubleExtra("amountOfCO2Emission", -1.0)
         val relativeCO2EmissionGrade = intent.getIntExtra("relativeCO2EmissionGrade", -1)
         val relativeCO2EmissionPercentage = intent.getIntExtra("relativeCO2EmissionPercentage", -1)
         val position = intent.getIntExtra("position", -1)
-        val averageUsageTimePerDay = intent.getFloatExtra("averageUsageTimePerDay", -1.0F)
+        val averageUsageTimePerDay = intent.getDoubleExtra("averageUsageTimePerDay", -1.0)
 
         val toolbar = binding.toolbar
         setSupportActionBar(toolbar)
 
-        if (powerOfConsume > 0.0F) {
-            binding.textPowerOfConsume.text = powerOfConsume.toString()
+        if (powerOfConsume > 0.0) {
+            val _powerOfConsume = BigDecimal(powerOfConsume).setScale(1, RoundingMode.HALF_UP)
+            binding.textPowerOfConsume.text = _powerOfConsume.toString()
         } else {
             binding.textPowerOfConsume.text = ""
         }
 
-        if (amountOfCO2Emission > 0.0F) {
-            binding.textCO2Emission.text = amountOfCO2Emission.toString()
+        if (amountOfCO2Emission > 0.0) {
+            val _amountOfCO2Emission = BigDecimal(amountOfCO2Emission).setScale(1, RoundingMode.HALF_UP)
+            binding.textCO2Emission.text = _amountOfCO2Emission.toString()
         } else {
             binding.textCO2Emission.text = ""
         }
@@ -231,7 +349,7 @@ class DetailActivity : AppCompatActivity() {
             // 에어컨, TV의 경우 하루 평균 사용 시간 설정 가능
             binding.relativeLayoutForUsageTimeFor1Day.visibility = View.VISIBLE
 
-            if (averageUsageTimePerDay > 0.0F) {
+            if (averageUsageTimePerDay > 0.0) {
                 binding.textUsageTimeFor1Day.text = averageUsageTimePerDay.toString()
             }
         } else {
@@ -246,16 +364,16 @@ class DetailActivity : AppCompatActivity() {
             val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
                 val text = editText.text.toString()
 
-                if (text.toFloatOrNull() != null) {
+                if (text.toDoubleOrNull() != null) {
                     // 하루 평균 사용 시간 재설정
                     binding.textUsageTimeFor1Day.text = text
 
                     if (position >= 0) {
-                        HomeActivity.list[position].averageUsageTimePerDay = text.toFloat()
+                        HomeActivity.list[position].averageUsageTimePerDay = text.toDouble()
                     }
 
-                    Log.d("하루 평균 사용 시간 변경", (powerOfConsume * text.toFloat() * 30).toString())
-                    Log.d("하루 평균 사용 시간 변경", (amountOfCO2Emission * text.toFloat() * 30).toString())
+                    Log.d("하루 평균 사용 시간 변경", (powerOfConsume * text.toDouble() * 30).toString())
+                    Log.d("하루 평균 사용 시간 변경", (amountOfCO2Emission * text.toDouble() * 30).toString())
 
                     // 서버와의 통신을 통해 상대적 에너지 소비 효율 등급을 알아냄
                 }
@@ -280,6 +398,20 @@ class DetailActivity : AppCompatActivity() {
             relativeElectricPowerConsumeGrade,
             relativeElectricPowerConsumePercentage
         )
+
+        binding.btnDeleteDevice.setOnClickListener {
+            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                callApplianceDelete(deviceType)
+            }
+
+            createDialog(
+                this@DetailActivity,
+                "기기 삭제",
+                "해당 기기를 삭제하시겠습니까?",
+                positiveButtonOnClickListener,
+                defaultNegativeDialogInterfaceOnClickListener
+            )
+        }
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true) // 앱바에 back 버튼 활성화
     }
