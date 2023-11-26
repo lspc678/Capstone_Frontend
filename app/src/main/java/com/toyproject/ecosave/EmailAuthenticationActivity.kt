@@ -1,6 +1,8 @@
 package com.toyproject.ecosave
 
 import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
@@ -11,11 +13,15 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import androidx.appcompat.widget.AppCompatButton
+import com.toyproject.ecosave.SignUpActivity.Companion.EMAIL_AUTHENTICATION_REQUEST
 import com.toyproject.ecosave.api.APIClientForServer
+import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
 import com.toyproject.ecosave.api.APIInterface
 
 import com.toyproject.ecosave.databinding.ActivityEmailAuthenticationBinding
 import com.toyproject.ecosave.api.responsemodels.EmailAuthenticationResponse
+import com.toyproject.ecosave.widget.createDialog
+import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
 
 import retrofit2.Call
@@ -131,7 +137,9 @@ class EmailAuthenticationActivity : AppCompatActivity() {
 
             if (code.length == 6) {
                 if (email != null) {
-                    val apiInterface = APIClientForServer.getClient().create(APIInterface::class.java)
+                    val apiInterface = APIClientForServerByPassSSLCertificate
+                        .getClient()
+                        .create(APIInterface::class.java)
                     val call = apiInterface.sendEmailAuthenticationRequest(email, code)
                     call.enqueue(
                         object : Callback<EmailAuthenticationResponse> {
@@ -144,10 +152,22 @@ class EmailAuthenticationActivity : AppCompatActivity() {
                                     val result = response.body()
                                     if ((result != null) &&
                                         (result.success == true)) {
-                                        simpleDialog(
+                                        // 인증 번호를 Shared Preferences에 저장
+                                        App.prefs.setStringValue("code", code)
+
+                                        val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                                            val intent = Intent()
+                                            intent.putExtra("emailAuthentication", true)
+                                            setResult(EMAIL_AUTHENTICATION_REQUEST, intent)
+                                            finish()
+                                        }
+
+                                        createDialog(
                                             this@EmailAuthenticationActivity,
                                             "이메일 인증",
-                                            "이메일 인증에 성공하였습니다."
+                                            "이메일 인증에 성공하였습니다.",
+                                            positiveButtonOnClickListener,
+                                            defaultNegativeDialogInterfaceOnClickListener
                                         )
                                     } else {
                                         simpleDialog(
