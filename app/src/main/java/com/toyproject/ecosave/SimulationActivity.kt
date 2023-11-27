@@ -21,6 +21,9 @@ import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jsoup.Jsoup
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -93,6 +96,75 @@ class SimulationActivity : AppCompatActivity() {
             91.8
         ),
     )
+
+    // 시뮬레이션을 위한 기기 정보를 크롤링하여 List로 반환(TV, 전자레인지, 냉장고, 에어컨)
+    private suspend fun crawl(): List<RecommendProductData> = withContext(Dispatchers.IO) {
+        val searchSite = "https://prod.danawa.com/list/?cate="
+
+        //tv = 1022811 (단위 W), 전자레인지 = 10338815 (단위 W), 냉장고 = 10251508 (단위 kWh(월)), 에어컨 = 1022644(단위 : kW)
+        val productCode = "1022811"
+        val document = Jsoup.connect(searchSite + productCode).get()
+
+        val onlyProduct = document.select("li.prod_item.prod_layer")
+        val onlyProductString = onlyProduct.joinToString(" ") { it.text() }
+
+        val productsName = onlyProduct.select("a[name='productName']").map { it.text() }.take(10)
+        val productPowers = extractPowers(onlyProductString).take(10)
+
+        val thumbimage = onlyProduct.select("div.thumb_image")
+        val forimage = thumbimage.select("img")
+        val imageUrls = forimage.mapNotNull { imgElement ->
+            imgElement.attr("data-original").takeIf { it.isNotEmpty() }
+                ?: imgElement.attr("src").takeIf { it.isNotEmpty() }
+        }.map { it.substringBefore("?") }
+            .distinct() // 중복된 URL 제거
+
+        // 이미지 URL을 '//'로 시작하는 부분까지만 잘라내어 저장
+        val productImgUrl = imageUrls.take(10)
+
+        val productInfoList = List(minOf( productImgUrl.size, productsName.size, productPowers.size)) { index ->
+            RecommendProductData(
+                imageUrl = productImgUrl.getOrNull(index) ?: "Unknown",
+                productName = productsName.getOrNull(index) ?: "Unknown",
+                powerOfConsume = productPowers.getOrNull(index) ?: 0.0
+            )
+        }
+
+        return@withContext productInfoList
+    }
+    fun extractPowers(text: String): List<Double> {
+        val powers = mutableListOf<Double>()
+        val regex = "\\d+(\\.\\d+)?(?=(W|kW|kWh\\(월\\)))".toRegex()
+
+        val splitText = text.split("소비전력").drop(1)
+
+        for (part in splitText) {
+            val matchResult = regex.find(part)
+            matchResult?.let {
+                val power = it.value.toDouble()
+                powers.add(power)
+            }
+        }
+
+        return powers
+    }
+
+    fun extractPrices(text: String): List<Int> {
+        val prices = mutableListOf<Int>()
+        val regex = "\\d{1,3}(,\\d{3})*원".toRegex()
+
+        val splitText = text.split("소비전력")
+
+        for (part in splitText) {
+            val matchResult = regex.find(part)
+            matchResult?.let {
+                val price = it.value.replace("[^\\d]".toRegex(), "").toInt()
+                prices.add(price)
+            }
+        }
+
+        return prices
+    }
 
     // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
     @SuppressLint("SetTextI18n")
