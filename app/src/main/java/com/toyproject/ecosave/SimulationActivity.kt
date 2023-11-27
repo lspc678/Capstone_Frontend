@@ -3,24 +3,22 @@ package com.toyproject.ecosave
 import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.InputType
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-
 import com.toyproject.ecosave.databinding.ActivitySimulationBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RecommendProductData
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
-import com.toyproject.ecosave.widget.simpleDialog
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -39,7 +37,7 @@ class SimulationActivity : AppCompatActivity() {
     private var recyclerViewProductRecommendationListAdapter:
             RecyclerViewProductRecommendationListAdapter? = null
 
-    var productRecommendationList = mutableListOf<RecommendProductData>()
+    private var productRecommendationList = mutableListOf<RecommendProductData>()
 
     private val dummyData = mutableListOf(
         RecommendProductData(
@@ -94,6 +92,49 @@ class SimulationActivity : AppCompatActivity() {
         ),
     )
 
+    private val dummyDataMicrowaveOven = mutableListOf(
+        RecommendProductData(
+            "",
+            "LG전자 MW23GD",
+            1570.0
+        ),
+        RecommendProductData(
+            "",
+            "LG전자 MW22CA",
+            1570.0
+        ),
+        RecommendProductData(
+            "",
+            "LG전자 오브제컬렉션 MWJ23P",
+            1570.0
+        ),
+        RecommendProductData(
+            "",
+            "SK매직 MWO-230KH",
+            1250.0
+        ),
+        RecommendProductData(
+            "",
+            "삼성전자 MS23C3513AW",
+            1100.0
+        ),
+        RecommendProductData(
+            "",
+            "삼성전자 비스포크 MG23T5018",
+            1100.0
+        ),
+        RecommendProductData(
+            "",
+            "삼성전자 MS23C3535AW",
+            1100.0
+        ),
+        RecommendProductData(
+            "",
+            "쿠쿠전자 CMW-A201DW",
+            1050.0
+        )
+    )
+
     // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
     @SuppressLint("SetTextI18n")
     private fun calculateCurrentTotalPowerOfConsumeForMonth() {
@@ -144,11 +185,16 @@ class SimulationActivity : AppCompatActivity() {
     }
 
     // 기기 변경 후 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
+    // 기기 변경 후 소비전력과 하루 평균 사용 시간이 모두 채워졌을 경우 시뮬레이션 결과를 보여줌
     @SuppressLint("SetTextI18n")
-    private fun calculateAfterCurrentTotalPowerOfConsumeForMonth(
-        position: Int, deviceType: DeviceTypeList?, afterPowerOfConsume: Int) {
+    fun calculateAfterCurrentTotalPowerOfConsumeForMonth(
+        position: Int, deviceType: DeviceTypeList?, afterPowerOfConsume: Double?) {
         // 소비 전력 변화량
         if (HomeActivity.list[position].powerOfConsume == null) {
+            return
+        }
+
+        if (afterPowerOfConsume == null) {
             return
         }
 
@@ -192,6 +238,12 @@ class SimulationActivity : AppCompatActivity() {
 
         afterTotalPowerOfConsumeForMonth += totalPowerOfConsumeForMonth
 
+        calculateMonthlyElectricityBillChange()
+    }
+
+    // 한 달 전기 요금 변화량 계산
+    @SuppressLint("ResourceAsColor", "SetTextI18n")
+    private fun calculateMonthlyElectricityBillChange() {
         // 기기 변경 후 총 소비전력량 시뮬레이션 결과에 표시
         val _afterTotalPowerOfConsumeForMonth =
             BigDecimal(afterTotalPowerOfConsumeForMonth).setScale(2, RoundingMode.HALF_UP)
@@ -200,12 +252,6 @@ class SimulationActivity : AppCompatActivity() {
         Log.d("시뮬레이션", totalPowerOfConsumeForMonth.toString())
         Log.d("시뮬레이션", afterTotalPowerOfConsumeForMonth.toString())
 
-        calculateMonthlyElectricityBillChange()
-    }
-
-    // 한 달 전기 요금 변화량 계산
-    @SuppressLint("ResourceAsColor", "SetTextI18n")
-    private fun calculateMonthlyElectricityBillChange() {
         var textMonthlyElectricityBillChangeText = ""
 
         if (afterTotalPowerOfConsumeForMonth < totalPowerOfConsumeForMonth) {
@@ -348,16 +394,18 @@ class SimulationActivity : AppCompatActivity() {
     private fun getProductRecommendationList(deviceType: DeviceTypeList?) {
         productRecommendationList.clear()
 
-        val input = binding.textAfterPowerOfConsume.text.toString().toInt()
-
         when (deviceType) {
+            DeviceTypeList.MICROWAVE_OVEN -> {
+                for (recommendProductData in dummyDataMicrowaveOven) {
+                    if (recommendProductData.powerOfConsume != null) {
+                        productRecommendationList.add(recommendProductData)
+                    }
+                }
+            }
             DeviceTypeList.BOILER -> {
                 for (recommendProductData in dummyData) {
                     if (recommendProductData.powerOfConsume != null) {
-                        if ((recommendProductData.powerOfConsume - 0.5 <= input)
-                            && (input <= recommendProductData.powerOfConsume + 0.5)) {
-                            productRecommendationList.add(recommendProductData)
-                        }
+                        productRecommendationList.add(recommendProductData)
                     }
                 }
             }
@@ -408,6 +456,11 @@ class SimulationActivity : AppCompatActivity() {
             }
         }
 
+        binding.textUsageTimeFor1Day.text = ""
+
+        // 추천 제품 목록 가져오기
+        getProductRecommendationList(deviceType)
+
         when (deviceType) {
             DeviceTypeList.WASHING_MACHINE,
             DeviceTypeList.BOILER -> {
@@ -426,67 +479,56 @@ class SimulationActivity : AppCompatActivity() {
         // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
         calculateCurrentTotalPowerOfConsumeForMonth()
 
-        // 기기 변경 후 오른쪽에 있는 입력란을 클릭할 경우
-        binding.relativeLayoutForAfterPowerOfConsume.setOnClickListener {
+        // 하루 평균 사용 시간 클릭 시
+        binding.relativeLayoutForEditableField.setOnClickListener {
             val editText = EditText(this)
-            editText.inputType = InputType.TYPE_CLASS_NUMBER
+            editText.inputType = EditorInfo.TYPE_CLASS_NUMBER
 
             val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
                 val text = editText.text.toString()
 
-                if (text.toIntOrNull() != null) {
-                    binding.textAfterPowerOfConsume.text = text
-                    Log.d("시뮬레이션", text.toIntOrNull().toString())
+                if (text.toDoubleOrNull() != null) {
+                    // 하루 평균 사용 시간 재설정
+                    binding.textUsageTimeFor1Day.text = text
+
+                    if (position >= 0) {
+                        HomeActivity.list[position].averageUsageTimePerDay = text.toDouble()
+                        val afterPowerOfConsume =
+                            binding.textAfterPowerOfConsume.text.toString().toDoubleOrNull()
+                        calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
+                    }
                 }
             }
 
             val alertDialog = AlertDialog.Builder(this)
-            alertDialog.setTitle("희망 소비전력량 입력")
+            alertDialog.setTitle("하루 평균 사용 시간 변경")
             alertDialog.setView(editText)
             alertDialog.setPositiveButton("확인", positiveButtonOnClickListener)
             alertDialog.setNegativeButton("취소", defaultNegativeDialogInterfaceOnClickListener)
             alertDialog.show()
         }
 
-        // 적용 버튼 클릭 시
-        binding.btnApply.setOnClickListener {
-            if (binding.textAfterPowerOfConsume.text == "") {
-                simpleDialog(
-                    this@SimulationActivity,
-                    "시뮬레이션",
-                    "기기 변경 후 소비전력량을 입력해 주세요."
-                )
-                return@setOnClickListener
-            }
-
-            val afterPowerOfConsume = binding.textAfterPowerOfConsume.text.toString().toIntOrNull()
-
-            if (afterPowerOfConsume == null) {
-                simpleDialog(
-                    this@SimulationActivity,
-                    "시뮬레이션",
-                    "기기 변경 후 소비전력량에 정수만 입력해 주세요."
-                )
-                return@setOnClickListener
-            }
-
-            if ((deviceType != DeviceTypeList.WASHING_MACHINE)
-                && (deviceType != DeviceTypeList.BOILER)) {
-                calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
-            }
-
-            // 추천 제품 목록 가져오기
-            getProductRecommendationList(deviceType)
-        }
-
         recyclerView = binding.recyclerView
 
         if (deviceType != null) {
             recyclerViewProductRecommendationListAdapter =
-                RecyclerViewProductRecommendationListAdapter(this, productRecommendationList, deviceType)
+                RecyclerViewProductRecommendationListAdapter(
+                    this,
+                    productRecommendationList,
+                    deviceType)
             val layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
             recyclerView!!.layoutManager = layoutManager
             recyclerView!!.adapter = recyclerViewProductRecommendationListAdapter
+
+            recyclerViewProductRecommendationListAdapter!!.setOnItemClickListener(
+                object : RecyclerViewProductRecommendationListAdapter.OnItemClickListener {
+                    override fun onItemClick(v: View, data: RecommendProductData, pos: Int) {
+                        Log.d("시뮬레이션", data.toString())
+                        Log.d("시뮬레이션", pos.toString())
+                        binding.textAfterPowerOfConsumeType.text = data.powerOfConsume.toString()
+                    }
+                }
+            )
         }
     }
 
