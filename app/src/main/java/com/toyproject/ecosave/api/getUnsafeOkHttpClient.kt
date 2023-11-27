@@ -50,7 +50,7 @@ fun getUnsafeOkHttpClient(): OkHttpClient.Builder {
             val originalRequest = chain.request()
             val modifiedRequest = originalRequest.newBuilder()
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", App.prefs.token!!)
+                .addHeader("Authorization", App.prefs.token ?: "")
                 .build()
             chain.proceed(modifiedRequest)
         })
