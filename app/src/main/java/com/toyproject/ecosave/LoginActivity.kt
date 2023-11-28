@@ -44,6 +44,7 @@ class LoginActivity : AppCompatActivity() {
             Log.d("로그인", token)
 
             val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             startActivity(intent)
             finish()
         }
@@ -85,6 +86,7 @@ class LoginActivity : AppCompatActivity() {
                                     App.prefs.token = result.token
 
                                     val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                                     startActivity(intent)
                                     finish()
                                 } else {
