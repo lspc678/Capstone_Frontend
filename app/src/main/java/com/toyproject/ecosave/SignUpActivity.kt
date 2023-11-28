@@ -290,8 +290,8 @@ class SignUpActivity : AppCompatActivity() {
             }
 
             val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                val gpsLocation = GPSLocation(this@SignUpActivity)
-                gpsLocation.getMyLocation(this)
+                val gpsLocation = GPSLocation(this@SignUpActivity, this)
+                gpsLocation.getLocation()
 
                 if ((GPSLocation.currentLatitude != 0.0)
                     && (GPSLocation.currentLongitude != 0.0)) {
@@ -309,8 +309,8 @@ class SignUpActivity : AppCompatActivity() {
                         passwordConfirm,
                         finalNickname,
                         App.prefs.getStringValue("code", ""),
-                        HomeActivity.currentLongitude,
-                        HomeActivity.currentLatitude
+                        GPSLocation.currentLongitude,
+                        GPSLocation.currentLatitude
                     )
 
                     val apiInterface = APIClientForServerByPassSSLCertificate
@@ -331,18 +331,21 @@ class SignUpActivity : AppCompatActivity() {
                                         if (result.success == true) {
                                             // 회원가입 성공
 
-                                            simpleDialog(
+                                            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                                                Log.d("회원가입", "결과: 성공")
+
+                                                // 로그인 화면으로 이동
+                                                val intent = Intent(this@SignUpActivity, LoginActivity::class.java)
+                                                startActivity(intent)
+                                                finish()
+                                            }
+
+                                            createDialog(
                                                 this@SignUpActivity,
                                                 "회원가입",
-                                                "회원가입이 완료되었습니다. 로그인 화면에서 로그인을 진행해주세요.",
+                                                "회원가입이 완료되었습니다. 로그인 화면에서 로그인을 진행해주세요",
+                                                positiveButtonOnClickListener
                                             )
-
-                                            Log.d("회원가입", "결과: 성공")
-
-                                            // 로그인 화면으로 이동
-                                            val intent = Intent(this@SignUpActivity, LoginActivity::class.java)
-                                            startActivity(intent)
-                                            finish()
                                         } else {
                                             simpleDialog(
                                                 this@SignUpActivity,
