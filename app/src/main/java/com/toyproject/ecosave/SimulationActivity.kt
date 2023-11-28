@@ -13,17 +13,25 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+
 import com.toyproject.ecosave.databinding.ActivitySimulationBinding
+import com.toyproject.ecosave.models.ComparableRecommendProductData
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RecommendProductData
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
+
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 import org.jsoup.Jsoup
+
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.PriorityQueue
 
 class SimulationActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySimulationBinding
@@ -95,55 +103,11 @@ class SimulationActivity : AppCompatActivity() {
         ),
     )
 
-    private val dummyDataMicrowaveOven = mutableListOf(
-        RecommendProductData(
-            "",
-            "LG전자 MW23GD",
-            1570.0
-        ),
-        RecommendProductData(
-            "",
-            "LG전자 MW22CA",
-            1570.0
-        ),
-        RecommendProductData(
-            "",
-            "LG전자 오브제컬렉션 MWJ23P",
-            1570.0
-        ),
-        RecommendProductData(
-            "",
-            "SK매직 MWO-230KH",
-            1250.0
-        ),
-        RecommendProductData(
-            "",
-            "삼성전자 MS23C3513AW",
-            1100.0
-        ),
-        RecommendProductData(
-            "",
-            "삼성전자 비스포크 MG23T5018",
-            1100.0
-        ),
-        RecommendProductData(
-            "",
-            "삼성전자 MS23C3535AW",
-            1100.0
-        ),
-        RecommendProductData(
-            "",
-            "쿠쿠전자 CMW-A201DW",
-            1050.0
-        )
-    )
-
     // 시뮬레이션을 위한 기기 정보를 크롤링하여 List로 반환(TV, 전자레인지, 냉장고, 에어컨)
-    private suspend fun crawl(): List<RecommendProductData> = withContext(Dispatchers.IO) {
+    private suspend fun crawl(productCode: String): List<RecommendProductData> = withContext(Dispatchers.IO) {
         val searchSite = "https://prod.danawa.com/list/?cate="
 
-        //tv = 1022811 (단위 W), 전자레인지 = 10338815 (단위 W), 냉장고 = 10251508 (단위 kWh(월)), 에어컨 = 1022644(단위 : kW)
-        val productCode = "1022811"
+        // tv = 1022811 (단위 W), 전자레인지 = 10338815 (단위 W), 냉장고 = 10251508 (단위 kWh(월)), 에어컨 = 1022644(단위 : kW)
         val document = Jsoup.connect(searchSite + productCode).get()
 
         val onlyProduct = document.select("li.prod_item.prod_layer")
@@ -173,7 +137,8 @@ class SimulationActivity : AppCompatActivity() {
 
         return@withContext productInfoList
     }
-    fun extractPowers(text: String): List<Double> {
+
+    private fun extractPowers(text: String) : List<Double> {
         val powers = mutableListOf<Double>()
         val regex = "\\d+(\\.\\d+)?(?=(W|kW|kWh\\(월\\)))".toRegex()
 
@@ -190,22 +155,22 @@ class SimulationActivity : AppCompatActivity() {
         return powers
     }
 
-    fun extractPrices(text: String): List<Int> {
-        val prices = mutableListOf<Int>()
-        val regex = "\\d{1,3}(,\\d{3})*원".toRegex()
-
-        val splitText = text.split("소비전력")
-
-        for (part in splitText) {
-            val matchResult = regex.find(part)
-            matchResult?.let {
-                val price = it.value.replace("[^\\d]".toRegex(), "").toInt()
-                prices.add(price)
-            }
-        }
-
-        return prices
-    }
+//    fun extractPrices(text: String): List<Int> {
+//        val prices = mutableListOf<Int>()
+//        val regex = "\\d{1,3}(,\\d{3})*원".toRegex()
+//
+//        val splitText = text.split("소비전력")
+//
+//        for (part in splitText) {
+//            val matchResult = regex.find(part)
+//            matchResult?.let {
+//                val price = it.value.replace("[^\\d]".toRegex(), "").toInt()
+//                prices.add(price)
+//            }
+//        }
+//
+//        return prices
+//    }
 
     // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
     @SuppressLint("SetTextI18n")
@@ -217,29 +182,37 @@ class SimulationActivity : AppCompatActivity() {
                 continue
             }
 
+            val usageTimeFor1Day = binding.textUsageTimeFor1Day.text.toString().toDoubleOrNull()
+
             when (relativeGradeData.deviceType) {
                 DeviceTypeList.REFRIGERATOR,
                 DeviceTypeList.WASHING_MACHINE -> {
                     totalPowerOfConsumeForMonth += relativeGradeData.powerOfConsume!!
                 }
                 DeviceTypeList.MICROWAVE_OVEN -> {
-                    // 전자레인지의 경우 하루에 10분씩 사용한다고 가정
-                    // 전자레인지에 대한 월간 소비 전력량 = 소비전력 * 1/6(시간) * 30(일)
+                    // 전자레인지에 대한 월간 소비 전력량 = 소비전력 * (하루 평균 사용 시간) * 30(일)
                     // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
-                    totalPowerOfConsumeForMonth += (relativeGradeData.powerOfConsume!! / 6 * 30) / 1000
+                    if (usageTimeFor1Day != null) {
+                        totalPowerOfConsumeForMonth +=
+                            (relativeGradeData.powerOfConsume!! * usageTimeFor1Day * 30) / 1000
+                    }
                 }
                 DeviceTypeList.AIR_CONDITIONER -> {
                     // 에어컨의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                     // 월간 소비 전력량 = 표준 월간 소비 전력량 * (하루 평균 사용 시간 / 7.8)
-                    totalPowerOfConsumeForMonth +=
-                        relativeGradeData.powerOfConsume!! * (relativeGradeData.averageUsageTimePerDay!! / 7.8F)
+                    if (usageTimeFor1Day != null) {
+                        totalPowerOfConsumeForMonth +=
+                            relativeGradeData.powerOfConsume!! * (usageTimeFor1Day / 7.8F)
+                    }
                 }
                 DeviceTypeList.TV -> {
                     // TV의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                     // 월간 소비 전력량 = 소비전력 * 하루 평균 사용 시간 * 30(일)
                     // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
-                    totalPowerOfConsumeForMonth +=
-                        (relativeGradeData.powerOfConsume!! * relativeGradeData.averageUsageTimePerDay!! * 30) / 1000
+                    if (usageTimeFor1Day != null) {
+                        totalPowerOfConsumeForMonth +=
+                            (relativeGradeData.powerOfConsume!! * usageTimeFor1Day * 30) / 1000
+                    }
                 }
                 DeviceTypeList.BOILER -> {
                     // 보일러의 경우 아직 시뮬레이션 기능을 제공하지 않음
@@ -275,33 +248,41 @@ class SimulationActivity : AppCompatActivity() {
 
         afterTotalPowerOfConsumeForMonth = 0.0
 
+        val usageTimeFor1Day = binding.textUsageTimeFor1Day.text.toString().toDoubleOrNull()
+
         // 기기 변경 후 등록된 모든 기기의 총 소비 전력량 (월간) 계산
         when (deviceType) {
-            DeviceTypeList.REFRIGERATOR,
-            DeviceTypeList.WASHING_MACHINE -> {
+            DeviceTypeList.REFRIGERATOR -> {
                 afterTotalPowerOfConsumeForMonth += changeInPowerConsumption
             }
             DeviceTypeList.MICROWAVE_OVEN -> {
-                // 전자레인지의 경우 하루에 10분씩 사용한다고 가정
                 // 전자레인지에 대한 월간 소비 전력량 = 소비전력 * 1/6(시간) * 30(일)
                 // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
-                afterTotalPowerOfConsumeForMonth += (changeInPowerConsumption / 6 * 30) / 1000
+                if (usageTimeFor1Day != null) {
+                    afterTotalPowerOfConsumeForMonth +=
+                        (changeInPowerConsumption * usageTimeFor1Day * 30) / 1000
+                }
             }
             DeviceTypeList.AIR_CONDITIONER -> {
                 // 에어컨의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                 // 월간 소비 전력량 = 표준 월간 소비 전력량 * (하루 평균 사용 시간 / 7.8)
-                afterTotalPowerOfConsumeForMonth +=
-                    changeInPowerConsumption * (HomeActivity.list[position].averageUsageTimePerDay!! / 7.8F)
+                if (usageTimeFor1Day != null) {
+                    afterTotalPowerOfConsumeForMonth +=
+                        changeInPowerConsumption * (usageTimeFor1Day / 7.8F)
+                }
             }
             DeviceTypeList.TV -> {
                 // TV의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                 // 월간 소비 전력량 = 소비전력 * 하루 평균 사용 시간 * 30(일)
                 // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
-                afterTotalPowerOfConsumeForMonth +=
-                    (changeInPowerConsumption * HomeActivity.list[position].averageUsageTimePerDay!! * 30) / 1000
+                if (usageTimeFor1Day != null) {
+                    afterTotalPowerOfConsumeForMonth +=
+                        (changeInPowerConsumption * usageTimeFor1Day * 30) / 1000
+                }
             }
+            DeviceTypeList.WASHING_MACHINE,
             DeviceTypeList.BOILER -> {
-                // 보일러의 경우 아직 시뮬레이션 기능을 제공하지 않음
+                // 세탁기, 보일러의 경우 아직 시뮬레이션 기능을 제공하지 않음
             }
             else -> {
 
@@ -463,15 +444,60 @@ class SimulationActivity : AppCompatActivity() {
 
     // 추천 제품 목록 가져오기
     @SuppressLint("NotifyDataSetChanged")
-    private fun getProductRecommendationList(deviceType: DeviceTypeList?) {
+    private suspend fun getProductRecommendationList(deviceType: DeviceTypeList?) {
         productRecommendationList.clear()
 
+        // 소비 전력이 낮은 기기부터 순차적으로 정렬 (단, 보일러 제외)
+        // 보일러의 경우 반대로 난방열효율이 높은 기기부터 순차적으로 정렬
+        // tv = 1022811 (단위 W), 전자레인지 = 10338815 (단위 W),
+        // 냉장고 = 10251508 (단위 kWh(월)), 에어컨 = 1022644(단위 : kW)
         when (deviceType) {
+            DeviceTypeList.REFRIGERATOR -> {
+                val recommendProductDataList = crawl("10251508")
+                val pq = PriorityQueue<ComparableRecommendProductData>()
+
+                for (data in recommendProductDataList) {
+                    pq.add(ComparableRecommendProductData(data))
+                }
+
+                while (pq.isNotEmpty()) {
+                    pq.poll()?.let { productRecommendationList.add(it.recommendProductData) }
+                }
+            }
+            DeviceTypeList.AIR_CONDITIONER -> {
+                val recommendProductDataList = crawl("1022644")
+                val pq = PriorityQueue<ComparableRecommendProductData>()
+
+                for (data in recommendProductDataList) {
+                    pq.add(ComparableRecommendProductData(data))
+                }
+
+                while (pq.isNotEmpty()) {
+                    pq.poll()?.let { productRecommendationList.add(it.recommendProductData) }
+                }
+            }
+            DeviceTypeList.TV -> {
+                val recommendProductDataList = crawl("1022811")
+                val pq = PriorityQueue<ComparableRecommendProductData>()
+
+                for (data in recommendProductDataList) {
+                    pq.add(ComparableRecommendProductData(data))
+                }
+
+                while (pq.isNotEmpty()) {
+                    pq.poll()?.let { productRecommendationList.add(it.recommendProductData) }
+                }
+            }
             DeviceTypeList.MICROWAVE_OVEN -> {
-                for (recommendProductData in dummyDataMicrowaveOven) {
-                    if (recommendProductData.powerOfConsume != null) {
-                        productRecommendationList.add(recommendProductData)
-                    }
+                val recommendProductDataList = crawl("10338815")
+                val pq = PriorityQueue<ComparableRecommendProductData>()
+
+                for (data in recommendProductDataList) {
+                    pq.add(ComparableRecommendProductData(data))
+                }
+
+                while (pq.isNotEmpty()) {
+                    pq.poll()?.let { productRecommendationList.add(it.recommendProductData) }
                 }
             }
             DeviceTypeList.BOILER -> {
@@ -485,8 +511,12 @@ class SimulationActivity : AppCompatActivity() {
         }
 
         try {
-            Log.d("시뮬레이션", productRecommendationList.toString())
-            recyclerViewProductRecommendationListAdapter?.notifyDataSetChanged()
+            runOnUiThread {
+                Log.d("시뮬레이션", productRecommendationList.toString())
+                // progress bar 제거
+                binding.constraintLayoutForProgressBar.visibility = View.GONE
+                recyclerViewProductRecommendationListAdapter?.notifyDataSetChanged()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             Log.d("시뮬레이션", e.toString())
@@ -507,7 +537,6 @@ class SimulationActivity : AppCompatActivity() {
 
         val powerOfConsume = intent.getDoubleExtra("powerOfConsume", -1.0)
         val _powerOfConsume = BigDecimal(powerOfConsume).setScale(1, RoundingMode.HALF_UP)
-        val relativeElectricPowerConsumePercentage = intent.getIntExtra("relativeElectricPowerConsumePercentage", -1)
         val position = intent.getIntExtra("position", -1)
 
         val toolbar = binding.toolbar
@@ -519,7 +548,6 @@ class SimulationActivity : AppCompatActivity() {
                 binding.textPowerOfConsumeType.text = getPowerOfConsumeUnit(deviceType)["description"]
                 binding.textPowerOfConsumeUnit.text = getPowerOfConsumeUnit(deviceType)["symbol"]
                 binding.textPowerOfConsume.text = _powerOfConsume.toString()
-                binding.textAfterPowerOfConsumeType.text = "기기 변경 후"
                 binding.textAfterPowerOfConsumeUnit.text = getPowerOfConsumeUnit(deviceType)["symbol"]
                 binding.textAfterPowerOfConsume.text = ""
             }
@@ -529,9 +557,6 @@ class SimulationActivity : AppCompatActivity() {
         }
 
         binding.textUsageTimeFor1Day.text = ""
-
-        // 추천 제품 목록 가져오기
-        getProductRecommendationList(deviceType)
 
         when (deviceType) {
             DeviceTypeList.WASHING_MACHINE,
@@ -548,11 +573,38 @@ class SimulationActivity : AppCompatActivity() {
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true) // 앱바에 back 버튼 활성화
 
-        // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
-        calculateCurrentTotalPowerOfConsumeForMonth()
-
         // 하루 평균 사용 시간 클릭 시
         binding.relativeLayoutForEditableField.setOnClickListener {
+//            val view = LayoutInflater.from(this).inflate(R.layout.edittext_dialog_layout, null)
+//            val editText: TextInputEditText = view.findViewById(R.id.editText)
+//            val alertDialog = MaterialAlertDialogBuilder(this, R.style.Theme_Material3DialogEditText)
+//                .setTitle("하루 평균 사용 시간 설정")
+//                .setView(view)
+//
+//            val positiveButtonOnClickListener = DialogInterface.OnClickListener { dialogInterface, _ ->
+//                val text = editText.text.toString()
+//
+//                if (text.toDoubleOrNull() != null) {
+//                    // 하루 평균 사용 시간 재설정
+//                    binding.textUsageTimeFor1Day.text = text
+//
+//                    if (position >= 0) {
+//                        HomeActivity.list[position].averageUsageTimePerDay = text.toDouble()
+//                        val afterPowerOfConsume =
+//                            binding.textAfterPowerOfConsume.text.toString().toDoubleOrNull()
+//                        // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
+//                        calculateCurrentTotalPowerOfConsumeForMonth()
+//                        calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
+//                    }
+//                }
+//
+//                dialogInterface.dismiss()
+//            }
+//
+//            alertDialog.setPositiveButton("확인", positiveButtonOnClickListener)
+//            alertDialog.setNegativeButton("취소", defaultNegativeDialogInterfaceOnClickListener)
+//            alertDialog.show()
+
             val editText = EditText(this)
             editText.inputType = EditorInfo.TYPE_CLASS_NUMBER
 
@@ -567,6 +619,8 @@ class SimulationActivity : AppCompatActivity() {
                         HomeActivity.list[position].averageUsageTimePerDay = text.toDouble()
                         val afterPowerOfConsume =
                             binding.textAfterPowerOfConsume.text.toString().toDoubleOrNull()
+                        // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
+                        calculateCurrentTotalPowerOfConsumeForMonth()
                         calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
                     }
                 }
@@ -580,6 +634,9 @@ class SimulationActivity : AppCompatActivity() {
             alertDialog.show()
         }
 
+        // progress bar 표시
+        binding.constraintLayoutForProgressBar.visibility = View.VISIBLE
+
         recyclerView = binding.recyclerView
 
         if (deviceType != null) {
@@ -587,7 +644,9 @@ class SimulationActivity : AppCompatActivity() {
                 RecyclerViewProductRecommendationListAdapter(
                     this,
                     productRecommendationList,
-                    deviceType)
+                    deviceType,
+                    resources
+                )
             val layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
             recyclerView!!.layoutManager = layoutManager
             recyclerView!!.adapter = recyclerViewProductRecommendationListAdapter
@@ -597,10 +656,21 @@ class SimulationActivity : AppCompatActivity() {
                     override fun onItemClick(v: View, data: RecommendProductData, pos: Int) {
                         Log.d("시뮬레이션", data.toString())
                         Log.d("시뮬레이션", pos.toString())
-                        binding.textAfterPowerOfConsumeType.text = data.powerOfConsume.toString()
+                        val afterPowerOfConsume = data.powerOfConsume
+                        if (afterPowerOfConsume != null) {
+                            binding.textAfterPowerOfConsume.text = afterPowerOfConsume.toString()
+                        }
+                        // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
+                        calculateCurrentTotalPowerOfConsumeForMonth()
+                        calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
                     }
                 }
             )
+        }
+
+        // 추천 제품 목록 가져오기
+        CoroutineScope(Dispatchers.IO).launch {
+            getProductRecommendationList(deviceType)
         }
     }
 
