@@ -1,6 +1,5 @@
 package com.toyproject.ecosave.api
 
-import com.toyproject.ecosave.App
 import com.toyproject.ecosave.api.requestmodels.AppliancePostRequest
 import com.toyproject.ecosave.api.requestmodels.ChangeMyResidenceRequest
 import com.toyproject.ecosave.api.requestmodels.LoginRequest
