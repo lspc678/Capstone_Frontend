@@ -9,6 +9,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -556,7 +557,11 @@ class SimulationActivity : AppCompatActivity() {
             }
         }
 
-        binding.textUsageTimeFor1Day.text = ""
+        if (deviceType == DeviceTypeList.REFRIGERATOR) {
+            binding.textUsageTimeFor1Day.text = "24"
+        } else {
+            binding.textUsageTimeFor1Day.text = ""
+        }
 
         when (deviceType) {
             DeviceTypeList.WASHING_MACHINE,
@@ -605,6 +610,15 @@ class SimulationActivity : AppCompatActivity() {
 //            alertDialog.setNegativeButton("취소", defaultNegativeDialogInterfaceOnClickListener)
 //            alertDialog.show()
 
+            if (deviceType == DeviceTypeList.REFRIGERATOR) {
+                Toast.makeText(
+                    this,
+                    "냉장고는 하루 평균 사용 시간 설정이 불가능합니다.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+
             val editText = EditText(this)
             editText.inputType = EditorInfo.TYPE_CLASS_NUMBER
 
@@ -612,6 +626,27 @@ class SimulationActivity : AppCompatActivity() {
                 val text = editText.text.toString()
 
                 if (text.toDoubleOrNull() != null) {
+                    val averageUsageTimePerDay = text.toDouble()
+
+                    if (averageUsageTimePerDay == 0.0) {
+                        Toast.makeText(
+                            this,
+                            "0은 입력할 수 없습니다.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@OnClickListener
+                    }
+
+                    if ((averageUsageTimePerDay < 0.0)
+                        || (averageUsageTimePerDay > 24.0)) {
+                        Toast.makeText(
+                            this,
+                            "0 ~ 24 사이의 숫자를 입력해 주세요.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@OnClickListener
+                    }
+
                     // 하루 평균 사용 시간 재설정
                     binding.textUsageTimeFor1Day.text = text
 
