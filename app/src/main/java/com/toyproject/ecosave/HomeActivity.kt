@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import android.view.MenuItem
 import android.view.View
 
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -17,6 +18,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,6 +29,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.material.navigation.NavigationView
 
 import com.toyproject.ecosave.api.APIClientForNaverMap
 import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
@@ -51,9 +54,10 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class HomeActivity : AppCompatActivity() {
+class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private lateinit var binding: ActivityHomeBinding
     private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navigationView: NavigationView
 
     private var recyclerView: RecyclerView? = null
     private var recyclerViewRegisteredDeviceListAdapter: RecyclerViewRegisteredDeviceListAdapter? = null
@@ -211,7 +215,8 @@ class HomeActivity : AppCompatActivity() {
                                                 "",
                                                 null, null,
                                                 energy,
-                                                null, null, null, null
+                                                null, null, null,
+                                                7.8
                                             )
                                         )
                                         recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
@@ -230,7 +235,8 @@ class HomeActivity : AppCompatActivity() {
                                                 "",
                                                 null, null,
                                                 energy,
-                                                null, null, null, null
+                                                null, null, null,
+                                                6.0
                                             )
                                         )
                                         recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
@@ -634,6 +640,7 @@ class HomeActivity : AppCompatActivity() {
                 textNoRelativeGradeData = "등록된 기기가 없습니다."
             }
             binding.textNoRelativeGradeData.text = textNoRelativeGradeData
+            binding.progressBar.visibility = View.GONE
         }
     }
 
@@ -1093,6 +1100,9 @@ class HomeActivity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
+        navigationView = binding.navView
+        navigationView.setNavigationItemSelectedListener(this)
+
         binding.btnChangeMyResident.setOnClickListener {
             val alertDialogBuilderBtn = AlertDialog.Builder(this)
             alertDialogBuilderBtn.setTitle("내 거주지 변경")
@@ -1111,5 +1121,32 @@ class HomeActivity : AppCompatActivity() {
             val intent = Intent(this, AddDeviceActivity::class.java)
             startActivity(intent)
         }
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.drawerLogout -> {
+                val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                    // 토큰 정보 초기화
+                    App.prefs.clearValue()
+
+                    // 로그인 화면으로 되돌아가고 intent 스택은 모두 삭제
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    startActivity(intent)
+                    finish()
+                }
+
+                createDialog(
+                    this@HomeActivity,
+                    "로그아웃",
+                    "로그아웃 하시겠습니까?",
+                    positiveButtonOnClickListener,
+                    defaultNegativeDialogInterfaceOnClickListener
+                )
+            }
+        }
+        binding.drawerLayout.closeDrawer(GravityCompat.START)
+        return true
     }
 }
