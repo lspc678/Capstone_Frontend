@@ -344,49 +344,6 @@ class DetailActivity : AppCompatActivity() {
             }
         }
 
-        if ((deviceType == DeviceTypeList.AIR_CONDITIONER)
-            || (deviceType == DeviceTypeList.TV)) {
-            // 에어컨, TV의 경우 하루 평균 사용 시간 설정 가능
-            binding.relativeLayoutForUsageTimeFor1Day.visibility = View.VISIBLE
-
-            if (averageUsageTimePerDay > 0.0) {
-                binding.textUsageTimeFor1Day.text = averageUsageTimePerDay.toString()
-            }
-        } else {
-            binding.relativeLayoutForUsageTimeFor1Day.visibility = View.GONE
-        }
-
-        // 하루 평균 사용 시간 클릭 시
-        binding.relativeLayoutForEditableField.setOnClickListener {
-            val editText = EditText(this)
-            editText.inputType = EditorInfo.TYPE_CLASS_NUMBER
-
-            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                val text = editText.text.toString()
-
-                if (text.toDoubleOrNull() != null) {
-                    // 하루 평균 사용 시간 재설정
-                    binding.textUsageTimeFor1Day.text = text
-
-                    if (position >= 0) {
-                        HomeActivity.list[position].averageUsageTimePerDay = text.toDouble()
-                    }
-
-                    Log.d("하루 평균 사용 시간 변경", (powerOfConsume * text.toDouble() * 30).toString())
-                    Log.d("하루 평균 사용 시간 변경", (amountOfCO2Emission * text.toDouble() * 30).toString())
-
-                    // 서버와의 통신을 통해 상대적 에너지 소비 효율 등급을 알아냄
-                }
-            }
-
-            val alertDialog = AlertDialog.Builder(this)
-            alertDialog.setTitle("하루 평균 사용 시간 변경")
-            alertDialog.setView(editText)
-            alertDialog.setPositiveButton("확인", positiveButtonOnClickListener)
-            alertDialog.setNegativeButton("취소", defaultNegativeDialogInterfaceOnClickListener)
-            alertDialog.show()
-        }
-
         // CO2 배출량이 표기되어 있지 않은 제품(예: 보일러)의 경우 CO2 배출량에 관한 UI가 보이지 않도록 설정
         if (binding.textCO2EmissionUnit.text == "") {
             binding.relativeLayoutForCO2.visibility = View.GONE
