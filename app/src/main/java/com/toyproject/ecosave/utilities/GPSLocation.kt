@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.startActivity
@@ -26,11 +25,12 @@ import com.toyproject.ecosave.SignUpActivity
 import com.toyproject.ecosave.widget.createDialog
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 
-class GPSLocation(val context: Context) {
+class GPSLocation(val activity: Activity, val context: Context) {
     companion object {
         var currentLatitude = 0.0 // 현재 위치 위도
         var currentLongitude = 0.0 // 현재 위치 경도
         const val REQUEST_CODE_PERMISSIONS = 1001
+        const val LOCATION_REQUEST_INTERVAL_MILLIS = (1000 * 10).toLong()
     }
 
     // 현재 위치를 파악하기 위해 필요한 권한 목록
@@ -39,7 +39,12 @@ class GPSLocation(val context: Context) {
         Manifest.permission.ACCESS_COARSE_LOCATION
     )
 
-    fun getMyLocation(activity: Activity) {
+    fun getLocation() {
+        turnOnLocationSystem()
+        setLocationRequest()
+    }
+
+    private fun turnOnLocationSystem() {
         if ((activity is SignUpActivity)
             || (activity is HomeActivity)) {
             val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -49,12 +54,12 @@ class GPSLocation(val context: Context) {
                 turnOnGPS() // 위치 서비스 켜기
             } else {
                 // 10초 마다 현재 위치 수신
-                setLocationRequest(activity)
+                setLocationRequest()
             }
         }
     }
 
-    private fun setLocationRequest(activity: Activity) {
+    private fun setLocationRequest() {
         // 필요 권한이 허용되어 있는지 확인
         if (permissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) {
             val fusedLocationClient: FusedLocationProviderClient =
@@ -62,7 +67,7 @@ class GPSLocation(val context: Context) {
             val locationRequest: LocationRequest =
                 LocationRequest.Builder(
                     Priority.PRIORITY_HIGH_ACCURACY,
-                    HomeActivity.LOCATION_REQUEST_INTERVAL_MILLIS)
+                    LOCATION_REQUEST_INTERVAL_MILLIS)
                     .setMinUpdateDistanceMeters(0.0F)
                     .build()
 
@@ -81,7 +86,6 @@ class GPSLocation(val context: Context) {
                 lastLocation?.let { it2 ->
                     currentLatitude = it2.latitude
                     currentLongitude = it2.longitude
-                    Log.d("위치", "${HomeActivity.currentLatitude}, ${HomeActivity.currentLongitude}")
                 }
             }
         }
