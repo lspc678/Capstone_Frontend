@@ -22,6 +22,7 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -30,7 +31,6 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.material.navigation.NavigationView
-
 import com.toyproject.ecosave.api.APIClientForNaverMap
 import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
 import com.toyproject.ecosave.api.APIInterface
@@ -39,10 +39,10 @@ import com.toyproject.ecosave.api.responsemodels.ApplianceDetailResponse
 import com.toyproject.ecosave.api.responsemodels.BoilerDetailResponse
 import com.toyproject.ecosave.api.responsemodels.DefaultResponse
 import com.toyproject.ecosave.api.responsemodels.MainTotalInformationResponse
+import com.toyproject.ecosave.api.responsemodels.ReverseGeocodingResponse
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RegisteredDeviceData
-import com.toyproject.ecosave.api.responsemodels.ReverseGeocodingResponse
 import com.toyproject.ecosave.utilities.fromDpToPx
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
 import com.toyproject.ecosave.widget.ProgressDialog
@@ -58,6 +58,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var binding: ActivityHomeBinding
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
     private var recyclerView: RecyclerView? = null
     private var recyclerViewRegisteredDeviceListAdapter: RecyclerViewRegisteredDeviceListAdapter? = null
@@ -396,7 +397,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     response: Response<ApplianceDetailResponse>
                 ) {
                     Log.d("홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)", "statusCode: ${response.code()}")
-                    Log.d("홈 화면 (보일러 세부정보 호출)", "결과: ${response.body()?.data}")
+                    Log.d("홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)", "결과: ${response.body()?.data}")
 
                     if (response.isSuccessful) {
                         val result = response.body()
@@ -1089,6 +1090,12 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         binding.progressBar.visibility = View.VISIBLE
         binding.relativeLayoutForPyramid.visibility = View.GONE
 
+        // 변수 초기화
+        numOfGetDetailedInformationDevices = 0
+        numOfRegisteredDevices = 0
+        sumOfRelativeEnergyConsumePercentage = 0.0
+        sumOfRelativeCO2EmissionPercentage = 0.0
+
         // 내 거주지 불러오기
         getMyLocationFromServer()
 
@@ -1099,6 +1106,17 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open_nav, R.string.close_nav)
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
+
+        // swipe refresh 기능 구현
+        swipeRefreshLayout = binding.swipeRefreshLayout
+        swipeRefreshLayout.setOnRefreshListener {
+            finish()
+            overridePendingTransition(0, 0)
+            val intent = intent
+            startActivity(intent)
+            overridePendingTransition(0, 0)
+            swipeRefreshLayout.isRefreshing = false
+        }
 
         navigationView = binding.navView
         navigationView.setNavigationItemSelectedListener(this)
