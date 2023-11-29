@@ -2,20 +2,22 @@ package com.toyproject.ecosave
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.GestureDetector
-import android.view.MotionEvent
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
+import androidx.appcompat.app.AppCompatActivity
+
 import com.toyproject.ecosave.databinding.ActivityMainBinding
 
 // 앱 전역에서 SharedPreferences를 사용하기 위해 싱글톤 패턴으로 SharedPreferences 클래스를 생성
 class App : Application() {
     companion object {
         lateinit var prefs : PreferenceUtil
+
+        // 화면의 가로 길이를 구하는 함수
+        fun getWidth(context: Context) : Int {
+            val metrics = context.resources.displayMetrics
+            return metrics.widthPixels
+        }
     }
 
     override fun onCreate() {
@@ -66,91 +68,12 @@ class PreferenceUtil(context: Context) {
     }
 }
 
-class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
+class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var gestureDetector: GestureDetector
-
-    private var x1 = 0.0f
-    private var x2 = 0.0f
-
-    private val MIN_DISTANCE = 150
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        gestureDetector = GestureDetector(this, this)
-
-        // 텍스트에 에니메이션 효과 추가
-        val animation: Animation
-        animation = AlphaAnimation(0.2f, 0.8f)
-        animation.setDuration(1000)
-        animation.setStartOffset(20)
-        animation.setRepeatMode(Animation.REVERSE)
-        animation.setRepeatCount(Animation.INFINITE)
-
-        binding.textSwipeToLeft.startAnimation(animation)
-    }
-
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (event != null) {
-            gestureDetector.onTouchEvent(event)
-        }
-
-        when (event?.action) {
-            // swipe start
-            0 -> {
-                x1 = event.x
-            }
-
-            // swipe end
-            1 -> {
-                x2 = event.x
-
-                val valueX = x2 - x1
-
-                // 화면 왼쪽으로 슬라이드하면 로그인 화면으로 넘어가도록 구현
-                if (kotlin.math.abs(valueX) > MIN_DISTANCE) {
-                    if (x1 > x2) {
-                        val intent = Intent(this, LoginActivity::class.java)
-                        startActivity(intent)
-                        overridePendingTransition(R.anim.slide_right_in, R.anim.slide_right_out)
-                        finish()
-                    }
-                }
-            }
-        }
-        return super.onTouchEvent(event)
-    }
-
-    override fun onDown(e: MotionEvent): Boolean {
-        return false
-    }
-
-    override fun onShowPress(e: MotionEvent) {}
-
-    override fun onSingleTapUp(e: MotionEvent): Boolean {
-        return false
-    }
-
-    override fun onScroll(
-        e1: MotionEvent,
-        e2: MotionEvent,
-        distanceX: Float,
-        distanceY: Float
-    ): Boolean {
-        return false
-    }
-
-    override fun onLongPress(e: MotionEvent) {}
-
-    override fun onFling(
-        e1: MotionEvent,
-        e2: MotionEvent,
-        velocityX: Float,
-        velocityY: Float
-    ): Boolean {
-        return false
     }
 }
