@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
 import com.toyproject.ecosave.api.APIInterface
 import com.toyproject.ecosave.api.requestmodels.AppliancePostRequest
+import com.toyproject.ecosave.api.requestmodels.BoilerPostRequest
 import com.toyproject.ecosave.api.responsemodels.DefaultResponse
 import com.toyproject.ecosave.databinding.ActivityAddDeviceBinding
 import com.toyproject.ecosave.models.DeviceTypeList
@@ -110,9 +111,10 @@ class AddDeviceActivity : AppCompatActivity() {
             }
             DeviceTypeList.BOILER -> {
                 call = apiInterface.applianceBoilerPost(
-                    AppliancePostRequest(
-                        energyConsumption.toDouble(),
-                        amountOfCO2.toDouble(),
+                    BoilerPostRequest(
+                        energyConsumption,
+                        24.0F,
+                        24.0F,
                         "none"
                     )
                 )
@@ -173,6 +175,12 @@ class AddDeviceActivity : AppCompatActivity() {
                         val result = response.body()
 
                         if (errorResult != null) {
+                            simpleDialog(
+                                this@AddDeviceActivity,
+                                "기기 추가",
+                                "기기 등록에 실패했습니다. 다시 시도해주세요."
+                            )
+
                             Log.d("기기등록 ($type)", "결과: 실패 (response.isSuccessful 통과하지 못함)")
                             Log.d("기기등록 ($type)", "statusCode: ${response.code()}")
                             Log.d("기기등록 ($type)", errorResult.string())
@@ -305,49 +313,74 @@ class AddDeviceActivity : AppCompatActivity() {
 
         // 기기 추가 버튼 클릭 시
         binding.btnAddDevice.setOnClickListener {
-            if ((energyConsumption > 0.0F)
-                && (amountOfCO2 > 0.0F)) {
-                val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                    when (binding.spinner.selectedItemPosition) {
-                        0 -> { // 냉장고
-                            callAppliancePost(DeviceTypeList.REFRIGERATOR)
-                        }
-                        1 -> { // 에어컨
-                            callAppliancePost(DeviceTypeList.AIR_CONDITIONER)
-                        }
-                        2 -> { // TV
-                            callAppliancePost(DeviceTypeList.TV)
-                        }
-                        3 -> { // 세탁기
-                            callAppliancePost(DeviceTypeList.WASHING_MACHINE)
-                        }
-                        4 -> { // 전자레인지
-                            callAppliancePost(DeviceTypeList.MICROWAVE_OVEN)
-                        }
-                        5 -> { // 보일러
-                            callAppliancePost(DeviceTypeList.BOILER)
-                        }
-                        6 -> { // 건조기
-                            callAppliancePost(DeviceTypeList.DRYER)
-                        }
-                        else -> {}
+            when (binding.spinner.selectedItemPosition) {
+                0, 1, 2, 3, 6 -> { // 냉장고, 에어컨, TV, 세탁기, 건조기
+                    if ((energyConsumption == 0.0F)
+                        || (amountOfCO2 == 0.0F)) {
+                        simpleDialog(
+                            this@AddDeviceActivity,
+                            "기기 추가",
+                            "사진 촬영이 진행되지 않았습니다."
+                        )
+                        return@setOnClickListener
                     }
                 }
-
-                createDialog(
-                    this@AddDeviceActivity,
-                    "기기 등록",
-                    "기기 등록을 하시겠습니까?",
-                    positiveButtonOnClickListener,
-                    defaultNegativeDialogInterfaceOnClickListener
-                )
-            } else {
-                simpleDialog(
-                    this@AddDeviceActivity,
-                    "기기 추가",
-                    "사진 촬영이 진행되지 않았습니다."
-                )
+                4 -> { // 전자레인지
+                    if (energyConsumption == 0.0F) {
+                        simpleDialog(
+                            this@AddDeviceActivity,
+                            "기기 추가",
+                            "사진 촬영이 진행되지 않았습니다."
+                        )
+                        return@setOnClickListener
+                    }
+                }
+                5 -> { // 보일러
+                    if (energyConsumption == 0.0F) {
+                        simpleDialog(
+                            this@AddDeviceActivity,
+                            "기기 추가",
+                            "사진 촬영이 진행되지 않았습니다."
+                        )
+                        return@setOnClickListener
+                    }
+                }
             }
+
+            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                when (binding.spinner.selectedItemPosition) {
+                    0 -> { // 냉장고
+                        callAppliancePost(DeviceTypeList.REFRIGERATOR)
+                    }
+                    1 -> { // 에어컨
+                        callAppliancePost(DeviceTypeList.AIR_CONDITIONER)
+                    }
+                    2 -> { // TV
+                        callAppliancePost(DeviceTypeList.TV)
+                    }
+                    3 -> { // 세탁기
+                        callAppliancePost(DeviceTypeList.WASHING_MACHINE)
+                    }
+                    4 -> { // 전자레인지
+                        callAppliancePost(DeviceTypeList.MICROWAVE_OVEN)
+                    }
+                    5 -> { // 보일러
+                        callAppliancePost(DeviceTypeList.BOILER)
+                    }
+                    6 -> { // 건조기
+                        callAppliancePost(DeviceTypeList.DRYER)
+                    }
+                    else -> {}
+                }
+            }
+
+            createDialog(
+                this@AddDeviceActivity,
+                "기기 등록",
+                "기기 등록을 하시겠습니까?",
+                positiveButtonOnClickListener,
+                defaultNegativeDialogInterfaceOnClickListener
+            )
         }
     }
 
