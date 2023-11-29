@@ -1,16 +1,11 @@
 package com.toyproject.ecosave
 
 import android.annotation.SuppressLint
-import android.content.DialogInterface
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.widget.EditText
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,7 +16,7 @@ import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RecommendProductData
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
-import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
+import com.toyproject.ecosave.widget.SelectAverageUsageTimePerDayDialog
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +29,11 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.PriorityQueue
 
-class SimulationActivity : AppCompatActivity() {
+interface SelectedAverageUsageTimePerDayInterface {
+    fun onSelectedHour(hours: Int, minute: Int)
+}
+
+class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayInterface {
     private lateinit var binding: ActivitySimulationBinding
 
     // 기기 변경 전 등록된 모든 기기의 총 소비 전력량 (월간)
@@ -50,6 +49,14 @@ class SimulationActivity : AppCompatActivity() {
             RecyclerViewProductRecommendationListAdapter? = null
 
     private var productRecommendationList = mutableListOf<RecommendProductData>()
+
+    private var position = -1
+    private var deviceType: DeviceTypeList? = null
+    private var afterPowerOfConsume: Double? = null
+
+    // number picker에서 선택한 하루 평균 사용 시간
+    private var selectedHours = 0
+    private var selectedMinutes = 0
 
     private val dummyData = mutableListOf(
         RecommendProductData(
@@ -173,6 +180,11 @@ class SimulationActivity : AppCompatActivity() {
 //        return prices
 //    }
 
+    private fun calculateTotalPowerOfConsumeForMonth() {
+        calculateCurrentTotalPowerOfConsumeForMonth()
+        calculateAfterCurrentTotalPowerOfConsumeForMonth()
+    }
+
     // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
     @SuppressLint("SetTextI18n")
     private fun calculateCurrentTotalPowerOfConsumeForMonth() {
@@ -183,7 +195,8 @@ class SimulationActivity : AppCompatActivity() {
                 continue
             }
 
-            val usageTimeFor1Day = binding.textUsageTimeFor1Day.text.toString().toDoubleOrNull()
+            val usageTimeFor1Day = selectedHours + selectedMinutes / 60.0
+            Log.d("시뮬레이션", usageTimeFor1Day.toString())
 
             when (relativeGradeData.deviceType) {
                 DeviceTypeList.REFRIGERATOR,
@@ -193,27 +206,21 @@ class SimulationActivity : AppCompatActivity() {
                 DeviceTypeList.MICROWAVE_OVEN -> {
                     // 전자레인지에 대한 월간 소비 전력량 = 소비전력 * (하루 평균 사용 시간) * 30(일)
                     // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
-                    if (usageTimeFor1Day != null) {
-                        totalPowerOfConsumeForMonth +=
-                            (relativeGradeData.powerOfConsume!! * usageTimeFor1Day * 30) / 1000
-                    }
+                    totalPowerOfConsumeForMonth +=
+                        (relativeGradeData.powerOfConsume!! * usageTimeFor1Day * 30) / 1000
                 }
                 DeviceTypeList.AIR_CONDITIONER -> {
                     // 에어컨의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                     // 월간 소비 전력량 = 표준 월간 소비 전력량 * (하루 평균 사용 시간 / 7.8)
-                    if (usageTimeFor1Day != null) {
-                        totalPowerOfConsumeForMonth +=
-                            relativeGradeData.powerOfConsume!! * (usageTimeFor1Day / 7.8F)
-                    }
+                    totalPowerOfConsumeForMonth +=
+                        relativeGradeData.powerOfConsume!! * (usageTimeFor1Day / 7.8F)
                 }
                 DeviceTypeList.TV -> {
                     // TV의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                     // 월간 소비 전력량 = 소비전력 * 하루 평균 사용 시간 * 30(일)
                     // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
-                    if (usageTimeFor1Day != null) {
-                        totalPowerOfConsumeForMonth +=
-                            (relativeGradeData.powerOfConsume!! * usageTimeFor1Day * 30) / 1000
-                    }
+                    totalPowerOfConsumeForMonth +=
+                        (relativeGradeData.powerOfConsume!! * usageTimeFor1Day * 30) / 1000
                 }
                 DeviceTypeList.BOILER -> {
                     // 보일러의 경우 아직 시뮬레이션 기능을 제공하지 않음
@@ -233,8 +240,7 @@ class SimulationActivity : AppCompatActivity() {
     // 기기 변경 후 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
     // 기기 변경 후 소비전력과 하루 평균 사용 시간이 모두 채워졌을 경우 시뮬레이션 결과를 보여줌
     @SuppressLint("SetTextI18n")
-    fun calculateAfterCurrentTotalPowerOfConsumeForMonth(
-        position: Int, deviceType: DeviceTypeList?, afterPowerOfConsume: Double?) {
+    fun calculateAfterCurrentTotalPowerOfConsumeForMonth() {
         // 소비 전력 변화량
         if (HomeActivity.list[position].powerOfConsume == null) {
             return
@@ -245,11 +251,11 @@ class SimulationActivity : AppCompatActivity() {
         }
 
         val changeInPowerConsumption =
-            afterPowerOfConsume - HomeActivity.list[position].powerOfConsume!!
+            afterPowerOfConsume!! - HomeActivity.list[position].powerOfConsume!!
 
         afterTotalPowerOfConsumeForMonth = 0.0
 
-        val usageTimeFor1Day = binding.textUsageTimeFor1Day.text.toString().toDoubleOrNull()
+        val usageTimeFor1Day = selectedHours + selectedMinutes / 60.0
 
         // 기기 변경 후 등록된 모든 기기의 총 소비 전력량 (월간) 계산
         when (deviceType) {
@@ -259,27 +265,21 @@ class SimulationActivity : AppCompatActivity() {
             DeviceTypeList.MICROWAVE_OVEN -> {
                 // 전자레인지에 대한 월간 소비 전력량 = 소비전력 * 1/6(시간) * 30(일)
                 // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
-                if (usageTimeFor1Day != null) {
-                    afterTotalPowerOfConsumeForMonth +=
-                        (changeInPowerConsumption * usageTimeFor1Day * 30) / 1000
-                }
+                afterTotalPowerOfConsumeForMonth +=
+                    (changeInPowerConsumption * usageTimeFor1Day * 30) / 1000
             }
             DeviceTypeList.AIR_CONDITIONER -> {
                 // 에어컨의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                 // 월간 소비 전력량 = 표준 월간 소비 전력량 * (하루 평균 사용 시간 / 7.8)
-                if (usageTimeFor1Day != null) {
-                    afterTotalPowerOfConsumeForMonth +=
-                        changeInPowerConsumption * (usageTimeFor1Day / 7.8F)
-                }
+                afterTotalPowerOfConsumeForMonth +=
+                    changeInPowerConsumption * (usageTimeFor1Day / 7.8F)
             }
             DeviceTypeList.TV -> {
                 // TV의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                 // 월간 소비 전력량 = 소비전력 * 하루 평균 사용 시간 * 30(일)
                 // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
-                if (usageTimeFor1Day != null) {
-                    afterTotalPowerOfConsumeForMonth +=
-                        (changeInPowerConsumption * usageTimeFor1Day * 30) / 1000
-                }
+                afterTotalPowerOfConsumeForMonth +=
+                    (changeInPowerConsumption * usageTimeFor1Day * 30) / 1000
             }
             DeviceTypeList.WASHING_MACHINE,
             DeviceTypeList.BOILER -> {
@@ -302,9 +302,6 @@ class SimulationActivity : AppCompatActivity() {
         val _afterTotalPowerOfConsumeForMonth =
             BigDecimal(afterTotalPowerOfConsumeForMonth).setScale(2, RoundingMode.HALF_UP)
         binding.textAfterTotalPowerOfConsumeForMonth.text = "$_afterTotalPowerOfConsumeForMonth kWh/월"
-
-        Log.d("시뮬레이션", totalPowerOfConsumeForMonth.toString())
-        Log.d("시뮬레이션", afterTotalPowerOfConsumeForMonth.toString())
 
         var textMonthlyElectricityBillChangeText = ""
 
@@ -513,7 +510,6 @@ class SimulationActivity : AppCompatActivity() {
 
         try {
             runOnUiThread {
-                Log.d("시뮬레이션", productRecommendationList.toString())
                 // progress bar 제거
                 binding.constraintLayoutForProgressBar.visibility = View.GONE
                 recyclerViewProductRecommendationListAdapter?.notifyDataSetChanged()
@@ -525,12 +521,30 @@ class SimulationActivity : AppCompatActivity() {
     }
 
     @SuppressLint("SetTextI18n")
+    override fun onSelectedHour(hours: Int, minute: Int) {
+        selectedHours = hours
+        when (minute) {
+            0 -> {
+                binding.textUsageTimeFor1Day.text = hours.toString()
+                selectedMinutes = 0
+            }
+            30 -> {
+                binding.textUsageTimeFor1Day.text = "$hours.5"
+                selectedMinutes = 30
+            }
+        }
+
+        // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
+        calculateTotalPowerOfConsumeForMonth()
+    }
+
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySimulationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val deviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        deviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getSerializableExtra("deviceType", DeviceTypeList::class.java)
         } else {
             intent.getSerializableExtra("deviceType") as DeviceTypeList
@@ -538,7 +552,7 @@ class SimulationActivity : AppCompatActivity() {
 
         val powerOfConsume = intent.getDoubleExtra("powerOfConsume", -1.0)
         val _powerOfConsume = BigDecimal(powerOfConsume).setScale(1, RoundingMode.HALF_UP)
-        val position = intent.getIntExtra("position", -1)
+        position = intent.getIntExtra("position", -1)
 
         val toolbar = binding.toolbar
         setSupportActionBar(toolbar)
@@ -580,93 +594,13 @@ class SimulationActivity : AppCompatActivity() {
 
         // 하루 평균 사용 시간 클릭 시
         binding.relativeLayoutForEditableField.setOnClickListener {
-//            val view = LayoutInflater.from(this).inflate(R.layout.edittext_dialog_layout, null)
-//            val editText: TextInputEditText = view.findViewById(R.id.editText)
-//            val alertDialog = MaterialAlertDialogBuilder(this, R.style.Theme_Material3DialogEditText)
-//                .setTitle("하루 평균 사용 시간 설정")
-//                .setView(view)
-//
-//            val positiveButtonOnClickListener = DialogInterface.OnClickListener { dialogInterface, _ ->
-//                val text = editText.text.toString()
-//
-//                if (text.toDoubleOrNull() != null) {
-//                    // 하루 평균 사용 시간 재설정
-//                    binding.textUsageTimeFor1Day.text = text
-//
-//                    if (position >= 0) {
-//                        HomeActivity.list[position].averageUsageTimePerDay = text.toDouble()
-//                        val afterPowerOfConsume =
-//                            binding.textAfterPowerOfConsume.text.toString().toDoubleOrNull()
-//                        // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
-//                        calculateCurrentTotalPowerOfConsumeForMonth()
-//                        calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
-//                    }
-//                }
-//
-//                dialogInterface.dismiss()
-//            }
-//
-//            alertDialog.setPositiveButton("확인", positiveButtonOnClickListener)
-//            alertDialog.setNegativeButton("취소", defaultNegativeDialogInterfaceOnClickListener)
-//            alertDialog.show()
-
-            if (deviceType == DeviceTypeList.REFRIGERATOR) {
-                Toast.makeText(
-                    this,
-                    "냉장고는 하루 평균 사용 시간 설정이 불가능합니다.",
-                    Toast.LENGTH_SHORT
-                ).show()
-                return@setOnClickListener
+            try {
+                SelectAverageUsageTimePerDayDialog(selectedHours, selectedMinutes).show(
+                    supportFragmentManager, "SelectAverageUsageTimePerDayDialog")
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.d("시뮬레이션", e.toString())
             }
-
-            val editText = EditText(this)
-            editText.inputType = EditorInfo.TYPE_CLASS_NUMBER
-
-            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                val text = editText.text.toString()
-
-                if (text.toDoubleOrNull() != null) {
-                    val averageUsageTimePerDay = text.toDouble()
-
-                    if (averageUsageTimePerDay == 0.0) {
-                        Toast.makeText(
-                            this,
-                            "0은 입력할 수 없습니다.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@OnClickListener
-                    }
-
-                    if ((averageUsageTimePerDay < 0.0)
-                        || (averageUsageTimePerDay > 24.0)) {
-                        Toast.makeText(
-                            this,
-                            "0 ~ 24 사이의 숫자를 입력해 주세요.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@OnClickListener
-                    }
-
-                    // 하루 평균 사용 시간 재설정
-                    binding.textUsageTimeFor1Day.text = text
-
-                    if (position >= 0) {
-                        HomeActivity.list[position].averageUsageTimePerDay = text.toDouble()
-                        val afterPowerOfConsume =
-                            binding.textAfterPowerOfConsume.text.toString().toDoubleOrNull()
-                        // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
-                        calculateCurrentTotalPowerOfConsumeForMonth()
-                        calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
-                    }
-                }
-            }
-
-            val alertDialog = AlertDialog.Builder(this)
-            alertDialog.setTitle("하루 평균 사용 시간 변경")
-            alertDialog.setView(editText)
-            alertDialog.setPositiveButton("확인", positiveButtonOnClickListener)
-            alertDialog.setNegativeButton("취소", defaultNegativeDialogInterfaceOnClickListener)
-            alertDialog.show()
         }
 
         // progress bar 표시
@@ -679,25 +613,24 @@ class SimulationActivity : AppCompatActivity() {
                 RecyclerViewProductRecommendationListAdapter(
                     this,
                     productRecommendationList,
-                    deviceType,
+                    deviceType!!,
                     resources
                 )
             val layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
             recyclerView!!.layoutManager = layoutManager
+            recyclerView!!.isFocusable = false
+            recyclerView!!.isNestedScrollingEnabled = false
             recyclerView!!.adapter = recyclerViewProductRecommendationListAdapter
 
             recyclerViewProductRecommendationListAdapter!!.setOnItemClickListener(
                 object : RecyclerViewProductRecommendationListAdapter.OnItemClickListener {
                     override fun onItemClick(v: View, data: RecommendProductData, pos: Int) {
-                        Log.d("시뮬레이션", data.toString())
-                        Log.d("시뮬레이션", pos.toString())
-                        val afterPowerOfConsume = data.powerOfConsume
+                        afterPowerOfConsume = data.powerOfConsume
                         if (afterPowerOfConsume != null) {
                             binding.textAfterPowerOfConsume.text = afterPowerOfConsume.toString()
                         }
                         // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
-                        calculateCurrentTotalPowerOfConsumeForMonth()
-                        calculateAfterCurrentTotalPowerOfConsumeForMonth(position, deviceType, afterPowerOfConsume)
+                        calculateTotalPowerOfConsumeForMonth()
                     }
                 }
             )
