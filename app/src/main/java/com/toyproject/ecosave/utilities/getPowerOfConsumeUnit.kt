@@ -18,7 +18,7 @@ fun getPowerOfConsumeUnit(deviceType: DeviceTypeList?) : Map<String, String> {
         )
         DeviceTypeList.WASHING_MACHINE,
         DeviceTypeList.DRYER -> mapOf(
-            "description" to "1kg당 월간소비전력량",
+            "description" to "1kg당 소비전력량",
             "symbol" to "Wh/kg"
         )
         DeviceTypeList.MICROWAVE_OVEN -> mapOf(
