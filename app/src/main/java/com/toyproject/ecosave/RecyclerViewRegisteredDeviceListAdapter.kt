@@ -57,6 +57,7 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
             DeviceTypeList.WASHING_MACHINE -> holder.imageDevice.setImageResource(R.drawable.img_washing_machine)
             DeviceTypeList.MICROWAVE_OVEN -> holder.imageDevice.setImageResource(R.drawable.img_microwave_oven)
             DeviceTypeList.BOILER -> holder.imageDevice.setImageResource(R.drawable.img_boiler)
+            DeviceTypeList.DRYER -> holder.imageDevice.setImageResource(R.drawable.img_dryer)
             else -> holder.imageDevice.setImageResource(R.drawable.ic_image)
         }
 
@@ -87,7 +88,6 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
             // progress bar가 보이도록 설정
             holder.textRelativeElectricPowerConsumeGrade.visibility = View.GONE
             holder.progressBar.visibility = View.VISIBLE
-            // holder.textRelativeElectricPowerConsumeGrade.text = "-등급(-%)"
         }
 
         // 소비전력량 표시
@@ -179,6 +179,7 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
                 DeviceTypeList.WASHING_MACHINE -> intent.putExtra("deviceType", DeviceTypeList.WASHING_MACHINE)
                 DeviceTypeList.MICROWAVE_OVEN -> intent.putExtra("deviceType", DeviceTypeList.MICROWAVE_OVEN)
                 DeviceTypeList.BOILER -> intent.putExtra("deviceType", DeviceTypeList.BOILER)
+                DeviceTypeList.DRYER -> intent.putExtra("deviceType", DeviceTypeList.DRYER)
                 else -> {}
             }
             

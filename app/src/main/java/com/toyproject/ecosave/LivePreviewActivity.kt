@@ -84,8 +84,6 @@ class LivePreviewActivity : AppCompatActivity() {
     private var energyConsumptionDescriptionPosition: Rect? = null
     private var energyConsumptionUnitPosition: Rect? = null
 
-    private var amountOfCO2Map = mutableMapOf<Float, Int>()
-    private var energyConsumptionMap = mutableMapOf<Float, Int>()
     private var energyConsumption: Float = 0.0F
     private var amountOfCO2Emission: Float = 0.0F
 
@@ -125,6 +123,10 @@ class LivePreviewActivity : AppCompatActivity() {
             DeviceTypeList.BOILER -> {
                 onTextFoundBoiler(foundText, lineFrame)
             }
+            DeviceTypeList.DRYER -> {
+                // 건조기의 경우 세탁기와 동일한 방식으로 소비전력, CO2 배출량을 인식함
+                onTextFoundWashingMachine(foundText, lineFrame)
+            }
             else -> {
 
             }
@@ -133,7 +135,8 @@ class LivePreviewActivity : AppCompatActivity() {
         when (deviceType) {
             DeviceTypeList.REFRIGERATOR,
             DeviceTypeList.TV,
-            DeviceTypeList.WASHING_MACHINE-> {
+            DeviceTypeList.WASHING_MACHINE,
+            DeviceTypeList.DRYER -> {
                 if ((energyConsumption != 0.0F) && (amountOfCO2Emission != 0.0F)) {
                     // 에너지 소비전력과 CO2 배출량을 모두 찾았을 경우
                     val intent = Intent()
@@ -146,7 +149,7 @@ class LivePreviewActivity : AppCompatActivity() {
                 }
             }
             DeviceTypeList.MICROWAVE_OVEN,
-            DeviceTypeList.BOILER-> {
+            DeviceTypeList.BOILER -> {
                 if (energyConsumption != 0.0F) {
                     val intent = Intent()
                     intent.putExtra("energyConsumption", energyConsumption)
@@ -884,6 +887,9 @@ class LivePreviewActivity : AppCompatActivity() {
                 }
                 5 -> { // 보일러
                     deviceType = DeviceTypeList.BOILER
+                }
+                6 -> { // 건조기
+                    deviceType = DeviceTypeList.DRYER
                 }
                 else -> {
                     finish()

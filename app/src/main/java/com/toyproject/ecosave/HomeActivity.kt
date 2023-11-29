@@ -301,6 +301,25 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                     }
                                 }
 
+                                // 등록된 건조기의 pkey와 소비전력량 가져오기
+                                if (data.dryer != null) {
+                                    for (dryerData in data.dryer) {
+                                        val pkey = dryerData.id
+                                        val energy = dryerData.energy
+                                        list.add(
+                                            RegisteredDeviceData(
+                                                pkey,
+                                                DeviceTypeList.DRYER,
+                                                "",
+                                                null, null,
+                                                energy,
+                                                null, null, null, null
+                                            )
+                                        )
+                                        recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
+                                    }
+                                }
+
                                 Log.d("홈 화면", list.toString())
                                 numOfRegisteredDevices = list.size
                                 callApplianceGet()
@@ -349,7 +368,8 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 DeviceTypeList.AIR_CONDITIONER,
                 DeviceTypeList.TV,
                 DeviceTypeList.WASHING_MACHINE,
-                DeviceTypeList.MICROWAVE_OVEN -> {
+                DeviceTypeList.MICROWAVE_OVEN,
+                DeviceTypeList.DRYER -> {
                     callAppliance(idx, registeredDeviceData.deviceType, list[idx].id)
                 }
                 DeviceTypeList.BOILER -> {
@@ -384,6 +404,9 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             // 나의 전자레인지 세부정보 호출
             DeviceTypeList.MICROWAVE_OVEN -> call = apiInterface.applianceMicrowaveGet(id)
+
+            // 나의 건조기 세부정보 호출
+            DeviceTypeList.DRYER -> call = apiInterface.applianceDryerGet(id)
 
             else -> return
         }

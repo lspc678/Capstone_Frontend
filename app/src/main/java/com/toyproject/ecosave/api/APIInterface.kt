@@ -124,6 +124,18 @@ interface APIInterface {
     @DELETE("appliance/boiler")
     fun applianceBoilerDelete() : Call<DefaultResponse>
 
+    // 나의 건조기 세부정보 호출
+    @GET("appliance/dryer")
+    fun applianceDryerGet(@Query("id") id: Int) : Call<ApplianceDetailResponse>
+
+    // 나의 건조기 등록
+    @POST("appliance/dryer")
+    fun applianceDryerPost(@Body body: AppliancePostRequest) : Call<DefaultResponse>
+
+    // 나의 건조기 삭제
+    @DELETE("appliance/dryer")
+    fun applianceDryerDelete() : Call<DefaultResponse>
+
     companion object {
         // 암호화 예정
         const val API_KEY_ID = "gqeoomhzl8"

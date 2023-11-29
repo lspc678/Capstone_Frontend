@@ -10,6 +10,7 @@ fun getTranslatedDeviceType(deviceType: DeviceTypeList?) : String {
         DeviceTypeList.WASHING_MACHINE -> "세탁기"
         DeviceTypeList.MICROWAVE_OVEN -> "전자레인지"
         DeviceTypeList.BOILER -> "보일러"
+        DeviceTypeList.DRYER -> "건조기"
         else -> ""
     }
 }

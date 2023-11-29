@@ -9,9 +9,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.widget.EditText
-import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 
 import com.toyproject.ecosave.api.APIClientForServer
@@ -83,6 +80,9 @@ class DetailActivity : AppCompatActivity() {
             }
             DeviceTypeList.BOILER -> {
                 call = apiInterface.applianceBoilerDelete()
+            }
+            DeviceTypeList.DRYER -> {
+                call = apiInterface.applianceDryerDelete()
             }
             else -> {
                 call = null

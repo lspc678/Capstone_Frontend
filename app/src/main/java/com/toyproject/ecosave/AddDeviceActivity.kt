@@ -117,6 +117,15 @@ class AddDeviceActivity : AppCompatActivity() {
                     )
                 )
             }
+            DeviceTypeList.DRYER -> {
+                call = apiInterface.applianceDryerPost(
+                    AppliancePostRequest(
+                        energyConsumption.toDouble(),
+                        amountOfCO2.toDouble(),
+                        "none"
+                    )
+                )
+            }
             else -> {
                 call = null
             }
@@ -270,6 +279,10 @@ class AddDeviceActivity : AppCompatActivity() {
                         powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.BOILER)
                         co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.BOILER)
                     }
+                    6 -> { // 건조기
+                        powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.DRYER)
+                        co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.DRYER)
+                    }
                     else -> {
                         powerOfConsumeUnit = getPowerOfConsumeUnit(DeviceTypeList.OTHERS)
                         co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.OTHERS)
@@ -313,6 +326,9 @@ class AddDeviceActivity : AppCompatActivity() {
                         }
                         5 -> { // 보일러
                             callAppliancePost(DeviceTypeList.BOILER)
+                        }
+                        6 -> { // 건조기
+                            callAppliancePost(DeviceTypeList.DRYER)
                         }
                         else -> {}
                     }
