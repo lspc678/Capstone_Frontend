@@ -112,17 +112,23 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
     )
 
     // 시뮬레이션을 위한 기기 정보를 크롤링하여 List로 반환(TV, 전자레인지, 냉장고, 에어컨)
-    private suspend fun crawl(productCode: String): List<RecommendProductData> = withContext(Dispatchers.IO) {
+    private suspend fun crawl(productCode: String) : List<RecommendProductData> = withContext(Dispatchers.IO) {
         val searchSite = "https://prod.danawa.com/list/?cate="
 
-        // tv = 1022811 (단위 W), 전자레인지 = 10338815 (단위 W), 냉장고 = 10251508 (단위 kWh(월)), 에어컨 = 1022644(단위 : kW)
+        // tv = 1022811 (단위 W)
+        // 전자레인지 = 10338815 (단위 W)
+        // 냉장고 = 10251508 (단위 kWh(월))
+        // 에어컨 = 1022644(단위 : kW)
+        // 건조기 = 10244108 (단위 W/kg)
         val document = Jsoup.connect(searchSite + productCode).get()
+
+        val numOfItems = 10
 
         val onlyProduct = document.select("li.prod_item.prod_layer")
         val onlyProductString = onlyProduct.joinToString(" ") { it.text() }
 
-        val productsName = onlyProduct.select("a[name='productName']").map { it.text() }.take(10)
-        val productPowers = extractPowers(onlyProductString).take(10)
+        val productsName = onlyProduct.select("a[name='productName']").map { it.text() }.take(numOfItems)
+        val productPowers = extractPowers(onlyProductString).take(numOfItems)
 
         val thumbimage = onlyProduct.select("div.thumb_image")
         val forimage = thumbimage.select("img")
@@ -133,7 +139,7 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
             .distinct() // 중복된 URL 제거
 
         // 이미지 URL을 '//'로 시작하는 부분까지만 잘라내어 저장
-        val productImgUrl = imageUrls.take(10)
+        val productImgUrl = imageUrls.take(numOfItems)
 
         val productInfoList = List(minOf( productImgUrl.size, productsName.size, productPowers.size)) { index ->
             RecommendProductData(
@@ -503,6 +509,18 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
                     if (recommendProductData.powerOfConsume != null) {
                         productRecommendationList.add(recommendProductData)
                     }
+                }
+            }
+            DeviceTypeList.DRYER -> {
+                val recommendProductDataList = crawl("10244108")
+                val pq = PriorityQueue<ComparableRecommendProductData>()
+
+                for (data in recommendProductDataList) {
+                    pq.add(ComparableRecommendProductData(data))
+                }
+
+                while (pq.isNotEmpty()) {
+                    pq.poll()?.let { productRecommendationList.add(it.recommendProductData) }
                 }
             }
             else -> {}
