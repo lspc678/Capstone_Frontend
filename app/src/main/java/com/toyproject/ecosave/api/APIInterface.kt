@@ -1,6 +1,8 @@
 package com.toyproject.ecosave.api
 
+import com.toyproject.ecosave.api.requestmodels.ApplianceDeleteRequest
 import com.toyproject.ecosave.api.requestmodels.AppliancePostRequest
+import com.toyproject.ecosave.api.requestmodels.BoilerPostRequest
 import com.toyproject.ecosave.api.requestmodels.ChangeMyResidenceRequest
 import com.toyproject.ecosave.api.requestmodels.LoginRequest
 import com.toyproject.ecosave.api.requestmodels.SignUpRequest
@@ -20,6 +22,7 @@ import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -61,8 +64,8 @@ interface APIInterface {
     fun applianceRefrigeratorPost(@Body body: AppliancePostRequest) : Call<DefaultResponse>
 
     // 나의 냉장고 삭제
-    @DELETE("appliance/refrigerator")
-    fun applianceRefrigeratorDelete() : Call<DefaultResponse>
+    @HTTP(method = "DELETE", path = "appliance/refrigerator", hasBody = true)
+    fun applianceRefrigeratorDelete(@Body body: ApplianceDeleteRequest) : Call<DefaultResponse>
 
     // 나의 에어컨 세부정보 호출
     @GET("appliance/air-conditioner")
@@ -73,8 +76,8 @@ interface APIInterface {
     fun applianceAirConditionerPost(@Body body: AppliancePostRequest) : Call<DefaultResponse>
 
     // 나의 에어컨 삭제
-    @DELETE("appliance/air_conditioner")
-    fun applianceAirConditionerDelete() : Call<DefaultResponse>
+    @HTTP(method = "DELETE", path = "appliance/air_conditioner", hasBody = true)
+    fun applianceAirConditionerDelete(@Body body: ApplianceDeleteRequest) : Call<DefaultResponse>
 
     // 나의 TV 세부정보 호출
     @GET("appliance/television")
@@ -85,8 +88,8 @@ interface APIInterface {
     fun applianceTelevisionPost(@Body body: AppliancePostRequest) : Call<DefaultResponse>
 
     // 나의 TV 삭제
-    @DELETE("appliance/television")
-    fun applianceTelevisionDelete() : Call<DefaultResponse>
+    @HTTP(method = "DELETE", path = "appliance/television", hasBody = true)
+    fun applianceTelevisionDelete(@Body body: ApplianceDeleteRequest) : Call<DefaultResponse>
 
     // 나의 세탁기 세부정보 호출
     @GET("appliance/washing-machine")
@@ -97,8 +100,8 @@ interface APIInterface {
     fun applianceWashingMachinePost(@Body body: AppliancePostRequest) : Call<DefaultResponse>
 
     // 나의 세탁기 삭제
-    @DELETE("appliance/washing-machine")
-    fun applianceWashingMachineDelete() : Call<DefaultResponse>
+    @HTTP(method = "DELETE", path = "appliance/washing-machine", hasBody = true)
+    fun applianceWashingMachineDelete(@Body body: ApplianceDeleteRequest) : Call<DefaultResponse>
 
     // 나의 전자레인지 세부정보 호출
     @GET("appliance/microwave")
@@ -109,8 +112,8 @@ interface APIInterface {
     fun applianceMicrowavePost(@Body body: AppliancePostRequest) : Call<DefaultResponse>
 
     // 나의 전자레인지 삭제
-    @DELETE("appliance/microwave")
-    fun applianceMicrowaveDelete() : Call<DefaultResponse>
+    @HTTP(method = "DELETE", path = "appliance/microwave", hasBody = true)
+    fun applianceMicrowaveDelete(@Body body: ApplianceDeleteRequest) : Call<DefaultResponse>
 
     // 나의 보일러 세부정보 호출
     @GET("appliance/boiler")
@@ -118,11 +121,11 @@ interface APIInterface {
 
     // 나의 보일러 등록
     @POST("appliance/boiler")
-    fun applianceBoilerPost(@Body body: AppliancePostRequest) : Call<DefaultResponse>
+    fun applianceBoilerPost(@Body body: BoilerPostRequest) : Call<DefaultResponse>
 
     // 나의 보일러 삭제
-    @DELETE("appliance/boiler")
-    fun applianceBoilerDelete() : Call<DefaultResponse>
+    @HTTP(method = "DELETE", path = "appliance/boiler", hasBody = true)
+    fun applianceBoilerDelete(@Body body: ApplianceDeleteRequest) : Call<DefaultResponse>
 
     // 나의 건조기 세부정보 호출
     @GET("appliance/dryer")
@@ -133,8 +136,8 @@ interface APIInterface {
     fun applianceDryerPost(@Body body: AppliancePostRequest) : Call<DefaultResponse>
 
     // 나의 건조기 삭제
-    @DELETE("appliance/dryer")
-    fun applianceDryerDelete() : Call<DefaultResponse>
+    @HTTP(method = "DELETE", path = "appliance/dryer", hasBody = true)
+    fun applianceDryerDelete(@Body body: ApplianceDeleteRequest) : Call<DefaultResponse>
 
     companion object {
         // 암호화 예정

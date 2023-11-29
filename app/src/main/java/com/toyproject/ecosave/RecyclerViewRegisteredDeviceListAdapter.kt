@@ -182,6 +182,9 @@ class RecyclerViewRegisteredDeviceListAdapter constructor(
                 DeviceTypeList.DRYER -> intent.putExtra("deviceType", DeviceTypeList.DRYER)
                 else -> {}
             }
+
+            // 해당 기기의 id 값을 intent에 저장
+            intent.putExtra("id", list[position].id)
             
             // 소비전력을 intent에 저장
             intent.putExtra("powerOfConsume", list[position].powerOfConsume)

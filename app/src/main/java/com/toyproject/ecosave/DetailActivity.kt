@@ -11,8 +11,9 @@ import android.view.MenuItem
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 
-import com.toyproject.ecosave.api.APIClientForServer
+import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
 import com.toyproject.ecosave.api.APIInterface
+import com.toyproject.ecosave.api.requestmodels.ApplianceDeleteRequest
 import com.toyproject.ecosave.api.responsemodels.DefaultResponse
 import com.toyproject.ecosave.databinding.ActivityDetailBinding
 import com.toyproject.ecosave.models.DeviceTypeList
@@ -50,13 +51,23 @@ class DetailActivity : AppCompatActivity() {
         )
     }
 
-    private fun callApplianceDelete(deviceType: DeviceTypeList?) {
+    private fun callApplianceDelete(
+        deviceType: DeviceTypeList?, id: Int) {
         // progress bar 불러오기
         val progressDialog = ProgressDialog.getProgressDialog(this, "처리 중 입니다")
         progressDialog.show()
 
+        if (id == -1) {
+            simpleDialog(
+                this,
+                "기기 삭제",
+                "기기 삭제 도중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+            )
+            return
+        }
+
         val type = getTranslatedDeviceType(deviceType)
-        val apiInterface = APIClientForServer
+        val apiInterface = APIClientForServerByPassSSLCertificate
             .getClient()
             .create(APIInterface::class.java)
 
@@ -64,25 +75,39 @@ class DetailActivity : AppCompatActivity() {
 
         when (deviceType) {
             DeviceTypeList.REFRIGERATOR -> {
-                call = apiInterface.applianceRefrigeratorDelete()
+                call = apiInterface.applianceRefrigeratorDelete(
+                    ApplianceDeleteRequest(id)
+                )
             }
             DeviceTypeList.AIR_CONDITIONER -> {
-                call = apiInterface.applianceAirConditionerDelete()
+                call = apiInterface.applianceAirConditionerDelete(
+                    ApplianceDeleteRequest(id)
+                )
             }
             DeviceTypeList.TV -> {
-                call = apiInterface.applianceTelevisionDelete()
+                call = apiInterface.applianceTelevisionDelete(
+                    ApplianceDeleteRequest(id)
+                )
             }
             DeviceTypeList.WASHING_MACHINE -> {
-                call = apiInterface.applianceWashingMachineDelete()
+                call = apiInterface.applianceWashingMachineDelete(
+                    ApplianceDeleteRequest(id)
+                )
             }
             DeviceTypeList.MICROWAVE_OVEN -> {
-                call = apiInterface.applianceMicrowaveDelete()
+                call = apiInterface.applianceMicrowaveDelete(
+                    ApplianceDeleteRequest(id)
+                )
             }
             DeviceTypeList.BOILER -> {
-                call = apiInterface.applianceBoilerDelete()
+                call = apiInterface.applianceBoilerDelete(
+                    ApplianceDeleteRequest(id)
+                )
             }
             DeviceTypeList.DRYER -> {
-                call = apiInterface.applianceDryerDelete()
+                call = apiInterface.applianceDryerDelete(
+                    ApplianceDeleteRequest(id)
+                )
             }
             else -> {
                 call = null
@@ -103,18 +128,25 @@ class DetailActivity : AppCompatActivity() {
                         val result = response.body()
 
                         if (result != null) {
-                            if ((result.success) && (result.message == "전송성공")) {
+                            if (result.success) {
                                 Log.d("기기삭제 ($type)", "결과: 성공")
                                 Log.d("기기삭제 ($type)", result.toString())
 
-                                simpleDialog(
+                                val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                                    // 기기가 삭제되었으므로 홈 화면으로 이동
+                                    val intent = Intent(this@DetailActivity, HomeActivity::class.java)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                    startActivity(intent)
+                                    finish()
+                                }
+
+                                createDialog(
                                     this@DetailActivity,
                                     "기기 삭제",
-                                    "기기가 성공적으로 삭제되었습니다."
+                                    "기기가 성공적으로 삭제되었습니다.",
+                                    positiveButtonOnClickListener
                                 )
 
-                                // 기기가 삭제되었으므로 홈 화면으로 이동
-                                finish()
                             } else {
                                 simpleDialog(
                                     this@DetailActivity,
@@ -287,6 +319,8 @@ class DetailActivity : AppCompatActivity() {
             intent.getSerializableExtra("deviceType") as DeviceTypeList
         }
 
+        // 해당 기기의 id 값
+        val id = intent.getIntExtra("id", -1)
         val powerOfConsume = intent.getDoubleExtra("powerOfConsume", -1.0)
         val relativeElectricPowerConsumeGrade = intent.getIntExtra("relativeElectricPowerConsumeGrade", -1)
         val relativeElectricPowerConsumePercentage = intent.getIntExtra("relativeElectricPowerConsumePercentage", -1)
@@ -358,7 +392,7 @@ class DetailActivity : AppCompatActivity() {
 
         binding.btnDeleteDevice.setOnClickListener {
             val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                callApplianceDelete(deviceType)
+                callApplianceDelete(deviceType, id)
             }
 
             createDialog(
