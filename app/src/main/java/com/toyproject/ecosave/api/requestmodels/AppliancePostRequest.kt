@@ -10,3 +10,14 @@ data class AppliancePostRequest(
     @SerializedName("modelname")
     val modelname: String
 )
+
+data class BoilerPostRequest(
+    @SerializedName("efficeicy")
+    val efficeicy: Float,
+    @SerializedName("gas_consumption")
+    val gas_consumption: Float,
+    @SerializedName("output")
+    val output: Float,
+    @SerializedName("modelname")
+    val modelname: String
+)
