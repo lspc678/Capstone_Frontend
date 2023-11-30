@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -540,6 +541,11 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
 
     @SuppressLint("SetTextI18n")
     override fun onSelectedHour(hours: Int, minute: Int) {
+        if ((hours == 0) && (minute == 0)) {
+            Toast.makeText(this, "하루 평균 사용 시간의 최솟값은 30분 입니다", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         selectedHours = hours
         when (minute) {
             0 -> {
@@ -613,8 +619,16 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
         // 하루 평균 사용 시간 클릭 시
         binding.relativeLayoutForEditableField.setOnClickListener {
             try {
-                SelectAverageUsageTimePerDayDialog(selectedHours, selectedMinutes).show(
-                    supportFragmentManager, "SelectAverageUsageTimePerDayDialog")
+                if (deviceType == DeviceTypeList.REFRIGERATOR) {
+                    Toast.makeText(
+                        this,
+                        "냉장고는 하루 평균 사용 시간 수정이 불가능합니다",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    SelectAverageUsageTimePerDayDialog(selectedHours, selectedMinutes).show(
+                        supportFragmentManager, "SelectAverageUsageTimePerDayDialog")
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.d("시뮬레이션", e.toString())
