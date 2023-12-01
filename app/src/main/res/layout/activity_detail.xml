@@ -5,13 +5,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F9F7DF"
     tools:context=".DetailActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/white"
+        android:background="#F9F7DF"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -60,7 +61,7 @@
                 android:layout_height="48dp"
                 android:layout_alignParentEnd="true">
 
-                <ImageView
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:src="@drawable/non_editable_textfield" />
@@ -112,7 +113,7 @@
                 android:layout_height="48dp"
                 android:layout_alignParentEnd="true">
 
-                <ImageView
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:src="@drawable/non_editable_textfield" />
@@ -163,7 +164,7 @@
                 android:layout_height="48dp"
                 android:layout_alignParentEnd="true">
 
-                <ImageView
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:src="@drawable/non_editable_textfield" />
