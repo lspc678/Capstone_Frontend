@@ -1,15 +1,11 @@
 package com.toyproject.ecosave
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.LocationManager
 import android.os.Bundle
-import android.os.Looper
-import android.provider.Settings
 import android.util.Log
+import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
 
@@ -17,19 +13,12 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import com.google.android.material.navigation.NavigationView
 import com.toyproject.ecosave.api.APIClientForNaverMap
 import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
@@ -43,12 +32,18 @@ import com.toyproject.ecosave.api.responsemodels.ReverseGeocodingResponse
 import com.toyproject.ecosave.databinding.ActivityHomeBinding
 import com.toyproject.ecosave.models.DeviceTypeList
 import com.toyproject.ecosave.models.RegisteredDeviceData
+import com.toyproject.ecosave.utilities.GPSLocation
 import com.toyproject.ecosave.utilities.fromDpToPx
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
 import com.toyproject.ecosave.widget.ProgressDialog
 import com.toyproject.ecosave.widget.createDialog
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 import retrofit2.Call
 import retrofit2.Callback
@@ -76,17 +71,6 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     )
 
     companion object {
-        var currentLatitude = 0.0 // 위도
-        var currentLongitude = 0.0 // 경도
-
-        // 내 거주지 설정 시 필요한 권한 목록
-        val permissions = arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-
-        const val REQUEST_CODE_PERMISSIONS = 1001
-        const val LOCATION_REQUEST_INTERVAL_MILLIS = (1000 * 100).toLong()
         private const val MARGIN_SIDE = 20.0F
         private const val MARGIN_BETWEEN_PYRAMIDS = 10
         private val MARGIN_TEXT = arrayOf(
@@ -123,21 +107,6 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         var totalRelativeEnergyConsumeGrade = -1
     }
 
-    val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            super.onLocationResult(locationResult)
-
-            locationResult.let {
-                val lastLocation = it.lastLocation
-                lastLocation?.let { it2 ->
-                    currentLatitude = it2.latitude
-                    currentLongitude = it2.longitude
-                    Log.d("위치", "$currentLatitude, $currentLongitude")
-                }
-            }
-        }
-    }
-
     // 서버로 부터 내 거주지를 불러옴
     private fun getMyLocationFromServer() {
         if (myLocation == "") {
@@ -148,6 +117,58 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         } else {
             binding.textMyResidentInfo.text = myLocation
         }
+    }
+
+    private fun setMyCurrentLocationAsMyResidence() {
+        // 현재 위치를 거주지로 설정
+        val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+            val gpsLocation = GPSLocation(this@HomeActivity, this)
+
+            if (!gpsLocation.getLocation()) {
+                return@OnClickListener
+            }
+
+            // progress bar 불러오기
+            val progressDialog = ProgressDialog.getProgressDialog(this, "현재 위치를 불러오고 있습니다")
+            progressDialog.show()
+
+            val job = CoroutineScope(Dispatchers.IO).launch {
+                while ((GPSLocation.currentLatitude == 0.0)
+                    || (GPSLocation.currentLongitude == 0.0)) {
+                    delay(10L)
+                }
+
+                progressDialog.dismiss()
+
+                if ((GPSLocation.currentLatitude != 0.0) &&
+                    (GPSLocation.currentLongitude != 0.0)) {
+                    searchAddress(GPSLocation.currentLatitude, GPSLocation.currentLongitude)
+                }
+            }
+
+            // progress bar 표시 도중 취소 버튼을 눌렀을 때
+            progressDialog.setOnKeyListener { _, keyCode, event ->
+                if ((keyCode == KeyEvent.KEYCODE_BACK)
+                    && (event.action == KeyEvent.ACTION_UP)) {
+                    job.cancel()
+                    simpleDialog(
+                        this,
+                        "내 거주지 변경",
+                        "현재 위치 정보를 가져오지 못했습니다. 잠시 후 다시 시도해주세요."
+                    )
+                }
+                return@setOnKeyListener false
+            }
+        }
+
+        createDialog(
+            this,
+            "내 거주지 변경",
+            "현재 위치를 기준으로 거주지를 변경합니다.\n\n"
+                    + "주의: 이전에 저장된 거주지 정보는 사라집니다.",
+            positiveButtonOnClickListener,
+            defaultNegativeDialogInterfaceOnClickListener
+        )
     }
 
     private fun prepareListData() {
@@ -899,75 +920,6 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         binding.textEnergyConsumeGrade.layoutParams = paramsForEnergyConsumeGrade
     }
 
-    private fun showDialogForError() {
-        simpleDialog(
-            this,
-            "내 거주지 변경",
-            "현재 위치를 수신하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-        )
-    }
-
-    private fun setLocationRequest() {
-        // 필요 권한이 허용되어 있는지 확인
-        if (permissions.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }) {
-            val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-            val locationRequest: LocationRequest =
-                LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_REQUEST_INTERVAL_MILLIS)
-                    .setMinUpdateDistanceMeters(0.0F)
-                    .build()
-
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
-        } else {
-            requestPermissions(permissions, REQUEST_CODE_PERMISSIONS)
-        }
-    }
-
-    private fun getMyLocation() {
-        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-
-        // 위치 서비스가 켜져있는지 확인
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            turnOnGPS() // 위치 서비스 켜기
-        } else {
-            // 10초 마다 현재 위치 수신
-            setLocationRequest()
-
-            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                if (currentLatitude == 0.0 || currentLongitude == 0.0) {
-                    showDialogForError()
-                } else {
-                    searchAddress(currentLatitude, currentLongitude)
-                }
-            }
-
-            createDialog(
-                this,
-                "내 거주지 변경",
-                "현재 위치를 기준으로 거주지를 변경합니다.\n\n"
-                        + "주의: 이전에 저장된 거주지 정보는 사라집니다.",
-                positiveButtonOnClickListener,
-                defaultNegativeDialogInterfaceOnClickListener
-            )
-        }
-    }
-
-    private fun turnOnGPS() {
-        // 위치 설정이 켜져 있지 않으면 위치 설정창으로 이동
-        val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-            intent.addCategory(Intent.CATEGORY_DEFAULT)
-            startActivity(intent)
-        }
-
-        createDialog(
-            this,
-            "위치 서비스 권한 필요",
-            "내 거주지 설정을 하기 위해서는 위치 서비스 권한이 필요합니다.",
-            positiveButtonOnClickListener,
-            defaultNegativeDialogInterfaceOnClickListener
-        )
-    }
-
     // 현재 위치를 기반으로 지번 주소와 도로명 주소를 찾음
     private fun searchAddress(latitude: Double, longitude: Double) {
         val coords = "$longitude,$latitude" // 경도, 위도
@@ -1149,7 +1101,10 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             alertDialogBuilderBtn.setTitle("내 거주지 변경")
             alertDialogBuilderBtn.setItems(optionsForChangeMyResidence) { _, which ->
                 when (which) {
-                    0 -> getMyLocation()
+                    0 -> {
+                        // 현재 위치를 거주지로 설정
+                        setMyCurrentLocationAsMyResidence()
+                    }
                 }
             }
             alertDialogBuilderBtn.setNegativeButton("취소") { _, _ -> }
