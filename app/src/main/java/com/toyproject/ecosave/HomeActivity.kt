@@ -456,6 +456,18 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                 list[idx].relativeElectricPowerConsumeGrade = data.tier
                                 list[idx].relativeElectricPowerConsumePercentage = data.relativePercent
 
+                                when (deviceType) {
+                                    DeviceTypeList.REFRIGERATOR,
+                                    DeviceTypeList.WASHING_MACHINE,
+                                    DeviceTypeList.TV,
+                                    DeviceTypeList.AIR_CONDITIONER,
+                                    DeviceTypeList.DRYER -> {
+                                        list[idx].relativeCO2EmissionGrade = data.tier
+                                        list[idx].relativeCO2EmissionPercentage = data.relativePercent
+                                    }
+                                    else -> {}
+                                }
+
                                 // 상세 정보를 알아낸 기기의 개수 1 증가
                                 numOfGetDetailedInformationDevices++
 
