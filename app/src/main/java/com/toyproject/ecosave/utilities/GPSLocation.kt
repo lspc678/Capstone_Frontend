@@ -7,7 +7,6 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.os.Looper
 import android.provider.Settings
 import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
@@ -25,7 +24,12 @@ import com.toyproject.ecosave.SignUpActivity
 import com.toyproject.ecosave.widget.createDialog
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 
-class GPSLocation(val activity: Activity, val context: Context) {
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+class GPSLocation(private val activity: Activity, val context: Context) {
     companion object {
         var currentLatitude = 0.0 // 현재 위치 위도
         var currentLongitude = 0.0 // 현재 위치 경도
@@ -39,39 +43,66 @@ class GPSLocation(val activity: Activity, val context: Context) {
         Manifest.permission.ACCESS_COARSE_LOCATION
     )
 
-    fun getLocation() {
-        turnOnLocationSystem()
+    private val fusedLocationClient: FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(activity)
+    private val locationRequest = LocationRequest.Builder(
+        Priority.PRIORITY_HIGH_ACCURACY,
+        LOCATION_REQUEST_INTERVAL_MILLIS)
+        .build()
+
+    fun getLocation() : Boolean {
+        // SignUpActivity 또는 HomeActivity에서 실행했을 경우에만 GPSLocation 사용 가능
+        if (!isValidActivity()) {
+            return false
+        }
+
+        // 위치 서비스가 켜져 있는지 확인
+        if (!turnOnLocationSystem()) {
+            turnOnGPS()
+            return false
+        }
+
         setLocationRequest()
+
+        CoroutineScope(Dispatchers.Default).launch {
+            while ((currentLatitude == 0.0)
+                || (currentLongitude == 0.0)) {
+                delay(10L)
+            }
+
+            // 현재 위치 정보 업데이트 종료
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+        }
+
+        return true
     }
 
-    private fun turnOnLocationSystem() {
-        if ((activity is SignUpActivity)
-            || (activity is HomeActivity)) {
-            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private fun isValidActivity() : Boolean {
+        return ((activity is SignUpActivity) || (activity is HomeActivity))
+    }
 
-            // 위치 서비스가 켜져있는지 확인
-            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                turnOnGPS() // 위치 서비스 켜기
-            } else {
-                // 10초 마다 현재 위치 수신
-                setLocationRequest()
-            }
-        }
+    private fun turnOnLocationSystem() : Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        // 위치 서비스가 켜져있는지 확인
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
     private fun setLocationRequest() {
         // 필요 권한이 허용되어 있는지 확인
         if (permissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) {
-            val fusedLocationClient: FusedLocationProviderClient =
-                LocationServices.getFusedLocationProviderClient(activity)
-            val locationRequest: LocationRequest =
-                LocationRequest.Builder(
-                    Priority.PRIORITY_HIGH_ACCURACY,
-                    LOCATION_REQUEST_INTERVAL_MILLIS)
-                    .setMinUpdateDistanceMeters(0.0F)
-                    .build()
-
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+            fusedLocationClient.lastLocation.addOnSuccessListener {
+                if (it != null) {
+                    currentLatitude = it.latitude
+                    currentLongitude = it.longitude
+                } else {
+                    fusedLocationClient.requestLocationUpdates(
+                        locationRequest,
+                        locationCallback,
+                        null
+                    )
+                }
+            }
         } else {
             requestPermissions(activity, permissions, REQUEST_CODE_PERMISSIONS)
         }
@@ -81,12 +112,10 @@ class GPSLocation(val activity: Activity, val context: Context) {
         override fun onLocationResult(locationResult: LocationResult) {
             super.onLocationResult(locationResult)
 
-            locationResult.let {
-                val lastLocation = it.lastLocation
-                lastLocation?.let { it2 ->
-                    currentLatitude = it2.latitude
-                    currentLongitude = it2.longitude
-                }
+            val lastLocation = locationResult.lastLocation
+            if (lastLocation != null) {
+                currentLatitude = lastLocation.latitude
+                currentLongitude = lastLocation.longitude
             }
         }
     }
