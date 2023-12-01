@@ -394,7 +394,9 @@ class DetailActivity : AppCompatActivity() {
 
         // CO2 배출량이 표기되어 있지 않은 제품(예: 보일러)의 경우 CO2 배출량에 관한 UI가 보이지 않도록 설정
         if (binding.textCO2EmissionUnit.text == "") {
-            binding.relativeLayoutForCO2.visibility = View.GONE
+            binding.cardViewForCO2.visibility = View.INVISIBLE
+
+            // binding.relativeLayoutForCO2.visibility = View.GONE
         }
 
         showPyramids(
