@@ -3,14 +3,14 @@ package com.toyproject.ecosave
 import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
-import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
@@ -31,7 +31,6 @@ import com.toyproject.ecosave.widget.simpleDialog
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.io.File
 
 class AddDeviceActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddDeviceBinding
@@ -151,13 +150,32 @@ class AddDeviceActivity : AppCompatActivity() {
                                 Log.d("기기등록 ($type)", "결과: 성공")
                                 Log.d("기기등록 ($type)", result.toString())
 
-                                simpleDialog(
-                                    this@AddDeviceActivity,
-                                    "기기 추가",
-                                    "기기가 등록되었습니다."
-                                )
+                                val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                                    reset()
+                                    val intent = Intent(this@AddDeviceActivity, HomeActivity::class.java)
+                                    startActivity(intent)
+                                    finish()
+                                }
 
-                                reset()
+                                val onKeyListener = DialogInterface.OnKeyListener { _, keyCode, event ->
+                                    if ((keyCode == KeyEvent.KEYCODE_BACK)
+                                        && (event.action == KeyEvent.ACTION_UP)) {
+                                        reset()
+                                        val intent = Intent(this@AddDeviceActivity, HomeActivity::class.java)
+                                        startActivity(intent)
+                                        finish()
+                                    }
+                                    return@OnKeyListener false
+                                }
+
+                                AlertDialog.Builder(this@AddDeviceActivity)
+                                    .setTitle("기기 추가")
+                                    .setMessage("기기가 등록되었습니다.")
+                                    .setPositiveButton("확인", positiveButtonOnClickListener)
+                                    .setOnKeyListener(onKeyListener)
+                                    .setCancelable(false)
+                                    .create()
+                                    .show()
                             } else {
                                 simpleDialog(
                                     this@AddDeviceActivity,
