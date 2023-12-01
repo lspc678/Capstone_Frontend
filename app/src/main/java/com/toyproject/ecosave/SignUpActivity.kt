@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.Patterns
+import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doOnTextChanged
 
@@ -16,9 +17,14 @@ import com.toyproject.ecosave.api.responsemodels.SignUpResponse
 import com.toyproject.ecosave.api.responsemodels.SignUpSendMailResponse
 import com.toyproject.ecosave.databinding.ActivitySignUpBinding
 import com.toyproject.ecosave.utilities.GPSLocation
+import com.toyproject.ecosave.widget.ProgressDialog
 import com.toyproject.ecosave.widget.createDialog
 import com.toyproject.ecosave.widget.defaultNegativeDialogInterfaceOnClickListener
 import com.toyproject.ecosave.widget.simpleDialog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 import retrofit2.Call
 import retrofit2.Callback
@@ -50,6 +56,91 @@ class SignUpActivity : AppCompatActivity() {
 
             }
         }
+    }
+
+    private fun processSignUp(password: String, passwordConfirm: String) {
+        val signUpData = SignUpRequest(
+            finalEmail,
+            password,
+            passwordConfirm,
+            finalNickname,
+            App.prefs.getStringValue("code", ""),
+            GPSLocation.currentLongitude,
+            GPSLocation.currentLatitude
+        )
+
+        val apiInterface = APIClientForServerByPassSSLCertificate
+            .getClient()
+            .create(APIInterface::class.java)
+        val call = apiInterface.signUp(signUpData)
+
+        call.enqueue(
+            object : Callback<SignUpResponse> {
+                override fun onResponse(
+                    call: Call<SignUpResponse>,
+                    response: Response<SignUpResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        val result = response.body()
+
+                        if (result != null) {
+                            if (result.success == true) {
+                                // 회원가입 성공
+
+                                val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
+                                    Log.d("회원가입", "결과: 성공")
+
+                                    // 로그인 화면으로 이동
+                                    val intent = Intent(this@SignUpActivity, LoginActivity::class.java)
+                                    startActivity(intent)
+                                    finish()
+                                }
+
+                                createDialog(
+                                    this@SignUpActivity,
+                                    "회원가입",
+                                    "회원가입이 완료되었습니다. 로그인 화면에서 로그인을 진행해주세요",
+                                    positiveButtonOnClickListener
+                                )
+                            } else {
+                                simpleDialog(
+                                    this@SignUpActivity,
+                                    "회원가입",
+                                    "회원가입에 실패하였습니다. 잠시 후 다시 시도해주세요."
+                                )
+                                Log.d("회원가입", "결과: 실패 (result.success = false)")
+                                Log.d("회원가입", result.toString())
+                            }
+                        }
+                    } else {
+                        val errorResult = response.errorBody()
+                        val result = response.body()
+
+                        if (errorResult != null) {
+                            simpleDialog(
+                                this@SignUpActivity,
+                                "회원가입",
+                                "회원가입에 실패하였습니다. 잠시 후 다시 시도해주세요."
+                            )
+
+                            Log.d("회원가입", "결과: 실패 (response.isSuccessful 통과 실패)")
+                            Log.d("회원가입", errorResult.string())
+                            Log.d("회원가입", result.toString())
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<SignUpResponse>, t: Throwable) {
+                    simpleDialog(
+                        this@SignUpActivity,
+                        "회원가입",
+                        "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해주세요."
+                    )
+                    Log.d("회원가입", "결과: 실패(onFailure)")
+                    Log.d("회원가입", t.message.toString())
+                }
+            }
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -291,106 +382,42 @@ class SignUpActivity : AppCompatActivity() {
 
             val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
                 val gpsLocation = GPSLocation(this@SignUpActivity, this)
-                gpsLocation.getLocation()
 
-                if ((GPSLocation.currentLatitude != 0.0)
-                    && (GPSLocation.currentLongitude != 0.0)) {
-                    Log.d("회원가입", finalEmail)
-                    Log.d("회원가입", password)
-                    Log.d("회원가입", passwordConfirm)
-                    Log.d("회원가입", finalNickname)
-                    Log.d("회원가입", App.prefs.getStringValue("code", ""))
-                    Log.d("회원가입", GPSLocation.currentLongitude.toString())
-                    Log.d("회원가입", GPSLocation.currentLatitude.toString())
+                if (!gpsLocation.getLocation()) {
+                    return@OnClickListener
+                }
 
-                    val signUpData = SignUpRequest(
-                        finalEmail,
-                        password,
-                        passwordConfirm,
-                        finalNickname,
-                        App.prefs.getStringValue("code", ""),
-                        GPSLocation.currentLongitude,
-                        GPSLocation.currentLatitude
-                    )
+                // progress bar 불러오기
+                val progressDialog = ProgressDialog.getProgressDialog(this, "현재 위치를 불러오고 있습니다")
+                progressDialog.show()
 
-                    val apiInterface = APIClientForServerByPassSSLCertificate
-                        .getClient()
-                        .create(APIInterface::class.java)
-                    val call = apiInterface.signUp(signUpData)
+                val job = CoroutineScope(Dispatchers.IO).launch {
+                    while ((GPSLocation.currentLatitude == 0.0)
+                        || (GPSLocation.currentLongitude == 0.0)) {
+                        delay(10L)
+                    }
 
-                    call.enqueue(
-                        object : Callback<SignUpResponse> {
-                            override fun onResponse(
-                                call: Call<SignUpResponse>,
-                                response: Response<SignUpResponse>
-                            ) {
-                                if (response.isSuccessful) {
-                                    val result = response.body()
+                    progressDialog.dismiss()
 
-                                    if (result != null) {
-                                        if (result.success == true) {
-                                            // 회원가입 성공
+                    if ((GPSLocation.currentLatitude != 0.0)
+                        && (GPSLocation.currentLongitude != 0.0)) {
+                        // 회원가입 진행
+                        processSignUp(password, passwordConfirm)
+                    }
+                }
 
-                                            val positiveButtonOnClickListener = DialogInterface.OnClickListener { _, _ ->
-                                                Log.d("회원가입", "결과: 성공")
-
-                                                // 로그인 화면으로 이동
-                                                val intent = Intent(this@SignUpActivity, LoginActivity::class.java)
-                                                startActivity(intent)
-                                                finish()
-                                            }
-
-                                            createDialog(
-                                                this@SignUpActivity,
-                                                "회원가입",
-                                                "회원가입이 완료되었습니다. 로그인 화면에서 로그인을 진행해주세요",
-                                                positiveButtonOnClickListener
-                                            )
-                                        } else {
-                                            simpleDialog(
-                                                this@SignUpActivity,
-                                                "회원가입",
-                                                "회원가입에 실패하였습니다. 잠시 후 다시 시도해주세요."
-                                            )
-                                            Log.d("회원가입", "결과: 실패 (result.success = false)")
-                                            Log.d("회원가입", result.toString())
-                                        }
-                                    }
-                                } else {
-                                    val errorResult = response.errorBody()
-                                    val result = response.body()
-
-                                    if (errorResult != null) {
-                                        simpleDialog(
-                                            this@SignUpActivity,
-                                            "회원가입",
-                                            "회원가입에 실패하였습니다. 잠시 후 다시 시도해주세요."
-                                        )
-
-                                        Log.d("회원가입", "결과: 실패 (response.isSuccessful 통과 실패)")
-                                        Log.d("회원가입", errorResult.string())
-                                        Log.d("회원가입", result.toString())
-                                    }
-                                }
-                            }
-
-                            override fun onFailure(call: Call<SignUpResponse>, t: Throwable) {
-                                simpleDialog(
-                                    this@SignUpActivity,
-                                    "회원가입",
-                                    "서버와의 통신이 원활하지 않습니다. 잠시 후 다시 시도해주세요."
-                                )
-                                Log.d("회원가입", "결과: 실패(onFailure)")
-                                Log.d("회원가입", t.message.toString())
-                            }
-                        }
-                    )
-                } else {
-                    simpleDialog(
-                        this@SignUpActivity,
-                        "내 거주지 변경",
-                        "현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요."
-                    )
+                // progress bar 표시 도중 취소 버튼을 눌렀을 때
+                progressDialog.setOnKeyListener { _, keyCode, event ->
+                    if ((keyCode == KeyEvent.KEYCODE_BACK)
+                        && (event.action == KeyEvent.ACTION_UP)) {
+                        job.cancel()
+                        simpleDialog(
+                            this,
+                            "내 거주지 변경",
+                            "현재 위치 정보를 가져오지 못했습니다. 잠시 후 다시 시도해주세요."
+                        )
+                    }
+                    return@setOnKeyListener false
                 }
             }
 
