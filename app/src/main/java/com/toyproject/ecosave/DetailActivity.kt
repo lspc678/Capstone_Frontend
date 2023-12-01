@@ -7,8 +7,10 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 
 import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
@@ -140,13 +142,25 @@ class DetailActivity : AppCompatActivity() {
                                     finish()
                                 }
 
-                                createDialog(
-                                    this@DetailActivity,
-                                    "기기 삭제",
-                                    "기기가 성공적으로 삭제되었습니다.",
-                                    positiveButtonOnClickListener
-                                )
+                                val onKeyListener = DialogInterface.OnKeyListener { _, keyCode, event ->
+                                    if ((keyCode == KeyEvent.KEYCODE_BACK)
+                                        && (event.action == KeyEvent.ACTION_UP)) {
+                                        val intent = Intent(this@DetailActivity, HomeActivity::class.java)
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                        startActivity(intent)
+                                        finish()
+                                    }
+                                    return@OnKeyListener false
+                                }
 
+                                AlertDialog.Builder(this@DetailActivity)
+                                    .setTitle("기기 삭제")
+                                    .setMessage("기기가 성공적으로 삭제되었습니다.")
+                                    .setPositiveButton("확인", positiveButtonOnClickListener)
+                                    .setOnKeyListener(onKeyListener)
+                                    .setCancelable(false)
+                                    .create()
+                                    .show()
                             } else {
                                 simpleDialog(
                                     this@DetailActivity,
