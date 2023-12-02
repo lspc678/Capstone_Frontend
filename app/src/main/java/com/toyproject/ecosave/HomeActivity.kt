@@ -813,39 +813,39 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             sumOfRelativeCO2EmissionPercentage / numOfRegisteredDevices
 
         if (averageRelativeCO2EmissionPercentage <= 4.0) { // 1등급 (CO2)
-            binding.CO2Pyramid.setImageResource(R.drawable.pyramid1_co2)
+            binding.CO2Pyramid.setImageResource(R.drawable.pyramid1_co2_green)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_1))
             totalRelativeCO2EmissionGrade = 1
         } else if (averageRelativeCO2EmissionPercentage <= 11.0) { // 2등급 (CO2)
-            binding.CO2Pyramid.setImageResource(R.drawable.pyramid2_co2)
+            binding.CO2Pyramid.setImageResource(R.drawable.pyramid2_co2_green)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_2_and_3))
             totalRelativeCO2EmissionGrade = 2
         } else if (averageRelativeCO2EmissionPercentage <= 23.0) { // 3등급 (CO2)
-            binding.CO2Pyramid.setImageResource(R.drawable.pyramid2_co2)
+            binding.CO2Pyramid.setImageResource(R.drawable.pyramid2_co2_green)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_2_and_3))
             totalRelativeCO2EmissionGrade = 3
         } else if (averageRelativeCO2EmissionPercentage <= 40.0) { // 4등급 (CO2)
-            binding.CO2Pyramid.setImageResource(R.drawable.pyramid3_co2)
+            binding.CO2Pyramid.setImageResource(R.drawable.pyramid3_co2_green)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_4_and_5))
             totalRelativeCO2EmissionGrade = 4
         } else if (averageRelativeCO2EmissionPercentage <= 60.0) { // 5등급 (CO2)
-            binding.CO2Pyramid.setImageResource(R.drawable.pyramid3_co2)
+            binding.CO2Pyramid.setImageResource(R.drawable.pyramid3_co2_green)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_4_and_5))
             totalRelativeCO2EmissionGrade = 5
         } else if (averageRelativeCO2EmissionPercentage <= 77.0) { // 6등급 (CO2)
-            binding.CO2Pyramid.setImageResource(R.drawable.pyramid4_co2)
+            binding.CO2Pyramid.setImageResource(R.drawable.pyramid4_co2_green)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_6_and_7))
             totalRelativeCO2EmissionGrade = 6
         } else if (averageRelativeCO2EmissionPercentage <= 89.0) { // 7등급 (CO2)
-            binding.CO2Pyramid.setImageResource(R.drawable.pyramid4_co2)
+            binding.CO2Pyramid.setImageResource(R.drawable.pyramid4_co2_green)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_6_and_7))
             totalRelativeCO2EmissionGrade = 7
         } else if (averageRelativeCO2EmissionPercentage <= 96.0) { // 8등급 (CO2)
-            binding.CO2Pyramid.setImageResource(R.drawable.pyramid5_co2)
+            binding.CO2Pyramid.setImageResource(R.drawable.pyramid5_co2_green)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_8_and_9))
             totalRelativeCO2EmissionGrade = 8
         } else { // 9등급 (CO2)
-            binding.CO2Pyramid.setImageResource(R.drawable.pyramid5_co2)
+            binding.CO2Pyramid.setImageResource(R.drawable.pyramid5_co2_green)
             binding.textCO2EmissionGrade.setTextColor(getColor(R.color.grade_8_and_9))
             totalRelativeCO2EmissionGrade = 9
         }
@@ -879,39 +879,39 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             sumOfRelativeEnergyConsumePercentage / numOfRegisteredDevices
 
         if (averageRelativeEnergyConsumePercentage <= 4.0) { // 1등급 (소비전력)
-            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid1_energy)
+            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid1_energy_green)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_1))
             totalRelativeEnergyConsumeGrade = 1
         } else if (averageRelativeEnergyConsumePercentage <= 11.0) { // 2등급 (소비전력)
-            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid2_energy)
+            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid2_energy_green)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_2_and_3))
             totalRelativeEnergyConsumeGrade = 2
         } else if (averageRelativeEnergyConsumePercentage <= 23.0) { // 3등급 (소비전력)
-            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid2_energy)
+            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid2_energy_green)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_2_and_3))
             totalRelativeEnergyConsumeGrade = 3
         } else if (averageRelativeEnergyConsumePercentage <= 40.0) { // 4등급 (소비전력)
-            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid3_energy)
+            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid3_energy_green)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_4_and_5))
             totalRelativeEnergyConsumeGrade = 4
         } else if (averageRelativeEnergyConsumePercentage <= 60.0) { // 5등급 (소비전력)
-            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid3_energy)
+            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid3_energy_green)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_4_and_5))
             totalRelativeEnergyConsumeGrade = 5
         } else if (averageRelativeEnergyConsumePercentage <= 77.0) { // 6등급 (소비전력)
-            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid4_energy)
+            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid4_energy_green)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_6_and_7))
             totalRelativeEnergyConsumeGrade = 6
         } else if (averageRelativeEnergyConsumePercentage <= 89.0) { // 7등급 (소비전력)
-            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid4_energy)
+            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid4_energy_green)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_6_and_7))
             totalRelativeEnergyConsumeGrade = 7
         } else if (averageRelativeEnergyConsumePercentage <= 96.0) { // 8등급 (소비전력)
-            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid5_energy)
+            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid5_energy_green)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_8_and_9))
             totalRelativeEnergyConsumeGrade = 8
         } else { // 9등급 (소비전력)
-            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid5_energy)
+            binding.energyConsumePyramid.setImageResource(R.drawable.pyramid5_energy_green)
             binding.textEnergyConsumeGrade.setTextColor(getColor(R.color.grade_8_and_9))
             totalRelativeEnergyConsumeGrade = 9
         }
