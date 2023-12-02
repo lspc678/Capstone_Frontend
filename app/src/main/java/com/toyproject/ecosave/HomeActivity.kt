@@ -70,21 +70,21 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         "지도에서 검색"
     )
 
-    companion object {
-        private const val MARGIN_SIDE = 20.0F
-        private const val MARGIN_BETWEEN_PYRAMIDS = 10
-        private val MARGIN_TEXT = arrayOf(
-            arrayOf(92.0F, 5.0F),
-            arrayOf(100.0F, 31.0F),
-            arrayOf(100.0F, 31.0F),
-            arrayOf(108.0F, 54.0F),
-            arrayOf(108.0F, 54.0F),
-            arrayOf(118.0F, 76.0F),
-            arrayOf(118.0F, 76.0F),
-            arrayOf(128.0F, 100.0F),
-            arrayOf(128.0F, 100.0F)
-        )
+    private val MARGIN_SIDE = 20.0F
+    private val MARGIN_BETWEEN_PYRAMIDS = 30.0F
+    private val MARGIN_TEXT = arrayOf(
+        arrayOf(87.0F, 5.0F),
+        arrayOf(94.0F, 30.0F),
+        arrayOf(94.0F, 30.0F),
+        arrayOf(102.0F, 50.0F),
+        arrayOf(102.0F, 50.0F),
+        arrayOf(110.0F, 71.0F),
+        arrayOf(110.0F, 71.0F),
+        arrayOf(128.0F, 100.0F),
+        arrayOf(128.0F, 100.0F)
+    )
 
+    companion object {
         // 등록된 기기 목록
         var list = mutableListOf<RegisteredDeviceData>()
 
@@ -745,19 +745,22 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     // 피라미드에 종합 상대적 에너지 소비 효율 등급을 나타냄
     private fun setPyramid() {
         // 피라미드 크기 조정
-        val metrics = resources.displayMetrics
-        val screenWidth = metrics.widthPixels
+        val screenWidth = App.getWidth(this)
         val width_margin_px = fromDpToPx(resources, MARGIN_SIDE)
-        val pyramidWidth = (screenWidth - 2 * width_margin_px - MARGIN_BETWEEN_PYRAMIDS) / 2
+        val margin_between_pyramids_px = fromDpToPx(resources, MARGIN_BETWEEN_PYRAMIDS)
+        val pyramidWidth = (screenWidth - 2 * width_margin_px - margin_between_pyramids_px) / 2
         val pyramidHeight = pyramidWidth * 1.055
 
-        val paramsForCO2Pyramid = ConstraintLayout.LayoutParams(pyramidWidth, pyramidHeight.toInt())
-        paramsForCO2Pyramid.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-        paramsForCO2Pyramid.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
-        paramsForCO2Pyramid.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
-        binding.CO2Pyramid.layoutParams = paramsForCO2Pyramid
+        val layoutParamsForEnergyConsumePyramid =
+            binding.constraintLayoutForEnergyConsumePyramid.layoutParams
+        layoutParamsForEnergyConsumePyramid.width = pyramidWidth
+        layoutParamsForEnergyConsumePyramid.height = pyramidHeight.toInt()
+        binding.constraintLayoutForEnergyConsumePyramid.layoutParams = layoutParamsForEnergyConsumePyramid
 
-        // calculateRelativeGradeData()
+        val layoutParamsForCO2Pyramid = binding.constraintLayoutForCO2Pyramid.layoutParams
+        layoutParamsForCO2Pyramid.width = pyramidWidth
+        layoutParamsForCO2Pyramid.height = pyramidHeight.toInt()
+        binding.constraintLayoutForCO2Pyramid.layoutParams = layoutParamsForCO2Pyramid
     }
 
     private fun calculateRelativeGradeData() {
