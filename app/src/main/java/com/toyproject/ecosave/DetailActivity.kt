@@ -37,22 +37,20 @@ import java.math.RoundingMode
 class DetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityDetailBinding
 
-    companion object {
-        private const val MARGIN_SIDE = 20.0F
-        private const val MARGIN_BETWEEN_PYRAMIDS = 10
-        private val MARGIN_TEXT = arrayOf(
-            arrayOf(92.0F, 5.0F),
-            arrayOf(100.0F, 31.0F),
-            arrayOf(100.0F, 31.0F),
-            arrayOf(108.0F, 54.0F),
-            arrayOf(108.0F, 54.0F),
-            arrayOf(118.0F, 76.0F),
-            arrayOf(118.0F, 76.0F),
-            arrayOf(128.0F, 100.0F),
-            arrayOf(128.0F, 100.0F)
-        )
-    }
+    private val MARGIN_SIDE = 20.0F
+    private val MARGIN_BETWEEN_PYRAMIDS = 30.0F
 
+    private val MARGIN_TEXT = arrayOf(
+        arrayOf(92.0F, 5.0F),
+        arrayOf(100.0F, 31.0F),
+        arrayOf(100.0F, 31.0F),
+        arrayOf(108.0F, 54.0F),
+        arrayOf(108.0F, 54.0F),
+        arrayOf(118.0F, 76.0F),
+        arrayOf(118.0F, 76.0F),
+        arrayOf(128.0F, 100.0F),
+        arrayOf(128.0F, 100.0F)
+    )
     private fun callApplianceDelete(
         deviceType: DeviceTypeList?, id: Int) {
         // progress bar 불러오기
@@ -210,17 +208,15 @@ class DetailActivity : AppCompatActivity() {
         relativeElectricPowerConsumeGrade: Int,
         relativeElectricPowerConsumePercentage: Int
     ) {
-        val metrics = resources.displayMetrics
-        val screenWidth = metrics.widthPixels
+        val screenWidth = App.getWidth(this)
         val width_margin_px = fromDpToPx(resources, MARGIN_SIDE)
-        val pyramidWidth = (screenWidth - 2 * width_margin_px - MARGIN_BETWEEN_PYRAMIDS) / 2
+        val pyramidWidth = (screenWidth - 2 * width_margin_px - MARGIN_BETWEEN_PYRAMIDS.toInt()) / 2
         val pyramidHeight = pyramidWidth * 1.055
 
-        val paramsForCO2Pyramid = ConstraintLayout.LayoutParams(pyramidWidth, pyramidHeight.toInt())
-        paramsForCO2Pyramid.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-        paramsForCO2Pyramid.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
-        paramsForCO2Pyramid.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
-        binding.CO2Pyramid.layoutParams = paramsForCO2Pyramid
+        val paramsForCO2Pyramid = binding.constraintLayoutForCO2Pyramid.layoutParams
+        paramsForCO2Pyramid.width = pyramidWidth
+        paramsForCO2Pyramid.height = pyramidHeight.toInt()
+        binding.constraintLayoutForCO2Pyramid.layoutParams = paramsForCO2Pyramid
 
         if ((relativeCO2EmissionGrade > 0)
             && (relativeCO2EmissionPercentage >= 0)) {
@@ -265,15 +261,14 @@ class DetailActivity : AppCompatActivity() {
 
             binding.textCO2EmissionGrade.layoutParams = paramsForCO2Grade
         } else {
-            binding.CO2Pyramid.visibility = View.GONE
+            binding.constraintLayoutForCO2Pyramid.visibility = View.GONE
             binding.textCO2EmissionGrade.text = ""
         }
 
-        val paramsForEnergyConsumePyramid = ConstraintLayout.LayoutParams(pyramidWidth, pyramidHeight.toInt())
-        paramsForEnergyConsumePyramid.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
-        paramsForEnergyConsumePyramid.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
-        paramsForEnergyConsumePyramid.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
-        binding.energyConsumePyramid.layoutParams = paramsForEnergyConsumePyramid
+        val paramsForEnergyConsumePyramid = binding.constraintLayoutForEnergyConsumePyramid.layoutParams
+        paramsForEnergyConsumePyramid.width = pyramidWidth
+        paramsForEnergyConsumePyramid.height = pyramidHeight.toInt()
+        binding.constraintLayoutForEnergyConsumePyramid.layoutParams = paramsForEnergyConsumePyramid
 
         if ((relativeElectricPowerConsumeGrade > 0) &&
             (relativeElectricPowerConsumePercentage >= 0)) {
@@ -380,6 +375,23 @@ class DetailActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        // cardViewForEnergyConsume 크기 조절
+        val layoutParamsForEnergyConsume = binding.cardViewForEnergyConsume.layoutParams
+
+        val screenWidth = App.getWidth(this)
+        val marginSidePx = fromDpToPx(resources, MARGIN_SIDE)
+        val marginBetweenCardViewPx = fromDpToPx(resources, MARGIN_BETWEEN_PYRAMIDS)
+        val cardViewWidth = (screenWidth - marginSidePx * 2 - marginBetweenCardViewPx) / 2
+
+        layoutParamsForEnergyConsume.width = cardViewWidth
+        layoutParamsForEnergyConsume.height = cardViewWidth
+
+        // cardViewForCO2 크기 조절
+        val layoutParamsForCO2 = binding.cardViewForCO2.layoutParams
+
+        layoutParamsForCO2.width = cardViewWidth
+        layoutParamsForCO2.height = cardViewWidth
+
         when (deviceType) {
             deviceType -> {
                 supportActionBar?.title = "상세 페이지 (${getTranslatedDeviceType(deviceType)})"
@@ -394,9 +406,7 @@ class DetailActivity : AppCompatActivity() {
 
         // CO2 배출량이 표기되어 있지 않은 제품(예: 보일러)의 경우 CO2 배출량에 관한 UI가 보이지 않도록 설정
         if (binding.textCO2EmissionUnit.text == "") {
-            binding.cardViewForCO2.visibility = View.INVISIBLE
-
-            // binding.relativeLayoutForCO2.visibility = View.GONE
+            binding.cardViewForCO2.visibility = View.GONE
         }
 
         showPyramids(
