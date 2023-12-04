@@ -22,6 +22,6 @@
     <color name="teal_200">#80CBC4</color>
     <color name="teal_700">#00796B</color>
 
-    <color name="home_background_color">#E5FFC5</color>
-    <color name="background_color">#F9F7DF</color>
+    <color name="background_color_1">#E5FFC5</color>
+    <color name="background_color_2">#F9F7DF</color>
 </resources>
