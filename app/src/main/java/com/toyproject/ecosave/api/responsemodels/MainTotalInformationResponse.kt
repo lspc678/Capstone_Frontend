@@ -25,5 +25,5 @@ data class DeviceData (
     @SerializedName("boiler")
     val boiler: ArrayList<DevicePkeyAndEfficiency>?,
     @SerializedName("dryer")
-    val dryer: ArrayList<DevicePkeyAndEnergy>?,
+    val dryer: ArrayList<DevicePkeyAndEnergy>?
 )
