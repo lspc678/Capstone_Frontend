@@ -1,7 +1,6 @@
 package com.toyproject.ecosave.api
 
 import android.annotation.SuppressLint
-import android.util.Log
 import com.toyproject.ecosave.App
 import okhttp3.Interceptor
 
@@ -44,6 +43,7 @@ fun getUnsafeOkHttpClient(): OkHttpClient.Builder {
         .connectTimeout(40, TimeUnit.SECONDS)
         .readTimeout(40, TimeUnit.SECONDS)
         .writeTimeout(40, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(false)
         .addInterceptor(httpLoggingInterceptor)
         .addNetworkInterceptor(Interceptor {
                 chain ->
@@ -57,8 +57,6 @@ fun getUnsafeOkHttpClient(): OkHttpClient.Builder {
 
     builder.sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
     builder.hostnameVerifier { _, _ -> true }
-
-    Log.d("홈 화면 (getUnsafeOkHttpClient)", "builder 생성 완료")
 
     return builder
 }
