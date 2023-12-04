@@ -49,6 +49,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+// 테스트용
+import com.toyproject.ecosave.test.TestMainActivity
+
 class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private lateinit var binding: ActivityHomeBinding
     private lateinit var drawerLayout: DrawerLayout
@@ -72,21 +75,22 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private val MARGIN_SIDE = 20.0F
     private val MARGIN_BETWEEN_PYRAMIDS = 30.0F
+
     private val MARGIN_TEXT = arrayOf(
-        arrayOf(87.0F, 5.0F),
-        arrayOf(94.0F, 30.0F),
-        arrayOf(94.0F, 30.0F),
-        arrayOf(102.0F, 50.0F),
-        arrayOf(102.0F, 50.0F),
-        arrayOf(110.0F, 71.0F),
-        arrayOf(110.0F, 71.0F),
-        arrayOf(128.0F, 100.0F),
-        arrayOf(128.0F, 100.0F)
+        arrayOf(87.0F, 6.0F),
+        arrayOf(94.0F, 31.0F),
+        arrayOf(94.0F, 31.0F),
+        arrayOf(102.0F, 52.0F),
+        arrayOf(102.0F, 52.0F),
+        arrayOf(110.0F, 72.0F),
+        arrayOf(110.0F, 72.0F),
+        arrayOf(114.0F, 92.0F),
+        arrayOf(114.0F, 92.0F)
     )
 
     companion object {
         // 등록된 기기 목록
-        var list = mutableListOf<RegisteredDeviceData>()
+        var list: MutableList<RegisteredDeviceData> = mutableListOf()
 
         // 등록된 기기의 개수
         private var numOfRegisteredDevices = 0
@@ -113,7 +117,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             binding.textMyResidentInfo.text = "등록된 정보가 없습니다."
             textNoRelativeGradeData = "내 거주지 설정 이후 상대적 에너지 소비 효율 등급을 확인할 수 있습니다."
             binding.textNoRelativeGradeData.visibility = View.VISIBLE
-            binding.relativeLayoutForPyramid.visibility = View.GONE
+            binding.constraintLayoutForPyramid.visibility = View.GONE
         } else {
             binding.textMyResidentInfo.text = myLocation
         }
@@ -218,7 +222,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                                 "",
                                                 null, null,
                                                 energy,
-                                                null, null, null, null
+                                                null, null, null, 24.0
                                             )
                                         )
                                         recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
@@ -238,7 +242,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                                 null, null,
                                                 energy,
                                                 null, null, null,
-                                                7.8
+                                                1.0
                                             )
                                         )
                                         recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
@@ -258,7 +262,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                                 null, null,
                                                 energy,
                                                 null, null, null,
-                                                6.0
+                                                1.0
                                             )
                                         )
                                         recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
@@ -342,8 +346,22 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                 }
 
                                 Log.d("홈 화면", list.toString())
-                                numOfRegisteredDevices = list.size
-                                callApplianceGet()
+
+                                if (myLocation != "") {
+                                    if (list.isEmpty()) {
+                                        binding.constraintLayoutForPyramid.visibility = View.GONE
+                                        if (textNoRelativeGradeData == "") {
+                                            textNoRelativeGradeData = "등록된 기기가 없습니다."
+                                        }
+                                        binding.textNoRelativeGradeData.text = textNoRelativeGradeData
+                                    } else {
+                                        binding.textNoRelativeGradeData.visibility = View.GONE
+                                        numOfRegisteredDevices = list.size
+
+                                        // list에 있는 RegisteredDeviceData를 이용해 GET request를 날림
+                                        callApplianceGet(0)
+                                    }
+                                }
                             } else {
                                 simpleDialog(
                                     this@HomeActivity,
@@ -382,66 +400,66 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         )
     }
 
-    private fun callApplianceGet() {
-        for ((idx, registeredDeviceData) in list.withIndex()) {
-            when (registeredDeviceData.deviceType) {
-                DeviceTypeList.REFRIGERATOR,
-                DeviceTypeList.AIR_CONDITIONER,
-                DeviceTypeList.TV,
-                DeviceTypeList.WASHING_MACHINE,
-                DeviceTypeList.MICROWAVE_OVEN,
-                DeviceTypeList.DRYER -> {
-                    callAppliance(idx, registeredDeviceData.deviceType, list[idx].id)
+    private fun callApplianceGet(idx: Int) {
+        if (idx < list.size) {
+            val apiInterface = APIClientForServerByPassSSLCertificate
+                .getClient()
+                .create(APIInterface::class.java)
+            val call: Call<ApplianceDetailResponse>
+
+            when (list[idx].deviceType) {
+                DeviceTypeList.REFRIGERATOR -> {
+                    call = apiInterface.applianceRefrigeratorGet(list[idx].id)
+                    callAppliance(idx, call)
+                }
+                DeviceTypeList.AIR_CONDITIONER -> {
+                    call = apiInterface.applianceAirConditionerGet(list[idx].id)
+                    callAppliance(idx, call)
+                }
+                DeviceTypeList.TV -> {
+                    call = apiInterface.applianceTelevisionGet(list[idx].id)
+                    callAppliance(idx, call)
+                }
+                DeviceTypeList.WASHING_MACHINE -> {
+                    call = apiInterface.applianceWashingMachineGet(list[idx].id)
+                    callAppliance(idx, call)
+                }
+                DeviceTypeList.MICROWAVE_OVEN -> {
+                    call = apiInterface.applianceMicrowaveGet(list[idx].id)
+                    callAppliance(idx, call)
                 }
                 DeviceTypeList.BOILER -> {
-                    // 나의 보일러 세부정보 호출
-                    callApplianceBoilerGet(idx, list[idx].id)
+                    val callBoiler: Call<BoilerDetailResponse> =
+                        apiInterface.applianceBoilerGet(list[idx].id)
+                    callApplianceBoiler(idx, callBoiler)
                 }
-                else -> continue
+                DeviceTypeList.DRYER -> {
+                    call = apiInterface.applianceDryerGet(list[idx].id)
+                    callAppliance(idx, call)
+                }
+                else -> return
             }
         }
-
-        checkMyLocationAndNumOfRegisteredDevices()
     }
 
-    private fun callAppliance(idx: Int, deviceType: DeviceTypeList, id: Int) {
-        val apiInterface = APIClientForServerByPassSSLCertificate
-            .getClient()
-            .create(APIInterface::class.java)
-        val call: Call<ApplianceDetailResponse>
-
-        when (deviceType) {
-            // 나의 냉장고 세부정보 호출
-            DeviceTypeList.REFRIGERATOR -> call = apiInterface.applianceRefrigeratorGet(id)
-
-            // 나의 에어컨 세부정보 호출
-            DeviceTypeList.AIR_CONDITIONER -> call = apiInterface.applianceAirConditionerGet(id)
-
-            // 나의 TV 세부정보 호출
-            DeviceTypeList.TV -> call = apiInterface.applianceTelevisionGet(id)
-
-            // 나의 세탁기 세부정보 호출
-            DeviceTypeList.WASHING_MACHINE -> call = apiInterface.applianceWashingMachineGet(id)
-
-            // 나의 전자레인지 세부정보 호출
-            DeviceTypeList.MICROWAVE_OVEN -> call = apiInterface.applianceMicrowaveGet(id)
-
-            // 나의 건조기 세부정보 호출
-            DeviceTypeList.DRYER -> call = apiInterface.applianceDryerGet(id)
-
-            else -> return
-        }
-
+    private fun callAppliance(idx: Int, call: Call<ApplianceDetailResponse>) {
         var retryCnt = 0 // 재시도 횟수
-
         call.enqueue(
             object : Callback<ApplianceDetailResponse> {
                 override fun onResponse(
                     call: Call<ApplianceDetailResponse>,
                     response: Response<ApplianceDetailResponse>
                 ) {
-                    Log.d("홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)", "statusCode: ${response.code()}")
-                    Log.d("홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)", "결과: ${response.body()?.data}")
+                    Log.d(
+                        "홈 화면 (${getTranslatedDeviceType(list[idx].deviceType)} 세부정보 호출)",
+                        "statusCode: ${response.code()}"
+                    )
+                    Log.d(
+                        "홈 화면 (${getTranslatedDeviceType(list[idx].deviceType)} 세부정보 호출)",
+                        "결과: $idx, ${response.body()?.data}"
+                    )
+
+                    callApplianceGet(idx + 1)
 
                     if (response.isSuccessful) {
                         val result = response.body()
@@ -456,7 +474,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                 list[idx].relativeElectricPowerConsumeGrade = data.tier
                                 list[idx].relativeElectricPowerConsumePercentage = data.relativePercent
 
-                                when (deviceType) {
+                                when (list[idx].deviceType) {
                                     DeviceTypeList.REFRIGERATOR,
                                     DeviceTypeList.WASHING_MACHINE,
                                     DeviceTypeList.TV,
@@ -480,8 +498,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                 recyclerViewRegisteredDeviceListAdapter?.notifyItemChanged(idx)
 
                                 if (numOfGetDetailedInformationDevices == numOfRegisteredDevices) {
-                                    binding.progressBar.visibility = View.GONE
-                                    binding.relativeLayoutForPyramid.visibility = View.VISIBLE
+                                    setPyramid()
                                     showPyramid()
                                 }
                             }
@@ -490,7 +507,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
                             if (errorBody != null) {
                                 Log.d(
-                                    "홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)",
+                                    "홈 화면 (${getTranslatedDeviceType(list[idx].deviceType)} 세부정보 호출)",
                                     "errorBody: ${errorBody.string()}"
                                 )
                             }
@@ -501,11 +518,12 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                             // request 재시도
                             // 재시도는 최대 3번만 가능
                             retryCnt++
+
                             if (retryCnt <= 3) {
                                 call.clone().enqueue(this)
                             } else {
                                 Log.d(
-                                    "홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)",
+                                    "홈 화면 (${getTranslatedDeviceType(list[idx].deviceType)} 세부정보 호출)",
                                     "재시도 횟수 3회 초과"
                                 )
                             }
@@ -515,11 +533,11 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
                 override fun onFailure(call: Call<ApplianceDetailResponse>, t: Throwable) {
                     Log.d(
-                        "홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)",
+                        "홈 화면 (${getTranslatedDeviceType(list[idx].deviceType)} 세부정보 호출)",
                         "결과: 실패 (onFailure)"
                     )
                     Log.d(
-                        "홈 화면 (${getTranslatedDeviceType(deviceType)} 세부정보 호출)",
+                        "홈 화면 (${getTranslatedDeviceType(list[idx].deviceType)} 세부정보 호출)",
                         t.message.toString()
                     )
                 }
@@ -528,22 +546,18 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     // 나의 보일러 세부정보 호출
-    private fun callApplianceBoilerGet(idx: Int, id: Int) {
-        val apiInterface = APIClientForServerByPassSSLCertificate
-            .getClient()
-            .create(APIInterface::class.java)
-        val callApplianceBoilerGet = apiInterface.applianceBoilerGet(id)
-
+    private fun callApplianceBoiler(idx: Int, call: Call<BoilerDetailResponse>) {
         var retryCnt = 0 // 재시도 횟수
-
-        callApplianceBoilerGet.enqueue(
+        call.enqueue(
             object : Callback<BoilerDetailResponse> {
                 override fun onResponse(
                     call: Call<BoilerDetailResponse>,
                     response: Response<BoilerDetailResponse>
                 ) {
                     Log.d("홈 화면 (보일러 세부정보 호출)", "statusCode: ${response.code()}")
-                    Log.d("홈 화면 (보일러 세부정보 호출)", "결과: ${response.body()?.data}")
+                    Log.d("홈 화면 (보일러 세부정보 호출)", "결과: $idx, ${response.body()?.data}")
+
+                    callApplianceGet(idx + 1)
 
                     if (response.isSuccessful) {
                         val result = response.body()
@@ -569,8 +583,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                 recyclerViewRegisteredDeviceListAdapter?.notifyItemChanged(idx)
 
                                 if (numOfGetDetailedInformationDevices == numOfRegisteredDevices) {
-                                    binding.progressBar.visibility = View.GONE
-                                    binding.relativeLayoutForPyramid.visibility = View.VISIBLE
+                                    setPyramid()
                                     showPyramid()
                                 }
                             }
@@ -587,6 +600,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                             // request 재시도
                             // 재시도는 최대 3번만 가능
                             retryCnt++
+
                             if (retryCnt <= 3) {
                                 call.clone().enqueue(this)
                             } else {
@@ -684,23 +698,6 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         )
     }
 
-    private fun checkMyLocationAndNumOfRegisteredDevices() {
-        if ((list.size >= 1) && (myLocation != "")) {
-            textNoRelativeGradeData = ""
-            binding.textNoRelativeGradeData.visibility = View.GONE
-
-            // 피라미드 설정
-            setPyramid()
-        } else {
-            binding.relativeLayoutForPyramid.visibility = View.GONE
-            if (textNoRelativeGradeData == "") {
-                textNoRelativeGradeData = "등록된 기기가 없습니다."
-            }
-            binding.textNoRelativeGradeData.text = textNoRelativeGradeData
-            binding.progressBar.visibility = View.GONE
-        }
-    }
-
     // 등록된 기기의 사용 여부가 변경될 경우 피라미드 재설정
     fun resetPyramid(mode: String, registeredDeviceData: RegisteredDeviceData) {
         if (mode == "OFF") {
@@ -796,12 +793,13 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private fun showPyramid() {
         if (numOfRegisteredDevices >= 1) {
             // 등록된 기기의 개수가 1개 이상일 경우
-            binding.relativeLayoutForPyramid.visibility = View.VISIBLE
+            binding.constraintLayoutForPyramid.visibility = View.VISIBLE
+            binding.progressBar.visibility = View.GONE
             showPyramidForCO2()
             showPyramidForEnergyConsume()
         } else {
             // 피라미드를 숨김
-            binding.relativeLayoutForPyramid.visibility = View.GONE
+            binding.constraintLayoutForPyramid.visibility = View.GONE
         }
     }
 
@@ -1048,7 +1046,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             // changeMyResidence API 호출
             callChangeMyResidence(latitude, longitude)
-            checkMyLocationAndNumOfRegisteredDevices()
+            getMyLocationFromServer()
         }
         alertDialogBuilderBtn.setNegativeButton("취소") { _, _ -> }
 
@@ -1078,7 +1076,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         myLocation = "인천광역시 미추홀구 용현동 12"
 
         binding.progressBar.visibility = View.VISIBLE
-        binding.relativeLayoutForPyramid.visibility = View.GONE
+        binding.constraintLayoutForPyramid.visibility = View.GONE
 
         // 변수 초기화
         numOfGetDetailedInformationDevices = 0
@@ -1155,6 +1153,10 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     positiveButtonOnClickListener,
                     defaultNegativeDialogInterfaceOnClickListener
                 )
+            }
+            R.id.developersTool -> {
+                val intent = Intent(this, TestMainActivity::class.java)
+                startActivity(intent)
             }
         }
         binding.drawerLayout.closeDrawer(GravityCompat.START)
