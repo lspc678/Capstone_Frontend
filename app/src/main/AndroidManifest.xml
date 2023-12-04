@@ -45,6 +45,7 @@
             android:name=".DetailActivity"
             android:exported="false"
             android:screenOrientation="sensorPortrait"
+            android:theme="@style/EcoSaveTheme2"
             tools:ignore="LockedOrientationActivity" />
         <activity
             android:name=".test.TestMainActivity"
@@ -66,6 +67,7 @@
             android:name=".AddDeviceActivity"
             android:exported="false"
             android:screenOrientation="sensorPortrait"
+            android:theme="@style/EcoSaveTheme2"
             tools:ignore="LockedOrientationActivity" />
         <activity
             android:name=".HomeActivity"
