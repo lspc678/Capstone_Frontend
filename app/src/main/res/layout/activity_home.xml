@@ -150,24 +150,31 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="15dp" />
 
-                    <RelativeLayout
-                        android:id="@+id/relativeLayoutForPyramid"
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/constraintLayoutForPyramid"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
                         android:layout_marginTop="15dp">
+
                         <androidx.constraintlayout.widget.ConstraintLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentStart="true">
+                            android:id="@+id/constraintLayoutForEnergyConsumePyramid"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            app:layout_constraintDimensionRatio="H, 1:1.055"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/constraintLayoutForCO2Pyramid"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent">
 
                             <ImageView
                                 android:id="@+id/energyConsumePyramid"
-                                android:layout_width="170dp"
-                                android:layout_height="179dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
                                 android:src="@drawable/pyramid_green"
+                                app:layout_constraintStart_toStartOf="parent"
                                 app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent" />
+                                app:layout_constraintTop_toTopOf="parent" />
 
                             <TextView
                                 android:id="@+id/textEnergyConsumeGrade"
@@ -177,23 +184,28 @@
                                 android:layout_marginTop="100dp"
                                 android:fontFamily="@font/outfit_bold"
                                 android:text=""
-                                android:textSize="12sp"
+                                android:textSize="11sp"
                                 app:layout_constraintStart_toStartOf="parent"
                                 app:layout_constraintTop_toTopOf="parent" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
                         <androidx.constraintlayout.widget.ConstraintLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true">
+                            android:id="@+id/constraintLayoutForCO2Pyramid"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            app:layout_constraintDimensionRatio="H, 1:1.055"
+                            app:layout_constraintStart_toEndOf="@id/constraintLayoutForEnergyConsumePyramid"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
 
                             <ImageView
                                 android:id="@+id/CO2Pyramid"
-                                android:layout_width="170dp"
-                                android:layout_height="179dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
                                 android:src="@drawable/pyramid_green"
+                                app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
                                 app:layout_constraintTop_toTopOf="parent" />
 
                             <TextView
@@ -204,11 +216,11 @@
                                 android:layout_marginTop="100dp"
                                 android:fontFamily="@font/outfit_bold"
                                 android:text=""
-                                android:textSize="12sp"
+                                android:textSize="11sp"
                                 app:layout_constraintStart_toStartOf="parent"
                                 app:layout_constraintTop_toTopOf="parent" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
-                    </RelativeLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
