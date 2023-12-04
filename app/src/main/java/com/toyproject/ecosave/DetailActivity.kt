@@ -41,16 +41,17 @@ class DetailActivity : AppCompatActivity() {
     private val MARGIN_BETWEEN_PYRAMIDS = 30.0F
 
     private val MARGIN_TEXT = arrayOf(
-        arrayOf(92.0F, 5.0F),
-        arrayOf(100.0F, 31.0F),
-        arrayOf(100.0F, 31.0F),
-        arrayOf(108.0F, 54.0F),
-        arrayOf(108.0F, 54.0F),
-        arrayOf(118.0F, 76.0F),
-        arrayOf(118.0F, 76.0F),
-        arrayOf(128.0F, 100.0F),
-        arrayOf(128.0F, 100.0F)
+        arrayOf(87.0F, 6.0F),
+        arrayOf(94.0F, 31.0F),
+        arrayOf(94.0F, 31.0F),
+        arrayOf(102.0F, 52.0F),
+        arrayOf(102.0F, 52.0F),
+        arrayOf(110.0F, 72.0F),
+        arrayOf(110.0F, 72.0F),
+        arrayOf(114.0F, 92.0F),
+        arrayOf(114.0F, 92.0F)
     )
+
     private fun callApplianceDelete(
         deviceType: DeviceTypeList?, id: Int) {
         // progress bar 불러오기
@@ -210,7 +211,8 @@ class DetailActivity : AppCompatActivity() {
     ) {
         val screenWidth = App.getWidth(this)
         val width_margin_px = fromDpToPx(resources, MARGIN_SIDE)
-        val pyramidWidth = (screenWidth - 2 * width_margin_px - MARGIN_BETWEEN_PYRAMIDS.toInt()) / 2
+        val margin_between_pyramids_px = fromDpToPx(resources, MARGIN_BETWEEN_PYRAMIDS)
+        val pyramidWidth = (screenWidth - 2 * width_margin_px - margin_between_pyramids_px) / 2
         val pyramidHeight = pyramidWidth * 1.055
 
         val paramsForCO2Pyramid = binding.constraintLayoutForCO2Pyramid.layoutParams
