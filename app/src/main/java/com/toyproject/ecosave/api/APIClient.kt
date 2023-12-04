@@ -1,6 +1,5 @@
 package com.toyproject.ecosave.api
 
-import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -46,15 +45,11 @@ class APIClientForServerByPassSSLCertificate {
 
         fun getClient() : Retrofit {
             // getUnsafeOkHttpClient()를 이용하여 SSL 인증서 검사를 우회함
-            val retrofit = Retrofit.Builder()
+            return Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(getUnsafeOkHttpClient().build())
                 .build()
-
-            Log.d("홈 화면 (APIClient)", "retrofit 생성 완료")
-
-            return retrofit
         }
     }
 }
