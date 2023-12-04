@@ -5,6 +5,10 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doOnTextChanged
 
+import com.toyproject.ecosave.App
+import com.toyproject.ecosave.api.APIClientForServerByPassSSLCertificate
+import com.toyproject.ecosave.api.APIInterface
+import com.toyproject.ecosave.api.responsemodels.ApplianceDetailResponse
 import com.toyproject.ecosave.databinding.ActivityTestMainBinding
 import com.toyproject.ecosave.test.api.TestAPIClient
 import com.toyproject.ecosave.test.api.TestAPIInterface
@@ -12,6 +16,10 @@ import com.toyproject.ecosave.test.api.requestmodel.TestCreateRequest
 import com.toyproject.ecosave.test.api.responsemodel.TestCreateResponse
 import com.toyproject.ecosave.test.api.responsemodel.TestListUsersResponse
 import com.toyproject.ecosave.test.api.responsemodel.TestSingleUserResponse
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 // retrofit2
 import retrofit2.Call
@@ -175,6 +183,143 @@ class TestMainActivity : AppCompatActivity() {
             } else {
                 binding.textInputForPasswordConfirm.error = null
             }
+        }
+
+        // SharedPreferences 저장
+        binding.btnTestSharedPreferencesSave.setOnClickListener {
+            try {
+                App.prefs.setValue("boilerEnergyConsume", 92)
+                App.prefs.setValue("refrigeratorEnergyConsume", 35)
+                App.prefs.setValue("refrigeratorCO2Emission", 21)
+
+                Log.d("SharedPreferences", "저장 완료")
+            } catch (e: Exception) {
+                Log.d("SharedPreferences", e.toString())
+            }
+
+        }
+
+        // SharedPreferences 불러오기
+        binding.btnTestSharedPreferencesLoad.setOnClickListener {
+            try {
+                Log.d("SharedPreferences", App.prefs.getValue("boilerEnergyConsume", 0))
+                Log.d("SharedPreferences", App.prefs.getValue("refrigeratorEnergyConsume", 0))
+                Log.d("SharedPreferences", App.prefs.getValue("refrigeratorCO2Emission", 0))
+                Log.d("SharedPreferences", App.prefs.getValue("microwaveOvenCO2Emission", 0))
+            } catch (e: Exception) {
+                Log.d("SharedPreferences", e.toString())
+            }
+        }
+
+        // Multiple API Request 테스트
+        binding.btnTestMultipleAPIRequest.setOnClickListener {
+            try {
+                prepareData()
+            } catch (e: Exception) {
+                Log.d("Multiple API Request 테스트", e.toString())
+            }
+        }
+    }
+
+    data class Info(val deviceType: String, val id: Int)
+    private val idList = mutableListOf<Info>()
+
+    private fun prepareData() {
+        idList.add(Info("tv", 26))
+        idList.add(Info("tv", 26))
+        idList.add(Info("tv", 26))
+        idList.add(Info("tv", 26))
+        idList.add(Info("tv", 26))
+
+        idList.add(Info("dryer", 34))
+        idList.add(Info("dryer", 36))
+        idList.add(Info("dryer", 37))
+        idList.add(Info("dryer", 40))
+        idList.add(Info("dryer", 34))
+        idList.add(Info("dryer", 36))
+        idList.add(Info("dryer", 37))
+        idList.add(Info("dryer", 40))
+        idList.add(Info("dryer", 34))
+        idList.add(Info("dryer", 36))
+        idList.add(Info("dryer", 37))
+        idList.add(Info("dryer", 40))
+
+        callAPI()
+    }
+
+    private fun callAPI() {
+        CoroutineScope(Dispatchers.IO).launch {
+            callAPI(0)
+        }
+    }
+
+    private fun callAPI(idx: Int) {
+        if (idx < idList.size - 1) {
+            val apiInterface = APIClientForServerByPassSSLCertificate
+                .getClient()
+                .create(APIInterface::class.java)
+            val call: Call<ApplianceDetailResponse>
+
+            when (idList[idx].deviceType) {
+                "tv" -> {
+                    call = apiInterface.applianceTelevisionGet(idList[idx].id)
+                    makeRequest(idList[idx].id, idx, "tv", call)
+                }
+                "dryer" -> {
+                    call = apiInterface.applianceDryerGet(idList[idx].id)
+                    makeRequest(idList[idx].id, idx, "dryer", call)
+                }
+            }
+        }
+    }
+
+    private fun makeRequest(id: Int, idx: Int, deviceType: String, call: Call<ApplianceDetailResponse>) {
+        try {
+            call.enqueue(
+                object : Callback<ApplianceDetailResponse> {
+                    override fun onResponse(
+                        call: Call<ApplianceDetailResponse>,
+                        response: Response<ApplianceDetailResponse>
+                    ) {
+                        Log.d("Multiple API Request 테스트(makeRequest)", "id: $id, statusCode: ${response.code()}")
+                        Log.d("Multiple API Request 테스트(makeRequest)", "결과: ${response.body()?.data}")
+
+                        callAPI(idx + 1)
+
+                        if (response.isSuccessful) {
+                            val result = response.body()
+
+                            if (result != null) {
+                                if (result.success) {
+                                    val data = result.data
+                                    Log.d("Multiple API Request 테스트(makeRequest)", data.toString())
+                                }
+                            }
+                        } else {
+                            if (response.code() == 500) {
+                                Log.d(
+                                    "Multiple API Request 테스트(makeRequest)",
+                                    "errorCode: 500"
+                                )
+                            }
+                        }
+                    }
+
+                    override fun onFailure(call: Call<ApplianceDetailResponse>, t: Throwable) {
+                        Log.d(
+                            "Multiple API Request 테스트(makeRequest)",
+                            "결과: 실패 (onFailure)"
+                        )
+                        Log.d(
+                            "Multiple API Request 테스트(makeRequest)",
+                            t.message.toString()
+                        )
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d("Multiple API Request 테스트(makeRequest)", e.toString())
         }
     }
 }
