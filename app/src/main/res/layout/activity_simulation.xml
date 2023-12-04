@@ -47,121 +47,175 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="25dp">
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/constraintLayoutForPowerOfConsume"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    app:layout_constraintEnd_toEndOf="parent"
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewBeforeEnergyConsume"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginEnd="5dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:layout_constraintDimensionRatio="H, 1:1"
                     app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/imgDoubleRightArrow"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toTopOf="@id/linearLayout">
+                    app:layout_constraintBottom_toBottomOf="parent">
 
-                    <TextView
-                        android:id="@+id/textPowerOfConsumeType"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentStart="true"
-                        android:layout_centerVertical="true"
-                        android:fontFamily="@font/outfit_regular"
-                        android:text="소비전력량"
-                        android:textColor="@color/light_grey"
-                        android:textSize="15sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="10dp">
 
-                    <RelativeLayout
-                        android:layout_width="180dp"
-                        android:layout_height="48dp"
-                        android:layout_alignParentEnd="true"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
+                        <TextView
+                            android:id="@+id/textBefore"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/outfit_bold"
+                            android:text="변경 전"
+                            android:textColor="@color/light_grey"
+                            android:textSize="15sp"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toTopOf="@id/linearLayoutForBeforeEnergyConsumeNumberAndUnit"/>
 
-                        <ImageView
+                        <LinearLayout
+                            android:id="@+id/linearLayoutForBeforeEnergyConsumeNumberAndUnit"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:src="@drawable/non_editable_textfield" />
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:orientation="horizontal"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/textBefore"
+                            app:layout_constraintBottom_toTopOf="@id/textBeforePowerOfConsumeType">
+
+                            <TextView
+                                android:id="@+id/textBeforePowerOfConsume"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="5dp"
+                                android:fontFamily="@font/outfit_bold"
+                                android:gravity="center_horizontal"
+                                android:text="0.0"
+                                android:textColor="@color/black"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:id="@+id/textBeforePowerOfConsumeUnit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/outfit_bold"
+                                android:gravity="center_horizontal"
+                                android:text="kWh/월"
+                                android:textColor="@color/black"
+                                android:textSize="20sp" />
+                        </LinearLayout>
 
                         <TextView
-                            android:id="@+id/textPowerOfConsume"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/textBeforePowerOfConsumeType"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_alignParentStart="true"
-                            android:layout_centerVertical="true"
-                            android:layout_marginStart="20dp"
-                            android:fontFamily="@font/outfit_regular"
-                            android:text="0.0"
-                            android:textColor="@color/light_grey"
-                            android:textSize="15sp" />
+                            android:fontFamily="@font/outfit_bold"
+                            android:gravity="center_horizontal"
+                            android:text="1kg당 소비전력량"
+                            android:textColor="#004A74"
+                            android:textSize="15sp"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/linearLayoutForBeforeEnergyConsumeNumberAndUnit"
+                            app:layout_constraintEnd_toEndOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.cardview.widget.CardView>
 
-                        <TextView
-                            android:id="@+id/textPowerOfConsumeUnit"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:layout_marginEnd="20dp"
-                            android:fontFamily="@font/outfit_regular"
-                            android:text="kWh/월"
-                            android:textColor="@color/light_grey"
-                            android:textSize="15sp" />
-                    </RelativeLayout>
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <LinearLayout
-                    android:id="@+id/linearLayout"
+                <ImageView
+                    android:id="@+id/imgDoubleRightArrow"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal"
-                    app:layout_constraintTop_toBottomOf="@id/constraintLayoutForPowerOfConsume"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_double_right_arrow"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent">
+                    app:layout_constraintStart_toEndOf="@id/cardViewBeforeEnergyConsume"
+                    app:layout_constraintEnd_toStartOf="@id/cardViewAfterEnergyConsume" />
 
-                    <ImageView
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:src="@drawable/ic_keyboard_double_arrow_down"/>
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewAfterEnergyConsume"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="5dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:layout_constraintDimensionRatio="H, 1:1"
+                    app:layout_constraintStart_toEndOf="@id/imgDoubleRightArrow"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
 
-                    <RelativeLayout
-                        android:id="@+id/relativeLayoutForAfterPowerOfConsume"
-                        android:layout_width="180dp"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="10dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent">
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="10dp">
 
-                        <ImageView
+                        <TextView
+                            android:id="@+id/textAfter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/outfit_bold"
+                            android:text="변경 후"
+                            android:textColor="@color/light_grey"
+                            android:textSize="15sp"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toTopOf="@id/linearLayoutForAfterEnergyConsumeNumberAndUnit"/>
+
+                        <LinearLayout
+                            android:id="@+id/linearLayoutForAfterEnergyConsumeNumberAndUnit"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:src="@drawable/non_editable_textfield" />
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:orientation="horizontal"
+                            app:layout_constraintBottom_toTopOf="@id/textAfter"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/textAfterPowerOfConsumeType">
+
+                            <TextView
+                                android:id="@+id/textAfterPowerOfConsume"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="5dp"
+                                android:fontFamily="@font/outfit_bold"
+                                android:gravity="center_horizontal"
+                                android:text="0.0"
+                                android:textColor="@color/black"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:id="@+id/textAfterPowerOfConsumeUnit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/outfit_bold"
+                                android:gravity="center_horizontal"
+                                android:text="kWh/월"
+                                android:textColor="@color/black"
+                                android:textSize="20sp" />
+                        </LinearLayout>
 
                         <TextView
-                            android:id="@+id/textAfterPowerOfConsume"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/textAfterPowerOfConsumeType"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_alignParentStart="true"
-                            android:layout_centerVertical="true"
-                            android:layout_marginStart="20dp"
-                            android:fontFamily="@font/outfit_regular"
-                            android:text="0.0"
-                            android:textColor="@color/light_grey"
-                            android:textSize="15sp" />
-
-                        <TextView
-                            android:id="@+id/textAfterPowerOfConsumeUnit"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:layout_marginEnd="20dp"
-                            android:fontFamily="@font/outfit_regular"
-                            android:text="kWh/월"
-                            android:textColor="@color/light_grey"
-                            android:textSize="15sp" />
-                    </RelativeLayout>
-                </LinearLayout>
+                            android:fontFamily="@font/outfit_bold"
+                            android:gravity="center_horizontal"
+                            android:text="1kg당 소비전력량"
+                            android:textColor="#004A74"
+                            android:textSize="15sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/linearLayoutForAfterEnergyConsumeNumberAndUnit" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.cardview.widget.CardView>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <RelativeLayout
