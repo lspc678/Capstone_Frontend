@@ -12,8 +12,8 @@ data class AppliancePostRequest(
 )
 
 data class BoilerPostRequest(
-    @SerializedName("efficeicy")
-    val efficeicy: Float,
+    @SerializedName("efficiency")
+    val efficiency: Float,
     @SerializedName("gas_consumption")
     val gas_consumption: Float,
     @SerializedName("output")
