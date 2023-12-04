@@ -584,9 +584,10 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
         when (deviceType) {
             deviceType -> {
                 supportActionBar?.title = "시뮬레이션 (${getTranslatedDeviceType(deviceType)})"
-                binding.textPowerOfConsumeType.text = getPowerOfConsumeUnit(deviceType)["description"]
-                binding.textPowerOfConsumeUnit.text = getPowerOfConsumeUnit(deviceType)["symbol"]
-                binding.textPowerOfConsume.text = _powerOfConsume.toString()
+                binding.textBeforePowerOfConsumeType.text = getPowerOfConsumeUnit(deviceType)["description"]
+                binding.textBeforePowerOfConsumeUnit.text = getPowerOfConsumeUnit(deviceType)["symbol"]
+                binding.textBeforePowerOfConsume.text = _powerOfConsume.toString()
+                binding.textAfterPowerOfConsumeType.text = getPowerOfConsumeUnit(deviceType)["description"]
                 binding.textAfterPowerOfConsumeUnit.text = getPowerOfConsumeUnit(deviceType)["symbol"]
                 binding.textAfterPowerOfConsume.text = ""
             }
