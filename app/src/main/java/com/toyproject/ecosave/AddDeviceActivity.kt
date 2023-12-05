@@ -20,6 +20,7 @@ import com.toyproject.ecosave.api.requestmodels.BoilerPostRequest
 import com.toyproject.ecosave.api.responsemodels.DefaultResponse
 import com.toyproject.ecosave.databinding.ActivityAddDeviceBinding
 import com.toyproject.ecosave.models.DeviceTypeList
+import com.toyproject.ecosave.utilities.fromDpToPx
 import com.toyproject.ecosave.utilities.getCO2EmissionUnit
 import com.toyproject.ecosave.utilities.getPowerOfConsumeUnit
 import com.toyproject.ecosave.utilities.getTranslatedDeviceType
@@ -38,15 +39,37 @@ class AddDeviceActivity : AppCompatActivity() {
     private var energyConsumption = 0.0F
     private var amountOfCO2 = 0.0F
 
+    private val MARGIN_SIDE = 20.0F
+    private val MARGIN_BETWEEN_CARDVIEWS = 30.0F
+
     companion object {
         private const val GET_ENERGY_CONSUMPTION_AND_CO2 = 50
     }
 
     private fun reset() {
-        binding.editEnergyConsumption.text = "0"
-        binding.editCO2Emission.text = "0"
+        binding.textPowerOfConsume.text = "0"
+        binding.textCO2Emission.text = "0"
         energyConsumption = 0.0F
         amountOfCO2 = 0.0F
+    }
+
+    private fun setCardView() {
+        // cardViewForEnergyConsume 크기 조절
+        val layoutParamsForEnergyConsume = binding.cardViewForEnergyConsume.layoutParams
+
+        val screenWidth = App.getWidth(this)
+        val marginSidePx = fromDpToPx(resources, MARGIN_SIDE)
+        val marginBetweenCardViewPx = fromDpToPx(resources, MARGIN_BETWEEN_CARDVIEWS)
+        val cardViewWidth = (screenWidth - marginSidePx * 2 - marginBetweenCardViewPx) / 2
+
+        layoutParamsForEnergyConsume.width = cardViewWidth
+        layoutParamsForEnergyConsume.height = cardViewWidth
+
+        // cardViewForCO2 크기 조절
+        val layoutParamsForCO2 = binding.cardViewForCO2.layoutParams
+
+        layoutParamsForCO2.width = cardViewWidth
+        layoutParamsForCO2.height = cardViewWidth
     }
 
     // 기기등록
@@ -235,12 +258,12 @@ class AddDeviceActivity : AppCompatActivity() {
 
                 energyConsumption = data.getFloatExtra("energyConsumption", 0.0F)
                 if (energyConsumption > 0.0F) {
-                    binding.editEnergyConsumption.text = energyConsumption.toString()
+                    binding.textPowerOfConsume.text = energyConsumption.toString()
                 }
 
                 amountOfCO2 = data.getFloatExtra("amountOfCO2", 0.0F)
                 if (amountOfCO2 > 0.0F) {
-                    binding.editCO2Emission.text = amountOfCO2.toString()
+                    binding.textCO2Emission.text = amountOfCO2.toString()
                 }
             } else {
                 Log.d("기기추가", "null")
@@ -268,6 +291,9 @@ class AddDeviceActivity : AppCompatActivity() {
 
         val items = resources.getStringArray(R.array.category_list)
         val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items)
+
+        // 2개의 CardView에 대한 크기 조절
+        setCardView()
 
         binding.spinner.adapter = spinnerAdapter
         binding.spinner.prompt = "카테고리 선택"
@@ -314,16 +340,16 @@ class AddDeviceActivity : AppCompatActivity() {
                         co2EmissionUnit = getCO2EmissionUnit(DeviceTypeList.OTHERS)
                     }
                 }
-                binding.textEnergyConsumption.text = powerOfConsumeUnit["description"]
-                binding.textEnergyConsumptionUnit.text = powerOfConsumeUnit["symbol"]
+                binding.textPowerOfConsumeUnit.text = powerOfConsumeUnit["symbol"]
+                binding.textPowerOfConsumeType.text = powerOfConsumeUnit["description"]
                 binding.textCO2EmissionUnit.text = co2EmissionUnit
 
                 reset()
 
                 if (co2EmissionUnit == "") {
-                    binding.constraintLayoutForCO2.visibility = View.GONE
+                    binding.cardViewForCO2.visibility = View.GONE
                 } else {
-                    binding.constraintLayoutForCO2.visibility = View.VISIBLE
+                    binding.cardViewForCO2.visibility = View.VISIBLE
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}

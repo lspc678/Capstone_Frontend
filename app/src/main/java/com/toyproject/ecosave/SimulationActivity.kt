@@ -202,32 +202,36 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
                 continue
             }
 
-            val usageTimeFor1Day = selectedHours + selectedMinutes / 60.0
-            Log.d("시뮬레이션", usageTimeFor1Day.toString())
-
             when (relativeGradeData.deviceType) {
-                DeviceTypeList.REFRIGERATOR,
-                DeviceTypeList.WASHING_MACHINE -> {
+                DeviceTypeList.REFRIGERATOR -> {
                     totalPowerOfConsumeForMonth += relativeGradeData.powerOfConsume!!
+                }
+                DeviceTypeList.WASHING_MACHINE,
+                DeviceTypeList.DRYER -> {
+                    // 세탁기, 건조기에 대한 월간 소비 전력량 = 1kg당 소비전력량 * (하루 평균 사용 시간) * 30(일)
+                    // 세탁기, 건조기를 사용할 때 마다 1kg의 빨래를 넣는다고 가정
+                    // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
+                    totalPowerOfConsumeForMonth +=
+                        (relativeGradeData.powerOfConsume!! * relativeGradeData.averageUsageTimePerDay!! * 30) / 1000.0
                 }
                 DeviceTypeList.MICROWAVE_OVEN -> {
                     // 전자레인지에 대한 월간 소비 전력량 = 소비전력 * (하루 평균 사용 시간) * 30(일)
                     // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
                     totalPowerOfConsumeForMonth +=
-                        (relativeGradeData.powerOfConsume!! * usageTimeFor1Day * 30) / 1000
+                        (relativeGradeData.powerOfConsume!! * relativeGradeData.averageUsageTimePerDay!! * 30) / 1000.0
                 }
                 DeviceTypeList.AIR_CONDITIONER -> {
                     // 에어컨의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                     // 월간 소비 전력량 = 표준 월간 소비 전력량 * (하루 평균 사용 시간 / 7.8)
                     totalPowerOfConsumeForMonth +=
-                        relativeGradeData.powerOfConsume!! * (usageTimeFor1Day / 7.8F)
+                        relativeGradeData.powerOfConsume!! * (relativeGradeData.averageUsageTimePerDay!! / 7.8)
                 }
                 DeviceTypeList.TV -> {
                     // TV의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                     // 월간 소비 전력량 = 소비전력 * 하루 평균 사용 시간 * 30(일)
                     // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
                     totalPowerOfConsumeForMonth +=
-                        (relativeGradeData.powerOfConsume!! * usageTimeFor1Day * 30) / 1000
+                        (relativeGradeData.powerOfConsume!! * relativeGradeData.averageUsageTimePerDay!! * 30) / 1000.0
                 }
                 DeviceTypeList.BOILER -> {
                     // 보일러의 경우 아직 시뮬레이션 기능을 제공하지 않음
@@ -262,35 +266,37 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
 
         afterTotalPowerOfConsumeForMonth = 0.0
 
-        val usageTimeFor1Day = selectedHours + selectedMinutes / 60.0
-
         // 기기 변경 후 등록된 모든 기기의 총 소비 전력량 (월간) 계산
         when (deviceType) {
             DeviceTypeList.REFRIGERATOR -> {
                 afterTotalPowerOfConsumeForMonth += changeInPowerConsumption
             }
+            DeviceTypeList.WASHING_MACHINE,
+            DeviceTypeList.DRYER -> {
+                afterTotalPowerOfConsumeForMonth +=
+                    (changeInPowerConsumption * HomeActivity.list[position].averageUsageTimePerDay!! * 30) / 1000.0
+            }
             DeviceTypeList.MICROWAVE_OVEN -> {
-                // 전자레인지에 대한 월간 소비 전력량 = 소비전력 * 1/6(시간) * 30(일)
+                // 전자레인지에 대한 월간 소비 전력량 = 소비전력 * (하루 평균 사용 시간) * 30(일)
                 // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
                 afterTotalPowerOfConsumeForMonth +=
-                    (changeInPowerConsumption * usageTimeFor1Day * 30) / 1000
+                    (changeInPowerConsumption * HomeActivity.list[position].averageUsageTimePerDay!! * 30) / 1000.0
             }
             DeviceTypeList.AIR_CONDITIONER -> {
                 // 에어컨의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                 // 월간 소비 전력량 = 표준 월간 소비 전력량 * (하루 평균 사용 시간 / 7.8)
                 afterTotalPowerOfConsumeForMonth +=
-                    changeInPowerConsumption * (usageTimeFor1Day / 7.8F)
+                    changeInPowerConsumption * (HomeActivity.list[position].averageUsageTimePerDay!! / 7.8)
             }
             DeviceTypeList.TV -> {
                 // TV의 경우 하루 평균 사용 시간을 통해 월간 소비 전력량을 계산
                 // 월간 소비 전력량 = 소비전력 * 하루 평균 사용 시간 * 30(일)
                 // kWh로 환산하기 위해 맨 마지막에 1000으로 나눔
                 afterTotalPowerOfConsumeForMonth +=
-                    (changeInPowerConsumption * usageTimeFor1Day * 30) / 1000
+                    (changeInPowerConsumption * HomeActivity.list[position].averageUsageTimePerDay!! * 30) / 1000.0
             }
-            DeviceTypeList.WASHING_MACHINE,
             DeviceTypeList.BOILER -> {
-                // 세탁기, 보일러의 경우 아직 시뮬레이션 기능을 제공하지 않음
+                // 보일러의 경우 아직 시뮬레이션 기능을 제공하지 않음
             }
             else -> {
 
@@ -298,7 +304,6 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
         }
 
         afterTotalPowerOfConsumeForMonth += totalPowerOfConsumeForMonth
-
         calculateMonthlyElectricityBillChange()
     }
 
@@ -335,9 +340,11 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
         // 기기 변경 후 예상 전기 요금 (월간)
         val afterMonthlyElectricityBillForMonth = calculateAfterMonthlyElectricityBill()
 
-        textMonthlyElectricityBillChangeText += "${kotlin.math.abs(
-            monthlyElectricityBillForMonth - afterMonthlyElectricityBillForMonth
-        )}원"
+        val monthlyElectricityBillChange = "%,d".format(
+            kotlin.math.abs(
+                afterMonthlyElectricityBillForMonth - monthlyElectricityBillForMonth))
+
+        textMonthlyElectricityBillChangeText += "${monthlyElectricityBillChange}원"
 
         // 한 달 전기 요금 변화량을 화면에 출력
         binding.textMonthlyElectricityBillChange.text = textMonthlyElectricityBillChangeText
@@ -558,6 +565,9 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
             }
         }
 
+        // 해당 기기에 대한 하루 평균 사용 시간 변경
+        HomeActivity.list[position].averageUsageTimePerDay = hours + minute / 60.0
+
         // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
         calculateTotalPowerOfConsumeForMonth()
     }
@@ -659,11 +669,25 @@ class SimulationActivity : AppCompatActivity(), SelectedAverageUsageTimePerDayIn
                 object : RecyclerViewProductRecommendationListAdapter.OnItemClickListener {
                     override fun onItemClick(v: View, data: RecommendProductData, pos: Int) {
                         afterPowerOfConsume = data.powerOfConsume
-                        if (afterPowerOfConsume != null) {
-                            binding.textAfterPowerOfConsume.text = afterPowerOfConsume.toString()
+                        binding.textAfterPowerOfConsume.text = afterPowerOfConsume.toString()
+
+                        // 변경 후 소비전력량에 대한 색깔 표시
+                        if (_powerOfConsume.toDouble() > afterPowerOfConsume!!) {
+                            binding.textAfterPowerOfConsume.setTextColor(getColor(R.color.blue))
+                            binding.textAfterPowerOfConsumeUnit.setTextColor(getColor(R.color.blue))
+                        } else if (_powerOfConsume.toDouble() < afterPowerOfConsume!!) {
+                            binding.textAfterPowerOfConsume.setTextColor(getColor(R.color.red))
+                            binding.textAfterPowerOfConsumeUnit.setTextColor(getColor(R.color.red))
+                        } else {
+                            binding.textAfterPowerOfConsume.setTextColor(getColor(R.color.green))
+                            binding.textAfterPowerOfConsumeUnit.setTextColor(getColor(R.color.green))
                         }
-                        // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
-                        calculateTotalPowerOfConsumeForMonth()
+
+                        if ((afterPowerOfConsume != null)
+                            && (HomeActivity.list[position].averageUsageTimePerDay != 0.0)) {
+                            // 기기 변경 전 총 소비전력량을 계산하고 시뮬레이션 결과에 표시
+                            calculateTotalPowerOfConsumeForMonth()
+                        }
                     }
                 }
             )

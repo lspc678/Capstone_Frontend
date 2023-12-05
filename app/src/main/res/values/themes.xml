@@ -6,9 +6,17 @@
     <style
         name="Base.Theme.EcoSave"
         parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimaryDark">@color/background_color_1</item>
+        <item name="colorPrimaryDark">@color/white</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+
+    <style
+        name="EcoSaveTheme1"
+        parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <item name="colorPrimaryDark">@color/background_color_1</item>
+    <item name="android:windowLightStatusBar">true</item>
+    </style>
+
     <style
         name="EcoSaveTheme2"
         parent="Theme.MaterialComponents.DayNight.NoActionBar">
