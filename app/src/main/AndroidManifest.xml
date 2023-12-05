@@ -27,6 +27,7 @@
             android:name=".SimulationActivity"
             android:exported="false"
             android:screenOrientation="sensorPortrait"
+            android:theme="@style/EcoSaveTheme1"
             tools:ignore="LockedOrientationActivity" />
         <activity
             android:name=".EmailAuthenticationActivity"
@@ -73,6 +74,7 @@
             android:name=".HomeActivity"
             android:exported="false"
             android:screenOrientation="sensorPortrait"
+            android:theme="@style/EcoSaveTheme1"
             tools:ignore="LockedOrientationActivity" />
         <activity
             android:name=".LoginActivity"
