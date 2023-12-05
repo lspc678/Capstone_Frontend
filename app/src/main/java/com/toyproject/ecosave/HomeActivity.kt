@@ -281,7 +281,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                                 "",
                                                 null, null,
                                                 energy,
-                                                null, null, null, null
+                                                null, null, null, 1.0
                                             )
                                         )
                                         recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
@@ -300,7 +300,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                                 "",
                                                 null, null,
                                                 energy,
-                                                null, null, null, null
+                                                null, null, null, 0.5
                                             )
                                         )
                                         recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
@@ -338,7 +338,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                                                 "",
                                                 null, null,
                                                 energy,
-                                                null, null, null, null
+                                                null, null, null, 0.5
                                             )
                                         )
                                         recyclerViewRegisteredDeviceListAdapter?.notifyItemInserted(list.size - 1)
